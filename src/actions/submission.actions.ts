@@ -154,17 +154,11 @@ export async function approveSubmissionAction(submissionId: string) {
       return { success: false, error: 'Insufficient permissions' };
     }
 
-    // Get submission to get author info
-    const originalSubmission = await getSubmissionById(submissionId);
-    if (!originalSubmission) {
-      return { success: false, error: 'Submission not found' };
-    }
-
     // Approve submission
     const result = await approveSubmission(submissionId, userId);
 
     // Get author info for email by database ID
-    const authorProfile = await getUserById(originalSubmission.authorId);
+    const authorProfile = await getUserById(result.submission.authorId);
 
     if (!authorProfile) {
       console.warn('Author not found for submission:', submissionId);
@@ -172,23 +166,27 @@ export async function approveSubmissionAction(submissionId: string) {
 
     // Send approval notification to author
     if (authorProfile) {
-      await sendApprovalNotification(
+      void sendApprovalNotification(
         result.submission,
         authorProfile.name || 'User',
         authorProfile.email
-      );
+      ).catch((error) => {
+        console.error('Error sending approval email:', error);
+      });
     }
 
     // Notify newsletter subscribers about the new post (excludes the author)
-    await notifySubscribers({
+    void notifySubscribers({
       postType: result.submission.postType,
       title: result.submission.title,
       excerpt: result.submission.content.substring(0, 200),
       postId: result.submission.id,
       authorName: authorProfile?.name || 'Anonymous',
-      authorId: originalSubmission.authorId, // Exclude author from newsletter notification
+      authorId: result.submission.authorId, // Exclude author from newsletter notification
       tags: result.submission.tags || [],
       thumbnailUrl: result.submission.thumbnailUrl || undefined,
+    }).catch((error) => {
+      console.error('Error notifying subscribers:', error);
     });
 
     revalidatePath('/dashboard');
@@ -288,12 +286,6 @@ export async function rejectSubmissionAction(
       return { success: false, error: 'Insufficient permissions' };
     }
 
-    // Get submission to get author info
-    const originalSubmission = await getSubmissionById(submissionId);
-    if (!originalSubmission) {
-      return { success: false, error: 'Submission not found' };
-    }
-
     // Reject submission with canMoveToDraft flag
     const rejectedSubmission = await rejectSubmission(
       submissionId,
@@ -303,16 +295,18 @@ export async function rejectSubmissionAction(
     );
 
     // Get author info for email by database ID
-    const authorProfile = await getUserById(originalSubmission.authorId);
+    const authorProfile = await getUserById(rejectedSubmission.authorId);
 
     // Send rejection notification to author
     if (authorProfile) {
-      await sendRejectionNotification(
+      void sendRejectionNotification(
         rejectedSubmission,
         authorProfile.name || 'User',
         authorProfile.email,
         rejectionReason
-      );
+      ).catch((error) => {
+        console.error('Error sending rejection email:', error);
+      });
     }
 
     revalidatePath('/dashboard');

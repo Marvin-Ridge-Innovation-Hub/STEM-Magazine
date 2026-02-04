@@ -123,6 +123,14 @@ export async function approveSubmission(
     throw new Error('Submission is not pending');
   }
 
+  const user = await prisma.user.findUnique({
+    where: { id: submission.authorId },
+    select: { pendingPostIds: true },
+  });
+
+  const nextPendingPostIds =
+    user?.pendingPostIds.filter((id) => id !== submissionId) ?? [];
+
   // Create a slug from the title
   const slug = submission.title
     .toLowerCase()
@@ -130,50 +138,49 @@ export async function approveSubmission(
     .replace(/[\s_]+/g, '-')
     .replace(/^-+|-+$/g, '');
 
-  // Create the public post with all submission data
-  const post = await prisma.post.create({
-    data: {
-      title: submission.title,
-      content: submission.content,
-      published: true,
-      authorId: submission.authorId,
-      coverImage:
-        submission.thumbnailUrl || 'https://via.placeholder.com/800x400',
-      slug: slug || `post-${Date.now()}`,
-      postType: submission.postType,
-      projectLinks: submission.projectLinks || [],
-      sources: submission.sources,
-      publishedAt: new Date(),
-    },
-  });
-
-  // Update submission status
-  const updatedSubmission = await prisma.submission.update({
-    where: { id: submissionId },
-    data: {
-      status: 'APPROVED',
-      reviewedBy: reviewerId,
-      reviewedAt: new Date(),
-      publishedAt: new Date(),
-    },
-  });
-
-  // Update user's post arrays
-  await prisma.user.update({
-    where: { id: submission.authorId },
-    data: {
-      postIds: {
-        push: post.id,
+  const { updatedSubmission, post } = await prisma.$transaction(async (tx) => {
+    // Create the public post with all submission data
+    const post = await tx.post.create({
+      data: {
+        title: submission.title,
+        content: submission.content,
+        published: true,
+        authorId: submission.authorId,
+        coverImage:
+          submission.thumbnailUrl || 'https://via.placeholder.com/800x400',
+        slug: slug || `post-${Date.now()}`,
+        postType: submission.postType,
+        projectLinks: submission.projectLinks || [],
+        sources: submission.sources,
+        publishedAt: new Date(),
       },
-      pendingPostIds: {
-        set: (
-          await prisma.user.findUnique({
-            where: { id: submission.authorId },
-            select: { pendingPostIds: true },
-          })
-        )?.pendingPostIds.filter((id) => id !== submissionId),
+    });
+
+    // Update submission status
+    const updatedSubmission = await tx.submission.update({
+      where: { id: submissionId },
+      data: {
+        status: 'APPROVED',
+        reviewedBy: reviewerId,
+        reviewedAt: new Date(),
+        publishedAt: new Date(),
       },
-    },
+    });
+
+    // Update user's post arrays
+    await tx.user.update({
+      where: { id: submission.authorId },
+      data: {
+        postIds: {
+          push: post.id,
+        },
+        pendingPostIds: {
+          set: nextPendingPostIds,
+        },
+      },
+    });
+
+    return { updatedSubmission, post };
   });
 
   return {
@@ -203,31 +210,38 @@ export async function rejectSubmission(
     throw new Error('Submission is not pending');
   }
 
-  // Update submission status
-  const updatedSubmission = await prisma.submission.update({
-    where: { id: submissionId },
-    data: {
-      status: 'REJECTED',
-      reviewedBy: reviewerId,
-      rejectionReason,
-      canMoveToDraft,
-      reviewedAt: new Date(),
-    },
+  const user = await prisma.user.findUnique({
+    where: { id: submission.authorId },
+    select: { pendingPostIds: true },
   });
 
-  // Remove from user's pendingPostIds
-  await prisma.user.update({
-    where: { id: submission.authorId },
-    data: {
-      pendingPostIds: {
-        set: (
-          await prisma.user.findUnique({
-            where: { id: submission.authorId },
-            select: { pendingPostIds: true },
-          })
-        )?.pendingPostIds.filter((id) => id !== submissionId),
+  const nextPendingPostIds =
+    user?.pendingPostIds.filter((id) => id !== submissionId) ?? [];
+
+  const updatedSubmission = await prisma.$transaction(async (tx) => {
+    // Update submission status
+    const updatedSubmission = await tx.submission.update({
+      where: { id: submissionId },
+      data: {
+        status: 'REJECTED',
+        reviewedBy: reviewerId,
+        rejectionReason,
+        canMoveToDraft,
+        reviewedAt: new Date(),
       },
-    },
+    });
+
+    // Remove from user's pendingPostIds
+    await tx.user.update({
+      where: { id: submission.authorId },
+      data: {
+        pendingPostIds: {
+          set: nextPendingPostIds,
+        },
+      },
+    });
+
+    return updatedSubmission;
   });
 
   return updatedSubmission as Submission;
