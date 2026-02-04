@@ -4,7 +4,7 @@ import prisma from '@/lib/prisma';
 
 /**
  * POST /api/admin/users/unban
- * Unban a user (admin only)
+ * Unban a user (admin or moderator)
  */
 export async function POST(request: Request) {
   try {
@@ -14,12 +14,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Check if user is admin
+    // Check if user is admin or moderator
     const adminProfile = await prisma.user.findUnique({
       where: { clerkId: adminId },
     });
 
-    if (!adminProfile || adminProfile.role !== 'ADMIN') {
+    if (
+      !adminProfile ||
+      (adminProfile.role !== 'ADMIN' && adminProfile.role !== 'MODERATOR')
+    ) {
       return NextResponse.json(
         { error: 'Insufficient permissions' },
         { status: 403 }
@@ -36,7 +39,8 @@ export async function POST(request: Request) {
     }
 
     // Unban user in Clerk
-    const client = await clerkClient();
+    const client =
+      typeof clerkClient === 'function' ? await clerkClient() : clerkClient;
     await client.users.unbanUser(userId);
 
     return NextResponse.json({

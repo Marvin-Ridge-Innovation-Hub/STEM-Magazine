@@ -525,6 +525,8 @@ export default function AdminDashboard() {
       const data = await response.json();
       if (data.success) {
         setUsers(data.users);
+      } else {
+        toast.error(data.error || 'Failed to load users');
       }
     } catch (error) {
       console.error('Failed to load users:', error);

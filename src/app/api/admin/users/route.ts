@@ -17,12 +17,15 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Check if user is admin
+    // Check if user is admin or moderator
     const userProfile = await prisma.user.findUnique({
       where: { clerkId: userId },
     });
 
-    if (!userProfile || userProfile.role !== 'ADMIN') {
+    if (
+      !userProfile ||
+      (userProfile.role !== 'ADMIN' && userProfile.role !== 'MODERATOR')
+    ) {
       return NextResponse.json(
         { error: 'Insufficient permissions' },
         { status: 403 }
@@ -30,7 +33,8 @@ export async function GET() {
     }
 
     // Get all Clerk users
-    const client = await clerkClient();
+    const client =
+      typeof clerkClient === 'function' ? await clerkClient() : clerkClient;
     const clerkUsers = await client.users.getUserList({ limit: 500 });
 
     // Get database users to get role information
@@ -68,7 +72,7 @@ export async function GET() {
   } catch (error) {
     console.error('Error fetching users:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch users' },
+      { success: false, error: 'Failed to fetch users' },
       { status: 500 }
     );
   }
