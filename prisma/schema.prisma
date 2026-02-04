@@ -129,6 +129,7 @@ model Submission {
   // Review data
   reviewedBy        String?            // Clerk ID of moderator
   rejectionReason   String?
+  canMoveToDraft    Boolean            @default(true) // Whether user can move rejected submission to drafts
   approvalToken     String?            @unique // One-click approval token
   
   // Timestamps

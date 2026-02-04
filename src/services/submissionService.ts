@@ -188,7 +188,8 @@ export async function approveSubmission(
 export async function rejectSubmission(
   submissionId: string,
   reviewerId: string,
-  rejectionReason: string
+  rejectionReason: string,
+  canMoveToDraft: boolean = true
 ): Promise<Submission> {
   const submission = await prisma.submission.findUnique({
     where: { id: submissionId },
@@ -209,6 +210,7 @@ export async function rejectSubmission(
       status: 'REJECTED',
       reviewedBy: reviewerId,
       rejectionReason,
+      canMoveToDraft,
       reviewedAt: new Date(),
     },
   });

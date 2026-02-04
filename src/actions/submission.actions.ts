@@ -265,7 +265,8 @@ export async function approveSubmissionByToken(token: string) {
  */
 export async function rejectSubmissionAction(
   submissionId: string,
-  rejectionReason: string
+  rejectionReason: string,
+  allowMoveToDraft: boolean = true
 ) {
   try {
     const { userId } = await auth();
@@ -293,11 +294,12 @@ export async function rejectSubmissionAction(
       return { success: false, error: 'Submission not found' };
     }
 
-    // Reject submission
+    // Reject submission with canMoveToDraft flag
     const rejectedSubmission = await rejectSubmission(
       submissionId,
       userId,
-      rejectionReason
+      rejectionReason,
+      allowMoveToDraft
     );
 
     // Get author info for email by database ID
@@ -318,7 +320,9 @@ export async function rejectSubmissionAction(
 
     return {
       success: true,
-      message: 'Submission rejected with feedback sent to author',
+      message: allowMoveToDraft
+        ? 'Submission rejected - author can revise and resubmit'
+        : 'Submission rejected',
     };
   } catch (error) {
     console.error('Error rejecting submission:', error);

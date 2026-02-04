@@ -133,9 +133,12 @@ interface Submission {
   title: string;
   content: string;
   thumbnailUrl?: string;
+  images: string[];
   projectLinks: string[];
   sources?: string;
+  tags: string[];
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  canMoveToDraft: boolean;
   createdAt: string;
   author: {
     id: string;
@@ -191,6 +194,7 @@ export default function AdminDashboard() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [rejectingId, setRejectingId] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
+  const [allowMoveToDraft, setAllowMoveToDraft] = useState(true);
   const [message, setMessage] = useState<{
     type: 'success' | 'error';
     text: string;
@@ -272,19 +276,14 @@ export default function AdminDashboard() {
     try {
       const result = await approveSubmissionAction(submissionId);
       if (result.success) {
-        setMessage({
-          type: 'success',
-          text: 'Submission approved successfully!',
-        });
-        loadSubmissions();
+        toast.success('Submission approved successfully!');
+        // Immediately update the UI by refetching submissions
+        await loadSubmissions();
       } else {
-        setMessage({
-          type: 'error',
-          text: result.error || 'Failed to approve',
-        });
+        toast.error(result.error || 'Failed to approve');
       }
     } catch (error) {
-      setMessage({ type: 'error', text: 'An error occurred' });
+      toast.error('An error occurred');
     } finally {
       setActionLoading(null);
     }
@@ -292,31 +291,30 @@ export default function AdminDashboard() {
 
   const handleReject = async (submissionId: string) => {
     if (!rejectionReason.trim()) {
-      setMessage({
-        type: 'error',
-        text: 'Please provide a reason for rejection',
-      });
+      toast.error('Please provide a reason for rejection');
       return;
     }
 
     setActionLoading(submissionId);
-    setMessage(null);
 
     try {
       const result = await rejectSubmissionAction(
         submissionId,
-        rejectionReason
+        rejectionReason,
+        allowMoveToDraft
       );
       if (result.success) {
-        setMessage({ type: 'success', text: 'Submission rejected' });
+        toast.success(result.message || 'Submission rejected');
         setRejectingId(null);
         setRejectionReason('');
-        loadSubmissions();
+        setAllowMoveToDraft(true);
+        // Immediately update the UI by refetching submissions
+        await loadSubmissions();
       } else {
-        setMessage({ type: 'error', text: result.error || 'Failed to reject' });
+        toast.error(result.error || 'Failed to reject');
       }
     } catch (error) {
-      setMessage({ type: 'error', text: 'An error occurred' });
+      toast.error('An error occurred');
     } finally {
       setActionLoading(null);
     }
@@ -775,25 +773,84 @@ export default function AdminDashboard() {
                       </p>
                     </div>
 
+                    {/* Tags */}
+                    {submission.tags && submission.tags.length > 0 && (
+                      <div className="p-4 md:p-6 border-b border-(--border) bg-(--muted)/20">
+                        <h4 className="font-semibold text-(--foreground) mb-3">
+                          🏷️ Tags
+                        </h4>
+                        <div className="flex flex-wrap gap-2">
+                          {submission.tags.map((tag, idx) => (
+                            <span
+                              key={idx}
+                              className="px-3 py-1 rounded-full text-xs font-medium capitalize bg-(--accent) text-(--accent-foreground)"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Images for SM Expo */}
+                    {submission.postType === 'SM_EXPO' &&
+                      submission.images &&
+                      submission.images.length > 0 && (
+                        <div className="p-4 md:p-6 border-b border-(--border)">
+                          <h4 className="font-semibold text-(--foreground) mb-3">
+                            🖼️ Project Images ({submission.images.length})
+                          </h4>
+                          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                            {submission.images.map((image, idx) => (
+                              <a
+                                key={idx}
+                                href={image}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="relative aspect-video rounded-lg overflow-hidden border border-(--border) hover:opacity-80 transition-opacity group"
+                              >
+                                <Image
+                                  src={image}
+                                  alt={`Project image ${idx + 1}`}
+                                  fill
+                                  className="object-cover"
+                                />
+                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                                  <ExternalLink className="h-5 w-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                                </div>
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
                     {/* Links/Sources */}
                     {(submission.projectLinks.length > 0 ||
                       submission.sources) && (
                       <div className="p-4 md:p-6 border-b border-(--border) bg-(--muted)/30">
                         {submission.projectLinks.length > 0 && (
                           <div className="mb-4">
-                            <h4 className="font-semibold text-(--foreground) mb-2">
-                              📎 Project Links
+                            <h4 className="font-semibold text-(--foreground) mb-3 flex items-center gap-2">
+                              <ExternalLink className="h-4 w-4" /> Project Links
+                              ({submission.projectLinks.length})
                             </h4>
-                            <ul className="space-y-1">
+                            <ul className="space-y-2">
                               {submission.projectLinks.map((link, idx) => (
-                                <li key={idx}>
+                                <li
+                                  key={idx}
+                                  className="flex items-start gap-2"
+                                >
+                                  <span className="text-(--muted-foreground) text-sm mt-0.5">
+                                    {idx + 1}.
+                                  </span>
                                   <a
                                     href={link}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-(--primary) hover:underline text-sm break-all"
+                                    className="text-(--primary) hover:underline text-sm break-all flex-1 inline-flex items-center gap-1"
                                   >
                                     {link}
+                                    <ExternalLink className="h-3 w-3 flex-shrink-0" />
                                   </a>
                                 </li>
                               ))}
@@ -827,11 +884,26 @@ export default function AdminDashboard() {
                               className="w-full p-3 bg-(--background) border border-(--border) rounded-lg text-(--foreground) placeholder-(--muted-foreground) resize-none"
                               rows={3}
                             />
+                            <label className="flex items-center gap-2 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={allowMoveToDraft}
+                                onChange={(e) =>
+                                  setAllowMoveToDraft(e.target.checked)
+                                }
+                                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                              />
+                              <span className="text-sm text-(--foreground)">
+                                Allow author to move to drafts (shows button in
+                                their dashboard to revise and resubmit)
+                              </span>
+                            </label>
                             <div className="flex gap-3 flex-wrap">
                               <button
                                 onClick={() => {
                                   setRejectingId(null);
                                   setRejectionReason('');
+                                  setAllowMoveToDraft(true);
                                 }}
                                 className="px-4 py-2 border border-(--border) rounded-lg hover:bg-(--muted) transition-colors"
                               >

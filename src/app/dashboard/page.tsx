@@ -83,6 +83,7 @@ interface Submission {
   content: string;
   thumbnailUrl?: string;
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  canMoveToDraft: boolean;
   rejectionReason?: string;
   createdAt: Date;
   publishedAt?: Date;
@@ -1087,20 +1088,24 @@ export default function DashboardPage() {
                                 {/* Rejected: Move to draft or delete */}
                                 {submission.status === 'REJECTED' && (
                                   <div className="flex gap-1">
-                                    <button
-                                      onClick={() =>
-                                        handleMoveToDraft(submission.id)
-                                      }
-                                      disabled={actionLoading === submission.id}
-                                      className="p-2 text-blue-500 hover:bg-blue-500/10 rounded-lg transition-colors disabled:opacity-50"
-                                      title="Edit and resubmit"
-                                    >
-                                      {actionLoading === submission.id ? (
-                                        <Loader2 className="h-4 w-4 animate-spin" />
-                                      ) : (
-                                        <RotateCcw className="h-4 w-4" />
-                                      )}
-                                    </button>
+                                    {submission.canMoveToDraft && (
+                                      <button
+                                        onClick={() =>
+                                          handleMoveToDraft(submission.id)
+                                        }
+                                        disabled={
+                                          actionLoading === submission.id
+                                        }
+                                        className="p-2 text-blue-500 hover:bg-blue-500/10 rounded-lg transition-colors disabled:opacity-50"
+                                        title="Edit and resubmit"
+                                      >
+                                        {actionLoading === submission.id ? (
+                                          <Loader2 className="h-4 w-4 animate-spin" />
+                                        ) : (
+                                          <RotateCcw className="h-4 w-4" />
+                                        )}
+                                      </button>
+                                    )}
                                     <button
                                       onClick={() =>
                                         handleDeleteSubmission(submission.id)
