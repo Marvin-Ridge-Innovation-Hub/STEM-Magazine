@@ -246,7 +246,9 @@ export default function AdminDashboard() {
 
   const checkAuthorization = async () => {
     try {
-      const response = await fetch('/api/admin/check-role');
+      const response = await fetch('/api/admin/check-role', {
+        cache: 'no-store',
+      });
       const data = await response.json();
 
       if (data.authorized) {
@@ -267,7 +269,9 @@ export default function AdminDashboard() {
   const loadSubmissions = async () => {
     try {
       setSubmissionsLoading(true);
-      const response = await fetch('/api/admin/submissions');
+      const response = await fetch('/api/admin/submissions', {
+        cache: 'no-store',
+      });
       const data = await response.json();
       if (data.success) {
         setSubmissions(data.submissions);
@@ -345,7 +349,9 @@ export default function AdminDashboard() {
   const loadPods = async () => {
     try {
       setPodsLoading(true);
-      const response = await fetch('/api/admin/pods');
+      const response = await fetch('/api/admin/pods', {
+        cache: 'no-store',
+      });
       const data = await response.json();
       if (data.success) {
         setPods(data.pods);
@@ -361,7 +367,9 @@ export default function AdminDashboard() {
   const handleSyncFromYouTube = async () => {
     setSyncing(true);
     try {
-      const response = await fetch('/api/admin/pods/sync');
+      const response = await fetch('/api/admin/pods/sync', {
+        cache: 'no-store',
+      });
       const data = await response.json();
 
       if (data.success) {
@@ -453,7 +461,9 @@ export default function AdminDashboard() {
   const loadPosts = async () => {
     try {
       setPostsLoading(true);
-      const response = await fetch('/api/admin/posts');
+      const response = await fetch('/api/admin/posts', {
+        cache: 'no-store',
+      });
       const data = await response.json();
       if (data.success) {
         setPosts(data.posts);
@@ -509,7 +519,9 @@ export default function AdminDashboard() {
   const loadUsers = async () => {
     try {
       setUsersLoading(true);
-      const response = await fetch('/api/admin/users');
+      const response = await fetch('/api/admin/users', {
+        cache: 'no-store',
+      });
       const data = await response.json();
       if (data.success) {
         setUsers(data.users);

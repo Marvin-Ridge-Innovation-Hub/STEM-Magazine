@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 // GET - List all SM Pods (for admin management)
 export async function GET() {
   try {
@@ -45,10 +48,17 @@ export async function GET() {
       },
     });
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       pods,
     });
+
+    response.headers.set(
+      'Cache-Control',
+      'no-store, no-cache, must-revalidate, proxy-revalidate'
+    );
+
+    return response;
   } catch (error) {
     console.error('Error fetching SM Pods:', error);
     return NextResponse.json(

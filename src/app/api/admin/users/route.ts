@@ -2,6 +2,9 @@ import { auth, clerkClient } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 /**
  * GET /api/admin/users
  * Get all users (admin only)
@@ -54,7 +57,14 @@ export async function GET() {
       createdAt: user.createdAt,
     }));
 
-    return NextResponse.json({ success: true, users });
+    const response = NextResponse.json({ success: true, users });
+
+    response.headers.set(
+      'Cache-Control',
+      'no-store, no-cache, must-revalidate, proxy-revalidate'
+    );
+
+    return response;
   } catch (error) {
     console.error('Error fetching users:', error);
     return NextResponse.json(

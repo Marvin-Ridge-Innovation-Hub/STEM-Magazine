@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { notifySubscribers } from '@/services/newsletterService';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 // YouTube Data API v3 endpoint
 const YOUTUBE_API_BASE = 'https://www.googleapis.com/youtube/v3';
 
@@ -216,13 +219,20 @@ export async function GET() {
       }
     }
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       message: `Synced ${newPods.length} new videos from YouTube`,
       totalVideosFound: videos.length,
       newPodsCreated: newPods.length,
       newPods,
     });
+
+    response.headers.set(
+      'Cache-Control',
+      'no-store, no-cache, must-revalidate, proxy-revalidate'
+    );
+
+    return response;
   } catch (error) {
     console.error('YouTube sync error:', error);
     return NextResponse.json(

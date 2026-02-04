@@ -3,6 +3,9 @@ import { auth } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
 import { deletePostImages } from '@/services/cloudinaryService';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 // Check if user is a moderator
 async function checkModerator() {
   const { userId } = await auth();
@@ -53,7 +56,7 @@ export async function GET() {
       },
     });
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       posts: posts.map((post) => ({
         id: post.id,
@@ -71,6 +74,13 @@ export async function GET() {
         commentCount: post._count.comments,
       })),
     });
+
+    response.headers.set(
+      'Cache-Control',
+      'no-store, no-cache, must-revalidate, proxy-revalidate'
+    );
+
+    return response;
   } catch (error) {
     console.error('Error fetching posts for admin:', error);
     return NextResponse.json(

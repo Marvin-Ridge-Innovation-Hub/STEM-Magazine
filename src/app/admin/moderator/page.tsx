@@ -130,7 +130,9 @@ export default function ModeratorDashboard() {
 
   const checkAuthorization = async () => {
     try {
-      const response = await fetch('/api/admin/check-role');
+      const response = await fetch('/api/admin/check-role', {
+        cache: 'no-store',
+      });
       const data = await response.json();
 
       if (data.authorized) {
@@ -150,7 +152,9 @@ export default function ModeratorDashboard() {
   const loadSubmissions = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/admin/submissions');
+      const response = await fetch('/api/admin/submissions', {
+        cache: 'no-store',
+      });
       const data = await response.json();
       if (data.success) {
         setSubmissions(data.submissions);

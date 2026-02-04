@@ -71,7 +71,9 @@ export default function SMPodsManagement() {
 
   const checkAuthorization = async () => {
     try {
-      const response = await fetch('/api/admin/check-role');
+      const response = await fetch('/api/admin/check-role', {
+        cache: 'no-store',
+      });
       const data = await response.json();
 
       if (data.authorized) {
@@ -91,7 +93,9 @@ export default function SMPodsManagement() {
   const loadPods = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/admin/pods');
+      const response = await fetch('/api/admin/pods', {
+        cache: 'no-store',
+      });
       const data = await response.json();
       if (data.success) {
         setPods(data.pods);
@@ -107,7 +111,9 @@ export default function SMPodsManagement() {
   const handleSyncFromYouTube = async () => {
     setSyncing(true);
     try {
-      const response = await fetch('/api/admin/pods/sync');
+      const response = await fetch('/api/admin/pods/sync', {
+        cache: 'no-store',
+      });
       const data = await response.json();
 
       if (data.success) {

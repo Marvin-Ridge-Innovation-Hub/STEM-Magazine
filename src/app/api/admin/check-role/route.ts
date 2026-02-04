@@ -2,6 +2,9 @@ import { auth, currentUser } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
 import { NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET() {
   try {
     const { userId } = await auth();
@@ -29,10 +32,17 @@ export async function GET() {
     const role = (user as any).role || 'USER';
     const authorized = role === 'MODERATOR' || role === 'ADMIN';
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       authorized,
       role,
     });
+
+    response.headers.set(
+      'Cache-Control',
+      'no-store, no-cache, must-revalidate, proxy-revalidate'
+    );
+
+    return response;
   } catch (error) {
     console.error('Error checking role:', error);
     return NextResponse.json(
