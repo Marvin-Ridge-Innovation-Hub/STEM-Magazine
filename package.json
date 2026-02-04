@@ -15,7 +15,7 @@
     "lint": "next lint",
     "start": "next start",
     "format": "prettier --write .",
-    "prepare": "husky",
+    "prepare": "node -e \"try { require('husky').install() } catch (e) { if (e.code !== 'MODULE_NOT_FOUND') throw e }\" || true",
     "lint:staged": "next lint",
     "postbuild": "npx prisma generate",
     "postinstall": "npx prisma generate",
