@@ -28,11 +28,14 @@ import {
   FileText,
   Headphones,
   Search,
+  Users,
+  Ban,
+  UserCheck,
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 // Tab types
-type AdminTab = 'submissions' | 'pods' | 'posts';
+type AdminTab = 'submissions' | 'pods' | 'posts' | 'users';
 
 // Helper components
 const PostTypeIcon = ({
@@ -222,6 +225,12 @@ export default function AdminDashboard() {
   const [postSearch, setPostSearch] = useState('');
   const [postTypeFilter, setPostTypeFilter] = useState<string>('ALL');
 
+  // Users state
+  const [users, setUsers] = useState<any[]>([]);
+  const [usersLoading, setUsersLoading] = useState(true);
+  const [userSearch, setUserSearch] = useState('');
+  const [banningUserId, setBanningUserId] = useState<string | null>(null);
+
   useEffect(() => {
     checkAuthorization();
   }, []);
@@ -231,6 +240,7 @@ export default function AdminDashboard() {
       if (activeTab === 'submissions') loadSubmissions();
       else if (activeTab === 'pods') loadPods();
       else if (activeTab === 'posts') loadPosts();
+      else if (activeTab === 'users') loadUsers();
     }
   }, [activeTab, authorized]);
 
@@ -495,6 +505,84 @@ export default function AdminDashboard() {
     return matchesSearch && matchesType;
   });
 
+  // ==================== USERS ====================
+  const loadUsers = async () => {
+    try {
+      setUsersLoading(true);
+      const response = await fetch('/api/admin/users');
+      const data = await response.json();
+      if (data.success) {
+        setUsers(data.users);
+      }
+    } catch (error) {
+      console.error('Failed to load users:', error);
+      toast.error('Failed to load users');
+    } finally {
+      setUsersLoading(false);
+    }
+  };
+
+  const handleBanUser = async (userId: string) => {
+    if (
+      !confirm(
+        'Are you sure you want to ban this user? They will not be able to sign in.'
+      )
+    )
+      return;
+
+    setBanningUserId(userId);
+    try {
+      const response = await fetch('/api/admin/users/ban', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast.success('User banned successfully');
+        loadUsers();
+      } else {
+        toast.error(data.error || 'Failed to ban user');
+      }
+    } catch (error) {
+      toast.error('Failed to ban user');
+    } finally {
+      setBanningUserId(null);
+    }
+  };
+
+  const handleUnbanUser = async (userId: string) => {
+    setBanningUserId(userId);
+    try {
+      const response = await fetch('/api/admin/users/unban', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast.success('User unbanned successfully');
+        loadUsers();
+      } else {
+        toast.error(data.error || 'Failed to unban user');
+      }
+    } catch (error) {
+      toast.error('Failed to unban user');
+    } finally {
+      setBanningUserId(null);
+    }
+  };
+
+  const filteredUsers = users.filter(
+    (user) =>
+      user.email?.toLowerCase().includes(userSearch.toLowerCase()) ||
+      user.name?.toLowerCase().includes(userSearch.toLowerCase())
+  );
+
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('en-US', {
       month: 'short',
@@ -592,6 +680,17 @@ export default function AdminDashboard() {
             >
               <Trash2 className="h-4 w-4" />
               Manage Posts
+            </button>
+            <button
+              onClick={() => setActiveTab('users')}
+              className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all ${
+                activeTab === 'users'
+                  ? 'bg-(--primary) text-(--primary-foreground)'
+                  : 'bg-(--card) border border-(--border) text-(--foreground) hover:border-(--primary)'
+              }`}
+            >
+              <Users className="h-4 w-4" />
+              Users
             </button>
           </div>
         </div>
@@ -850,7 +949,7 @@ export default function AdminDashboard() {
                                     className="text-(--primary) hover:underline text-sm break-all flex-1 inline-flex items-center gap-1"
                                   >
                                     {link}
-                                    <ExternalLink className="h-3 w-3 flex-shrink-0" />
+                                    <ExternalLink className="h-3 w-3 shrink-0" />
                                   </a>
                                 </li>
                               ))}
@@ -1339,6 +1438,140 @@ export default function AdminDashboard() {
                         <Trash2 className="h-5 w-5" />
                       )}
                     </button>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </motion.div>
+        )}
+
+        {/* ==================== USERS TAB ==================== */}
+        {activeTab === 'users' && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            {/* Search */}
+            <div className="mb-6">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-(--muted-foreground)" />
+                <input
+                  type="text"
+                  value={userSearch}
+                  onChange={(e) => setUserSearch(e.target.value)}
+                  placeholder="Search users by name or email..."
+                  className="w-full pl-10 pr-4 py-3 bg-(--background) border border-(--border) rounded-lg text-(--foreground) placeholder-(--muted-foreground) focus:outline-none focus:ring-2 focus:ring-(--primary)"
+                />
+              </div>
+            </div>
+
+            {/* Users List */}
+            {usersLoading ? (
+              <div className="space-y-3">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-4 p-4 bg-(--card) border border-(--border) rounded-lg animate-pulse"
+                  >
+                    <div className="w-12 h-12 rounded-full bg-(--muted)" />
+                    <div className="flex-1">
+                      <div className="h-5 rounded w-1/3 mb-2 bg-(--muted)" />
+                      <div className="h-4 rounded w-1/4 bg-(--muted)" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : filteredUsers.length === 0 ? (
+              <div className="text-center py-12 bg-(--card) border border-(--border) rounded-lg">
+                <Users className="h-12 w-12 mx-auto mb-4 text-(--muted-foreground)" />
+                <p className="text-(--muted-foreground) text-lg">
+                  No users found
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {filteredUsers.map((user) => (
+                  <motion.div
+                    key={user.id}
+                    className="flex items-center gap-4 p-4 bg-(--card) border border-(--border) rounded-lg hover:border-(--primary) transition-all"
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                  >
+                    {/* User Avatar */}
+                    {user.imageUrl ? (
+                      <Image
+                        src={user.imageUrl}
+                        alt={user.name || 'User'}
+                        width={48}
+                        height={48}
+                        className="rounded-full"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-(--primary) flex items-center justify-center text-(--primary-foreground) font-bold text-lg">
+                        {user.name?.[0]?.toUpperCase() ||
+                          user.email?.[0]?.toUpperCase() ||
+                          'U'}
+                      </div>
+                    )}
+
+                    {/* User Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-semibold text-(--foreground) truncate">
+                          {user.name || 'Unnamed User'}
+                        </h3>
+                        {user.banned && (
+                          <span className="px-2 py-0.5 text-xs rounded-full bg-red-500/10 text-red-500 font-medium">
+                            Banned
+                          </span>
+                        )}
+                        {user.role === 'ADMIN' && (
+                          <span className="px-2 py-0.5 text-xs rounded-full bg-purple-500/10 text-purple-500 font-medium">
+                            Admin
+                          </span>
+                        )}
+                        {user.role === 'MODERATOR' && (
+                          <span className="px-2 py-0.5 text-xs rounded-full bg-blue-500/10 text-blue-500 font-medium">
+                            Moderator
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-(--muted-foreground) truncate">
+                        {user.email}
+                      </p>
+                    </div>
+
+                    {/* Ban/Unban Button */}
+                    {user.role !== 'ADMIN' && (
+                      <button
+                        onClick={() =>
+                          user.banned
+                            ? handleUnbanUser(user.clerkId)
+                            : handleBanUser(user.clerkId)
+                        }
+                        disabled={banningUserId === user.clerkId}
+                        className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 ${
+                          user.banned
+                            ? 'bg-green-500/10 text-green-500 hover:bg-green-500 hover:text-white'
+                            : 'bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white'
+                        }`}
+                      >
+                        {banningUserId === user.clerkId ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : user.banned ? (
+                          <>
+                            <UserCheck className="h-4 w-4" />
+                            Unban
+                          </>
+                        ) : (
+                          <>
+                            <Ban className="h-4 w-4" />
+                            Ban
+                          </>
+                        )}
+                      </button>
+                    )}
                   </motion.div>
                 ))}
               </div>

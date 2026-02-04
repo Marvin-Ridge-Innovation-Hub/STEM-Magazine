@@ -59,6 +59,7 @@ export interface Submission {
   sources?: string;
   tags: string[];
   status: SubmissionStatus;
+  canMoveToDraft: boolean;
   authorId: string;
   reviewedBy?: string;
   rejectionReason?: string;
