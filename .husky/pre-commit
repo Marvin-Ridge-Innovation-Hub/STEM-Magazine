@@ -1,0 +1,10 @@
+echo "🔍 Running TypeScript type check..."
+npx tsc --noEmit
+
+echo "🧹 Running ESLint..."
+npx eslint . --fix
+
+echo "🎨 Running Prettier on staged files..."
+npx lint-staged
+
+echo "✅ All pre-commit checks passed!"

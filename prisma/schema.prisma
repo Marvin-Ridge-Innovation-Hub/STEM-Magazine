@@ -1,0 +1,258 @@
+// schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("MONGODB_URI")
+}
+
+model User {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  clerkId       String    @unique
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  bio           String?
+  
+  // Social links for public profile
+  website       String?
+  twitter       String?
+  github        String?
+  linkedin      String?
+  instagram     String?
+  youtube       String?
+  
+  isAdmin       Boolean   @default(false)
+  role          String    @default("USER")  // "USER" | "MODERATOR" | "ADMIN"
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  posts         Post[]    @relation("UserPosts")
+  comments      Comment[] @relation("UserComments")
+  
+  // New fields for submission system
+  submissions           Submission[]         @relation("UserSubmissions")
+  drafts                Draft[]              @relation("UserDrafts")
+  submissionComments    SubmissionComment[]  @relation("UserSubmissionComments")
+  submissionLikes       SubmissionLike[]     @relation("UserSubmissionLikes")
+  postIds               String[]             @default([])  // Array of approved submission IDs
+  draftIds              String[]             @default([])  // Array of draft IDs
+  pendingPostIds        String[]             @default([])  // Array of pending submission IDs
+  
+  // Newsletter subscription
+  newsletterSubscription NewsletterSubscription? @relation("UserNewsletterSubscription")
+  
+  // Notification preferences
+  notificationPreferences NotificationPreferences? @relation("UserNotificationPreferences")
+}
+
+model Post {
+  id           String     @id @default(auto()) @map("_id") @db.ObjectId
+  title        String
+  excerpt      String?
+  content      String
+  coverImage   String     
+  postType     String?    // "SM_EXPO" or "SM_NOW"
+  projectLinks String[]   @default([])
+  sources      String?
+  category     String?
+  tags         String[]
+  readTime     Int?
+  viewCount    Int        @default(0)
+  commentCount Int        @default(0)
+  featured     Boolean    @default(false)
+  published    Boolean    @default(false)
+  slug         String     @unique
+  author       User       @relation("UserPosts", fields: [authorId], references: [id])
+  authorId     String     @db.ObjectId
+  comments     Comment[]  @relation("PostComments")
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  publishedAt  DateTime?
+}
+
+model Comment {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  content   String
+  author    User      @relation("UserComments", fields: [authorId], references: [id])
+  authorId  String    @db.ObjectId
+  post      Post      @relation("PostComments", fields: [postId], references: [id])
+  postId    String    @db.ObjectId
+  parentId  String?   @db.ObjectId
+  parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  replies   Comment[] @relation("CommentReplies")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+// New Models for Submission System (SM Expo / SM Now)
+
+enum PostType {
+  SM_EXPO
+  SM_NOW
+  SM_PODS
+}
+
+enum SubmissionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model Submission {
+  id                String             @id @default(auto()) @map("_id") @db.ObjectId
+  postType          PostType
+  title             String
+  content           String
+  thumbnailUrl      String?            // URL of uploaded thumbnail (legacy, or first image for SM Expo)
+  images            String[]           @default([]) // For SM Expo: array of image URLs (1-5 images)
+  youtubeUrl        String?            // For SM Pods: YouTube video URL
+  projectLinks      String[]           // For SM Expo posts
+  sources           String?            // For SM Now posts
+  tags              String[]           @default([]) // Tags for categorization
+  
+  // Status tracking
+  status            SubmissionStatus   @default(PENDING)
+  
+  // Engagement
+  comments          SubmissionComment[] @relation("SubmissionComments")
+  likes             SubmissionLike[]    @relation("SubmissionLikes")
+  likeCount         Int                @default(0)
+  commentCount      Int                @default(0)
+  
+  // Relationships
+  author            User               @relation("UserSubmissions", fields: [authorId], references: [id], onDelete: Cascade)
+  authorId          String             @db.ObjectId
+  
+  // Review data
+  reviewedBy        String?            // Clerk ID of moderator
+  rejectionReason   String?
+  approvalToken     String?            @unique // One-click approval token
+  
+  // Timestamps
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  submittedAt       DateTime           @default(now())
+  reviewedAt        DateTime?          // When approved/rejected
+  publishedAt       DateTime?          // When made public
+  
+  @@index([authorId])
+  @@index([status])
+}
+
+model Draft {
+  id              String     @id @default(auto()) @map("_id") @db.ObjectId
+  postType        PostType?
+  title           String?
+  content         String?
+  thumbnailFile   String?    // Store file name/metadata (legacy)
+  images          String[]   @default([]) // For SM Expo: array of image URLs (1-5 images)
+  projectLinks    String[]   @default([]) // For SM Expo drafts
+  sources         String?    // For SM Now drafts
+  tags            String[]   @default([]) // Tags for categorization
+  
+  // Metadata
+  draftName       String     // Auto-generated: "Draft - Jan 15, 2026 3:45 PM"
+  
+  // Relationships
+  author          User       @relation("UserDrafts", fields: [authorId], references: [id], onDelete: Cascade)
+  authorId        String     @db.ObjectId
+  
+  // Timestamps
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  
+  @@index([authorId])
+}
+
+// Comment model for Submissions
+model SubmissionComment {
+  id            String      @id @default(auto()) @map("_id") @db.ObjectId
+  content       String
+  
+  // Relationships
+  author        User        @relation("UserSubmissionComments", fields: [authorId], references: [id], onDelete: Cascade)
+  authorId      String      @db.ObjectId
+  submission    Submission  @relation("SubmissionComments", fields: [submissionId], references: [id], onDelete: Cascade)
+  submissionId  String      @db.ObjectId
+  
+  // Reply threading
+  parentId      String?     @db.ObjectId
+  parent        SubmissionComment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  replies       SubmissionComment[] @relation("CommentReplies")
+  
+  // Timestamps
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  
+  @@index([submissionId])
+  @@index([authorId])
+}
+
+// Like model for Submissions
+model SubmissionLike {
+  id            String      @id @default(auto()) @map("_id") @db.ObjectId
+  
+  // Relationships
+  user          User        @relation("UserSubmissionLikes", fields: [userId], references: [id], onDelete: Cascade)
+  userId        String      @db.ObjectId
+  submission    Submission  @relation("SubmissionLikes", fields: [submissionId], references: [id], onDelete: Cascade)
+  submissionId  String      @db.ObjectId
+  
+  // Timestamps
+  createdAt     DateTime    @default(now())
+  
+  // Unique constraint: one like per user per submission
+  @@unique([userId, submissionId])
+  @@index([submissionId])
+  @@index([userId])
+}
+
+// Newsletter Subscription model
+model NewsletterSubscription {
+  id            String      @id @default(auto()) @map("_id") @db.ObjectId
+  
+  // User relationship
+  user          User        @relation("UserNewsletterSubscription", fields: [userId], references: [id], onDelete: Cascade)
+  userId        String      @unique @db.ObjectId
+  
+  // Subscription preferences
+  subscribeExpo Boolean     @default(false)  // SM Expo notifications
+  subscribeNow  Boolean     @default(false)  // SM Now notifications
+  subscribePods Boolean     @default(false)  // SM Pods notifications
+  
+  // Tags of interest
+  tags          String[]    @default([])     // Tags user is interested in
+  
+  // Active status
+  isActive      Boolean     @default(true)
+  
+  // Timestamps
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+// Notification Preferences model
+model NotificationPreferences {
+  id            String      @id @default(auto()) @map("_id") @db.ObjectId
+  
+  // User relationship
+  user          User        @relation("UserNotificationPreferences", fields: [userId], references: [id], onDelete: Cascade)
+  userId        String      @unique @db.ObjectId
+  
+  // Email notification preferences
+  emailOnLike           Boolean     @default(true)   // When someone likes your post
+  emailOnComment        Boolean     @default(true)   // When someone comments on your post
+  emailOnReply          Boolean     @default(true)   // When someone replies to your comment
+  emailOnApproval       Boolean     @default(true)   // When your submission is approved
+  emailOnRejection      Boolean     @default(true)   // When your submission is rejected
+  
+  // Master switch
+  emailEnabled          Boolean     @default(true)   // Master toggle for all email notifications
+  
+  // Timestamps
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}

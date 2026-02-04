@@ -1,0 +1,353 @@
+import { prisma } from '@/lib/prisma';
+import type {
+  Submission,
+  CreateSubmissionInput,
+  PostType,
+  SubmissionStatus,
+} from '@/types';
+import { randomBytes } from 'crypto';
+import { deletePostImages } from './cloudinaryService';
+
+/**
+ * Create a new submission
+ */
+export async function createSubmission(
+  authorId: string,
+  data: CreateSubmissionInput
+): Promise<Submission> {
+  const approvalToken = randomBytes(32).toString('hex');
+
+  const submission = await prisma.submission.create({
+    data: {
+      postType: data.postType,
+      title: data.title,
+      content: data.content,
+      thumbnailUrl: data.thumbnailUrl,
+      images: data.images || [], // For SM Expo: array of image URLs
+      projectLinks: data.projectLinks || [],
+      sources: data.sources,
+      tags: data.tags || [],
+      authorId,
+      approvalToken,
+      status: 'PENDING',
+    },
+  });
+
+  // Add submission ID to user's pendingPostIds
+  await prisma.user.update({
+    where: { id: authorId },
+    data: {
+      pendingPostIds: {
+        push: submission.id,
+      },
+    },
+  });
+
+  return submission as Submission;
+}
+
+/**
+ * Get submission by ID
+ */
+export async function getSubmissionById(
+  submissionId: string
+): Promise<Submission | null> {
+  const submission = await prisma.submission.findUnique({
+    where: { id: submissionId },
+  });
+
+  return submission as Submission | null;
+}
+
+/**
+ * Get submission by approval token
+ */
+export async function getSubmissionByToken(
+  token: string
+): Promise<Submission | null> {
+  const submission = await prisma.submission.findUnique({
+    where: { approvalToken: token },
+  });
+
+  return submission as Submission | null;
+}
+
+/**
+ * Get all submissions for a user
+ */
+export async function getUserSubmissions(
+  authorId: string,
+  status?: SubmissionStatus
+): Promise<Submission[]> {
+  const where: any = { authorId };
+  if (status) {
+    where.status = status;
+  }
+
+  const submissions = await prisma.submission.findMany({
+    where,
+    orderBy: { createdAt: 'desc' },
+  });
+
+  return submissions as Submission[];
+}
+
+/**
+ * Get all pending submissions (for moderators)
+ */
+export async function getAllPendingSubmissions(): Promise<Submission[]> {
+  const submissions = await prisma.submission.findMany({
+    where: { status: 'PENDING' },
+    orderBy: { submittedAt: 'desc' },
+  });
+
+  return submissions as Submission[];
+}
+
+/**
+ * Approve a submission and create a public post
+ */
+export async function approveSubmission(
+  submissionId: string,
+  reviewerId: string
+): Promise<{ submission: Submission; postId: string }> {
+  const submission = await prisma.submission.findUnique({
+    where: { id: submissionId },
+  });
+
+  if (!submission) {
+    throw new Error('Submission not found');
+  }
+
+  if (submission.status !== 'PENDING') {
+    throw new Error('Submission is not pending');
+  }
+
+  // Create a slug from the title
+  const slug = submission.title
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
+  // Create the public post with all submission data
+  const post = await prisma.post.create({
+    data: {
+      title: submission.title,
+      content: submission.content,
+      published: true,
+      authorId: submission.authorId,
+      coverImage:
+        submission.thumbnailUrl || 'https://via.placeholder.com/800x400',
+      slug: slug || `post-${Date.now()}`,
+      postType: submission.postType,
+      projectLinks: submission.projectLinks || [],
+      sources: submission.sources,
+      publishedAt: new Date(),
+    },
+  });
+
+  // Update submission status
+  const updatedSubmission = await prisma.submission.update({
+    where: { id: submissionId },
+    data: {
+      status: 'APPROVED',
+      reviewedBy: reviewerId,
+      reviewedAt: new Date(),
+      publishedAt: new Date(),
+    },
+  });
+
+  // Update user's post arrays
+  await prisma.user.update({
+    where: { id: submission.authorId },
+    data: {
+      postIds: {
+        push: post.id,
+      },
+      pendingPostIds: {
+        set: (
+          await prisma.user.findUnique({
+            where: { id: submission.authorId },
+            select: { pendingPostIds: true },
+          })
+        )?.pendingPostIds.filter((id) => id !== submissionId),
+      },
+    },
+  });
+
+  return {
+    submission: updatedSubmission as Submission,
+    postId: post.id,
+  };
+}
+
+/**
+ * Reject a submission with a reason
+ */
+export async function rejectSubmission(
+  submissionId: string,
+  reviewerId: string,
+  rejectionReason: string
+): Promise<Submission> {
+  const submission = await prisma.submission.findUnique({
+    where: { id: submissionId },
+  });
+
+  if (!submission) {
+    throw new Error('Submission not found');
+  }
+
+  if (submission.status !== 'PENDING') {
+    throw new Error('Submission is not pending');
+  }
+
+  // Update submission status
+  const updatedSubmission = await prisma.submission.update({
+    where: { id: submissionId },
+    data: {
+      status: 'REJECTED',
+      reviewedBy: reviewerId,
+      rejectionReason,
+      reviewedAt: new Date(),
+    },
+  });
+
+  // Remove from user's pendingPostIds
+  await prisma.user.update({
+    where: { id: submission.authorId },
+    data: {
+      pendingPostIds: {
+        set: (
+          await prisma.user.findUnique({
+            where: { id: submission.authorId },
+            select: { pendingPostIds: true },
+          })
+        )?.pendingPostIds.filter((id) => id !== submissionId),
+      },
+    },
+  });
+
+  return updatedSubmission as Submission;
+}
+
+/**
+ * Delete a submission
+ * If approved, also deletes the associated post
+ */
+export async function deleteSubmission(submissionId: string): Promise<void> {
+  const submission = await prisma.submission.findUnique({
+    where: { id: submissionId },
+  });
+
+  if (!submission) {
+    throw new Error('Submission not found');
+  }
+
+  // If submission was approved, we need to delete the associated post
+  if (submission.status === 'APPROVED') {
+    // Find and delete the post by matching title and author
+    const post = await prisma.post.findFirst({
+      where: {
+        authorId: submission.authorId,
+        title: submission.title,
+      },
+    });
+
+    if (post) {
+      // Delete all comments on the post first
+      await prisma.comment.deleteMany({
+        where: { postId: post.id },
+      });
+
+      // Delete images from Cloudinary
+      await deletePostImages(post.coverImage);
+
+      // Delete the post
+      await prisma.post.delete({
+        where: { id: post.id },
+      });
+
+      // Remove from user's postIds
+      await prisma.user.update({
+        where: { id: submission.authorId },
+        data: {
+          postIds: {
+            set: (
+              await prisma.user.findUnique({
+                where: { id: submission.authorId },
+                select: { postIds: true },
+              })
+            )?.postIds.filter((id) => id !== post.id),
+          },
+        },
+      });
+    }
+  }
+
+  // Delete submission comments in correct order (replies first, then parents)
+  // First, delete all replies (comments with a parentId)
+  await prisma.submissionComment.deleteMany({
+    where: {
+      submissionId: submissionId,
+      parentId: { not: null },
+    },
+  });
+
+  // Then delete all parent comments (comments without a parentId)
+  await prisma.submissionComment.deleteMany({
+    where: {
+      submissionId: submissionId,
+    },
+  });
+
+  // Delete submission images from Cloudinary (if not already deleted with the post)
+  // This handles cases where submission was pending/rejected
+  if (submission.status !== 'APPROVED') {
+    await deletePostImages(submission.thumbnailUrl, submission.images);
+  }
+
+  // Delete the submission
+  await prisma.submission.delete({
+    where: { id: submissionId },
+  });
+}
+
+/**
+ * Move a rejected submission back to drafts
+ */
+export async function moveToDraft(submissionId: string): Promise<string> {
+  const submission = await prisma.submission.findUnique({
+    where: { id: submissionId },
+  });
+
+  if (!submission) {
+    throw new Error('Submission not found');
+  }
+
+  if (submission.status !== 'REJECTED') {
+    throw new Error('Only rejected submissions can be moved to drafts');
+  }
+
+  // Create a draft from the submission
+  const draft = await prisma.draft.create({
+    data: {
+      postType: submission.postType,
+      title: submission.title,
+      content: submission.content,
+      thumbnailFile: submission.thumbnailUrl,
+      projectLinks: submission.projectLinks || [],
+      sources: submission.sources,
+      tags: submission.tags || [],
+      authorId: submission.authorId,
+      draftName: `${submission.title} (Revised)`,
+    },
+  });
+
+  // Delete the rejected submission
+  await prisma.submission.delete({
+    where: { id: submissionId },
+  });
+
+  return draft.id;
+}

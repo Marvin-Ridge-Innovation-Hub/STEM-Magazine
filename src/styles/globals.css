@@ -1,0 +1,195 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-family-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-family-poppins: 'Poppins', ui-sans-serif, system-ui, sans-serif;
+
+  --container-padding: 2rem;
+  --container-max-width-2xl: 1400px;
+
+  --color-border: oklch(88% 0.03 260);
+  --color-input: oklch(88% 0.03 260);
+  --color-ring: oklch(65% 0.2 270);
+  --color-background: oklch(100% 0 0);
+  --color-foreground: oklch(25% 0.15 260);
+  --color-primary: oklch(65% 0.2 270);
+  --color-primary-foreground: oklch(98% 0.01 270);
+  --color-secondary: oklch(80% 0.1 190);
+  --color-secondary-foreground: oklch(25% 0.15 260);
+  --color-accent: oklch(80% 0.15 60);
+  --color-accent-foreground: oklch(25% 0.15 260);
+  --color-muted: oklch(90% 0.02 260);
+  --color-muted-foreground: oklch(60% 0.05 260);
+  --color-card: oklch(98% 0.01 260);
+  --color-card-foreground: oklch(25% 0.15 260);
+}
+
+@layer base {
+  :root {
+    --background: oklch(100% 0 0);
+    --foreground: oklch(25% 0.15 260);
+    --card: oklch(98% 0.01 260);
+    --card-foreground: oklch(25% 0.15 260);
+    --popover: oklch(98% 0.01 260);
+    --popover-foreground: oklch(25% 0.15 260);
+    --primary: oklch(65% 0.2 270);
+    --primary-foreground: oklch(98% 0.01 270);
+    --secondary: oklch(80% 0.1 190);
+    --secondary-foreground: oklch(25% 0.15 260);
+    --muted: oklch(90% 0.02 260);
+    --muted-foreground: oklch(60% 0.05 260);
+    --accent: oklch(80% 0.15 60);
+    --accent-foreground: oklch(25% 0.15 260);
+    --border: oklch(88% 0.03 260);
+    --input: oklch(88% 0.03 260);
+    --ring: oklch(65% 0.2 270);
+  }
+
+  .dark {
+    --background: oklch(15% 0.05 260);
+    --foreground: oklch(90% 0.02 260);
+    --card: oklch(20% 0.05 260);
+    --card-foreground: oklch(90% 0.02 260);
+    --popover: oklch(20% 0.05 260);
+    --popover-foreground: oklch(90% 0.02 260);
+    --primary: oklch(30% 0.05 260);
+    --primary-foreground: oklch(90% 0.02 260);
+    --secondary: oklch(40% 0.06 260);
+    --secondary-foreground: oklch(90% 0.02 260);
+    --muted: oklch(30% 0.04 260);
+    --muted-foreground: oklch(65% 0.05 260);
+    --accent: oklch(75% 0.15 60);
+    --accent-foreground: oklch(90% 0.02 260);
+    --border: oklch(30% 0.04 260);
+    --input: oklch(30% 0.04 260);
+    --ring: oklch(30% 0.05 260);
+  }
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    @apply overflow-x-hidden max-w-full;
+  }
+  html {
+    @apply overflow-x-hidden max-w-full;
+  }
+}
+
+/* Shared Component Styles */
+@layer components {
+  /* Primary Button */
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold shadow-lg transition-all duration-300 hover:opacity-90 hover:scale-105;
+    background-color: var(--primary);
+    color: var(--primary-foreground);
+  }
+
+  /* Secondary/Outline Button */
+  .btn-secondary {
+    @apply inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold shadow-lg transition-all duration-300 hover:scale-105 border-2;
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+  .btn-secondary:hover {
+    background-color: color-mix(in oklch, var(--primary) 10%, transparent);
+  }
+
+  /* Card Component */
+  .card {
+    @apply rounded-xl p-6 shadow-lg border transition-all duration-300;
+    background-color: var(--card);
+    border-color: var(--border);
+  }
+  .card-hover {
+    @apply rounded-xl p-6 shadow-lg border transition-all duration-300 hover:shadow-xl hover:-translate-y-1;
+    background-color: var(--card);
+    border-color: var(--border);
+  }
+
+  /* Section Container */
+  .section-container {
+    @apply container px-4 sm:px-6 max-w-full;
+  }
+
+  /* Page Section */
+  .page-section {
+    @apply w-full py-12 sm:py-16 md:py-24;
+  }
+
+  /* Page Header */
+  .page-header {
+    @apply py-12 sm:py-16 border-b;
+    background: linear-gradient(
+      to bottom right,
+      color-mix(in oklch, var(--primary) 10%, transparent),
+      color-mix(in oklch, var(--secondary) 10%, transparent)
+    );
+    border-color: var(--border);
+  }
+
+  /* Heading Styles */
+  .heading-1 {
+    @apply text-3xl sm:text-4xl md:text-5xl font-bold tracking-tighter;
+    font-family: var(--font-family-poppins);
+    color: var(--foreground);
+  }
+  .heading-2 {
+    @apply text-2xl sm:text-3xl md:text-4xl font-bold tracking-tighter;
+    font-family: var(--font-family-poppins);
+    color: var(--foreground);
+  }
+  .heading-gradient {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(to right, var(--primary), var(--accent));
+  }
+
+  /* Message Boxes */
+  .message-success {
+    @apply p-4 rounded-lg border;
+    background-color: color-mix(in oklch, #22c55e 10%, transparent);
+    border-color: color-mix(in oklch, #22c55e 30%, transparent);
+    color: #22c55e;
+  }
+  .message-error {
+    @apply p-4 rounded-lg border;
+    background-color: color-mix(in oklch, #ef4444 10%, transparent);
+    border-color: color-mix(in oklch, #ef4444 30%, transparent);
+    color: #ef4444;
+  }
+
+  /* Filter Button */
+  .filter-btn {
+    @apply px-4 py-2 rounded-full font-semibold transition-all;
+  }
+  .filter-btn-active {
+    background-color: var(--primary);
+    color: var(--primary-foreground);
+  }
+  .filter-btn-inactive {
+    background-color: var(--card);
+    border: 1px solid var(--border);
+    color: var(--foreground);
+  }
+  .filter-btn-inactive:hover {
+    border-color: var(--primary);
+  }
+
+  /* Input Fields */
+  .input-field {
+    @apply w-full px-4 py-3 rounded-lg border focus:outline-none focus:ring-2;
+    background-color: var(--card);
+    border-color: var(--border);
+    color: var(--foreground);
+  }
+  .input-field::placeholder {
+    color: var(--muted-foreground);
+  }
+  .input-field:focus {
+    --tw-ring-color: var(--primary);
+  }
+}
