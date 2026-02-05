@@ -7,7 +7,7 @@ import { Webhook } from 'svix';
 import { prisma } from '@/lib/prisma';
 
 export async function POST(req: Request) {
-  const {CLERK_WEBHOOK_SECRET} = Env
+  const { CLERK_WEBHOOK_SECRET } = Env;
   if (!CLERK_WEBHOOK_SECRET) {
     return NextResponse.json(
       { error: 'Webhook secret not configured' },
@@ -27,11 +27,10 @@ export async function POST(req: Request) {
     );
   }
 
-  const payload = await req.json();
-  const body = JSON.stringify(payload);
+  const body = await req.text();
 
   const wh = new Webhook(CLERK_WEBHOOK_SECRET);
-  let evt:any;
+  let evt: any;
 
   try {
     evt = wh.verify(body, {

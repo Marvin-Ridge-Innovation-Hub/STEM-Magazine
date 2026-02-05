@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
+import { auth, currentUser } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
+import { getOrCreateUserProfile } from '@/services/userProfileService';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -97,8 +98,9 @@ export async function POST(
 ) {
   try {
     const { userId } = await auth();
+    const user = await currentUser();
 
-    if (!userId) {
+    if (!userId || !user) {
       return NextResponse.json(
         { success: false, error: 'You must be signed in to comment' },
         { status: 401 }
@@ -116,24 +118,19 @@ export async function POST(
       );
     }
 
-    // Get user from database
-    const user = await db.user.findUnique({
-      where: { clerkId: userId },
-    });
-
-    if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'User not found' },
-        { status: 404 }
-      );
-    }
+    const userProfile = await getOrCreateUserProfile(
+      userId,
+      user.emailAddresses[0]?.emailAddress || '',
+      user.fullName || user.username || 'Unknown User',
+      user.imageUrl
+    );
 
     // Check if submission exists and is approved
     const submission = await db.submission.findUnique({
-      where: { id, status: 'APPROVED' },
+      where: { id },
     });
 
-    if (!submission) {
+    if (!submission || submission.status !== 'APPROVED') {
       return NextResponse.json(
         { success: false, error: 'Post not found' },
         { status: 404 }
@@ -144,7 +141,7 @@ export async function POST(
     const comment = await db.submissionComment.create({
       data: {
         content: content.trim(),
-        authorId: user.id,
+        authorId: userProfile.id,
         submissionId: id,
         parentId: parentId || null,
       },
