@@ -36,6 +36,7 @@
   "dependencies": {
     "@clerk/nextjs": "^6.36.5",
     "@prisma/client": "^6.19.2",
+    "@tanstack/react-query-devtools": "^5.91.1",
     "axios": "^1.8.2",
     "babel-plugin-react-compiler": "^1.0.0",
     "class-variance-authority": "^0.7.1",
@@ -66,7 +67,6 @@
     "@commitlint/cli": "^19.5.0",
     "@commitlint/config-conventional": "^19.5.0",
     "@next/bundle-analyzer": "^15.3.0",
-    "@tanstack/react-query-devtools": "^5.91.1",
     "@types/node": "^22.15.3",
     "@types/nodemailer": "^7.0.9",
     "@types/react": "19.2.3",
