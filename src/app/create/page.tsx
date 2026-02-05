@@ -56,7 +56,7 @@ export default function CreatePostPage() {
   // form state
   const [title, setTitle] = useState('');
   // For SM Expo: multiple images (1-5)
-  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [imageFileMap, setImageFileMap] = useState<Record<string, File>>({});
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   // For SM Now: single thumbnail (legacy support)
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
@@ -95,12 +95,15 @@ export default function CreatePostPage() {
       setTimeout(() => setMessage(null), 3000);
     }
 
-    setImageFiles((prev) => [...prev, ...filesToAdd]);
+    const previewUrls = filesToAdd.map((file) => URL.createObjectURL(file));
 
-    // Generate previews
-    filesToAdd.forEach((file) => {
-      const url = URL.createObjectURL(file);
-      setImagePreviews((prev) => [...prev, url]);
+    setImagePreviews((prev) => [...prev, ...previewUrls]);
+    setImageFileMap((prev) => {
+      const next = { ...prev };
+      previewUrls.forEach((url, idx) => {
+        next[url] = filesToAdd[idx];
+      });
+      return next;
     });
 
     // Reset input
@@ -114,10 +117,18 @@ export default function CreatePostPage() {
       return;
     }
 
-    // Revoke URL to prevent memory leaks
-    URL.revokeObjectURL(imagePreviews[index]);
+    const previewToRemove = imagePreviews[index];
 
-    setImageFiles((prev) => prev.filter((_, i) => i !== index));
+    // Revoke URL to prevent memory leaks
+    if (previewToRemove?.startsWith('blob:')) {
+      URL.revokeObjectURL(previewToRemove);
+    }
+
+    setImageFileMap((prev) => {
+      const next = { ...prev };
+      delete next[previewToRemove];
+      return next;
+    });
     setImagePreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
@@ -130,16 +141,12 @@ export default function CreatePostPage() {
     if (draggedIndex === null || draggedIndex === index) return;
 
     // Reorder images
-    const newFiles = [...imageFiles];
     const newPreviews = [...imagePreviews];
 
-    const [draggedFile] = newFiles.splice(draggedIndex, 1);
     const [draggedPreview] = newPreviews.splice(draggedIndex, 1);
 
-    newFiles.splice(index, 0, draggedFile);
     newPreviews.splice(index, 0, draggedPreview);
 
-    setImageFiles(newFiles);
     setImagePreviews(newPreviews);
     setDraggedIndex(index);
   };
@@ -182,6 +189,9 @@ export default function CreatePostPage() {
         if (draft.tags && draft.tags.length > 0) {
           setSelectedTags(draft.tags);
         }
+
+        // Clear any locally staged files when loading a draft
+        setImageFileMap({});
 
         // Load images for SM Expo
         if (draft.images && draft.images.length > 0) {
@@ -279,14 +289,17 @@ export default function CreatePostPage() {
 
       if (postType === 'SM Expo') {
         // Upload all images for SM Expo
-        // First, include any already-uploaded previews (from drafts)
-        const existingUrls = imagePreviews.filter((url) =>
-          url.startsWith('http')
-        );
-        uploadedImages = [...existingUrls];
+        for (const preview of imagePreviews) {
+          if (preview.startsWith('http')) {
+            uploadedImages.push(preview);
+            continue;
+          }
 
-        // Upload new files
-        for (const file of imageFiles) {
+          const file = imageFileMap[preview];
+          if (!file) {
+            continue;
+          }
+
           const uploadedUrl = await uploadToCloudinary(file);
           if (!uploadedUrl) {
             setIsSubmitting(false);
@@ -398,7 +411,7 @@ export default function CreatePostPage() {
       imagePreviews.forEach((url) => {
         if (url.startsWith('blob:')) URL.revokeObjectURL(url);
       });
-      setImageFiles([]);
+      setImageFileMap({});
       setImagePreviews([]);
       setProjectLinks(['']);
       setContent('');
@@ -417,13 +430,17 @@ export default function CreatePostPage() {
       let thumbnailFileInfo: string | undefined = thumbnailPreview || undefined;
 
       if (postType === 'SM Expo') {
-        // Upload all new images for SM Expo
-        const existingUrls = imagePreviews.filter((url) =>
-          url.startsWith('http')
-        );
-        uploadedImages = [...existingUrls];
+        for (const preview of imagePreviews) {
+          if (preview.startsWith('http')) {
+            uploadedImages.push(preview);
+            continue;
+          }
 
-        for (const file of imageFiles) {
+          const file = imageFileMap[preview];
+          if (!file) {
+            continue;
+          }
+
           const uploadedUrl = await uploadToCloudinary(file);
           if (uploadedUrl) {
             uploadedImages.push(uploadedUrl);
@@ -495,7 +512,7 @@ export default function CreatePostPage() {
           // Update previews with the actual uploaded URLs
           setImagePreviews(uploadedImages);
           // Clear file objects since they've been uploaded
-          setImageFiles([]);
+          setImageFileMap({});
         } else if (postType === 'SM Now' && thumbnailFileInfo) {
           // For SM Now: update thumbnail preview with the actual URL and clear the file
           if (thumbnailPreview?.startsWith('blob:')) {
