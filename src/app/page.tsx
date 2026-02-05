@@ -1,7 +1,14 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { ArrowRight, Rocket, ShieldCheck, Zap, Mail, Send } from 'lucide-react';
+import {
+  ArrowRight,
+  Mail,
+  Send,
+  Target,
+  Newspaper,
+  Headphones,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useUser } from '@clerk/nextjs';
 import { useState, useEffect } from 'react';
@@ -183,19 +190,19 @@ export default function Home() {
             <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 py-12 sm:grid-cols-2 lg:grid-cols-3 px-4">
               {[
                 {
-                  icon: Zap,
+                  icon: Headphones,
                   title: 'SM Pods',
                   description:
                     'Every month, our student researchers curate a list of current events in the STEM-world. In these fourty-five minute episodes, we sit down and consider the nuances of our evergrowing field.',
                 },
                 {
-                  icon: ShieldCheck,
+                  icon: Newspaper,
                   title: 'SM Now',
                   description:
                     'With new frameworks and corporate shenanigans constantly emerging out of the blue, we are all trying our best to stay on top of it all. This blog lets students provide their opinions and insights on topics that interest them, creating a single platform for exposure.',
                 },
                 {
-                  icon: Rocket,
+                  icon: Target,
                   title: 'SM Expo',
                   description:
                     "Oftentimes, highschool STEM projects can go unseen. To celebrate each other's accomplishments and build on them, this promotional platform helps students find peers with similar goals.",

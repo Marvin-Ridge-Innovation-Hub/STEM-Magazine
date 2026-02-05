@@ -352,6 +352,7 @@ export async function moveToDraft(submissionId: string): Promise<string> {
       title: submission.title,
       content: submission.content,
       thumbnailFile: submission.thumbnailUrl,
+      images: submission.images || [],
       projectLinks: submission.projectLinks || [],
       sources: submission.sources,
       tags: submission.tags || [],
