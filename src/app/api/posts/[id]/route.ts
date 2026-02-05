@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -40,7 +43,7 @@ export async function GET(
 
     const postData = post as any;
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       post: {
         id: postData.id,
@@ -66,6 +69,13 @@ export async function GET(
         },
       },
     });
+
+    response.headers.set(
+      'Cache-Control',
+      'no-store, no-cache, must-revalidate, proxy-revalidate'
+    );
+
+    return response;
   } catch (error) {
     console.error('Error fetching post:', error);
     return NextResponse.json(

@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 // GET /api/profile/[id] - Get a user's public profile by ID
 export async function GET(
   request: NextRequest,
@@ -66,7 +69,7 @@ export async function GET(
       })
     );
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       profile: {
         id: user.id,
@@ -84,6 +87,13 @@ export async function GET(
         postCount: user.posts.length,
       },
     });
+
+    response.headers.set(
+      'Cache-Control',
+      'no-store, no-cache, must-revalidate, proxy-revalidate'
+    );
+
+    return response;
   } catch (error) {
     console.error('Failed to get profile:', error);
     return NextResponse.json(

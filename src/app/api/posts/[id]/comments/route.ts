@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 // Cast prisma to any to avoid stale type errors after schema update
 const db = prisma as any;
 
@@ -48,7 +51,7 @@ export async function GET(
       },
     });
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       comments: comments.map((comment: any) => ({
         id: comment.id,
@@ -71,6 +74,13 @@ export async function GET(
         })),
       })),
     });
+
+    response.headers.set(
+      'Cache-Control',
+      'no-store, no-cache, must-revalidate, proxy-revalidate'
+    );
+
+    return response;
   } catch (error) {
     console.error('Error fetching comments:', error);
     return NextResponse.json(

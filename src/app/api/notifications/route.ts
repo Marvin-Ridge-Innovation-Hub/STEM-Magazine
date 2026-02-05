@@ -6,6 +6,9 @@ import {
 } from '@/services/notificationService';
 import { getOrCreateUserProfile } from '@/services/userProfileService';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 // GET - Fetch user's notification preferences
 export async function GET() {
   try {
@@ -26,7 +29,7 @@ export async function GET() {
 
     const preferences = await getNotificationPreferences(userProfile.id);
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       preferences: {
         emailOnLike: preferences.emailOnLike,
@@ -38,6 +41,13 @@ export async function GET() {
         emailEnabled: preferences.emailEnabled,
       },
     });
+
+    response.headers.set(
+      'Cache-Control',
+      'no-store, no-cache, must-revalidate, proxy-revalidate'
+    );
+
+    return response;
   } catch (error) {
     console.error('Error fetching notification preferences:', error);
     return NextResponse.json(

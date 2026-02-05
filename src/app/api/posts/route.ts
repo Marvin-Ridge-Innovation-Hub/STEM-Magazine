@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
@@ -55,7 +58,7 @@ export async function GET(request: NextRequest) {
       take,
     });
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       posts: posts.map((post: any) => ({
         id: post.id,
@@ -92,6 +95,13 @@ export async function GET(request: NextRequest) {
         hasMore: skip + take < totalCount,
       },
     });
+
+    response.headers.set(
+      'Cache-Control',
+      'no-store, no-cache, must-revalidate, proxy-revalidate'
+    );
+
+    return response;
   } catch (error) {
     console.error('Error fetching posts:', error);
     return NextResponse.json(
