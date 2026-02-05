@@ -30,7 +30,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { getMyDrafts, deleteDraftAction } from '@/actions/draft.actions';
 import {
@@ -185,7 +185,7 @@ const getPostTypeLabel = (type: string) => {
 };
 
 export default function DashboardPage() {
-  const { user } = useUser();
+  const { user, isLoaded } = useUser();
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
@@ -214,12 +214,23 @@ export default function DashboardPage() {
     emailEnabled: true,
   });
   const [notificationsLoading, setNotificationsLoading] = useState(false);
+  const profileSyncRef = useRef(false);
 
   useEffect(() => {
     loadData();
     loadNewsletter();
     loadNotifications();
   }, []);
+
+  useEffect(() => {
+    if (!isLoaded || !user || profileSyncRef.current) return;
+
+    profileSyncRef.current = true;
+
+    void fetch('/api/profile/sync', { method: 'POST' }).catch((error) => {
+      console.error('Failed to sync profile:', error);
+    });
+  }, [isLoaded, user]);
 
   const loadNotifications = async () => {
     try {

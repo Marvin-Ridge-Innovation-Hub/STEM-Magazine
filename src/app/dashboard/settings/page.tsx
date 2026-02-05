@@ -1,11 +1,35 @@
 'use client';
 
-import { UserProfile } from '@clerk/nextjs';
+import { UserProfile, useUser } from '@clerk/nextjs';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Settings } from 'lucide-react';
 import Link from 'next/link';
+import { useEffect, useRef } from 'react';
 
 export default function SettingsPage() {
+  const { user, isLoaded } = useUser();
+  const lastUpdatedAtRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!isLoaded || !user) return;
+
+    const updatedAt = user.updatedAt
+      ? new Date(user.updatedAt).toISOString()
+      : null;
+
+    if (!lastUpdatedAtRef.current) {
+      lastUpdatedAtRef.current = updatedAt;
+      return;
+    }
+
+    if (updatedAt && updatedAt !== lastUpdatedAtRef.current) {
+      lastUpdatedAtRef.current = updatedAt;
+      void fetch('/api/profile/sync', { method: 'POST' }).catch((error) => {
+        console.error('Failed to sync profile:', error);
+      });
+    }
+  }, [isLoaded, user]);
+
   return (
     <div className="min-h-screen bg-(--background)">
       {/* Header */}
