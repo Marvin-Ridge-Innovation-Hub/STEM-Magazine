@@ -65,7 +65,7 @@ model Post {
   featured     Boolean    @default(false)
   published    Boolean    @default(false)
   slug         String     @unique
-  author       User       @relation("UserPosts", fields: [authorId], references: [id])
+  author       User       @relation("UserPosts", fields: [authorId], references: [id], onDelete: Cascade)
   authorId     String     @db.ObjectId
   comments     Comment[]  @relation("PostComments")
   createdAt    DateTime   @default(now())
@@ -76,9 +76,9 @@ model Post {
 model Comment {
   id        String    @id @default(auto()) @map("_id") @db.ObjectId
   content   String
-  author    User      @relation("UserComments", fields: [authorId], references: [id])
+  author    User      @relation("UserComments", fields: [authorId], references: [id], onDelete: Cascade)
   authorId  String    @db.ObjectId
-  post      Post      @relation("PostComments", fields: [postId], references: [id])
+  post      Post      @relation("PostComments", fields: [postId], references: [id], onDelete: Cascade)
   postId    String    @db.ObjectId
   parentId  String?   @db.ObjectId
   parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)

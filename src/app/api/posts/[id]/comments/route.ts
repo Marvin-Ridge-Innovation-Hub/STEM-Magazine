@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
 import { getOrCreateUserProfile } from '@/services/userProfileService';
+import {
+  moderateContent,
+  sanitizeContent,
+  COMMENT_MAX_LENGTH,
+} from '@/lib/contentModeration';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -118,6 +123,22 @@ export async function POST(
       );
     }
 
+    // Sanitize and moderate content
+    const sanitizedContent = sanitizeContent(content);
+    const moderationResult = moderateContent(sanitizedContent);
+
+    if (!moderationResult.isClean) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            moderationResult.reason || 'Comment contains inappropriate content',
+          maxLength: COMMENT_MAX_LENGTH,
+        },
+        { status: 400 }
+      );
+    }
+
     const userProfile = await getOrCreateUserProfile(
       userId,
       user.emailAddresses[0]?.emailAddress || '',
@@ -137,10 +158,10 @@ export async function POST(
       );
     }
 
-    // Create comment
+    // Create comment with sanitized content
     const comment = await db.submissionComment.create({
       data: {
-        content: content.trim(),
+        content: sanitizedContent,
         authorId: userProfile.id,
         submissionId: id,
         parentId: parentId || null,

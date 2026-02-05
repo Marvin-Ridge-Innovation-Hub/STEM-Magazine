@@ -4,13 +4,17 @@ import { useState, useEffect } from 'react';
 import { useUser } from '@clerk/nextjs';
 import Image from 'next/image';
 import Link from 'next/link';
+import toast from 'react-hot-toast';
 import {
   MessageCircle,
   Send,
   User,
   ChevronDown,
   ChevronUp,
+  AlertCircle,
 } from 'lucide-react';
+
+const COMMENT_MAX_LENGTH = 1000;
 
 interface Comment {
   id: string;
@@ -62,6 +66,11 @@ export default function CommentSection({ postId }: CommentSectionProps) {
     e.preventDefault();
     if (!newComment.trim() || !isSignedIn) return;
 
+    if (newComment.length > COMMENT_MAX_LENGTH) {
+      toast.error(`Comment exceeds ${COMMENT_MAX_LENGTH} character limit`);
+      return;
+    }
+
     setSubmitting(true);
     try {
       const response = await fetch(`/api/posts/${postId}/comments`, {
@@ -74,9 +83,13 @@ export default function CommentSection({ postId }: CommentSectionProps) {
       if (data.success) {
         setComments([data.comment, ...comments]);
         setNewComment('');
+        toast.success('Comment posted!');
+      } else {
+        toast.error(data.error || 'Failed to post comment');
       }
     } catch (error) {
       console.error('Failed to post comment:', error);
+      toast.error('Failed to post comment');
     } finally {
       setSubmitting(false);
     }
@@ -84,6 +97,11 @@ export default function CommentSection({ postId }: CommentSectionProps) {
 
   const handleSubmitReply = async (parentId: string) => {
     if (!replyContent.trim() || !isSignedIn) return;
+
+    if (replyContent.length > COMMENT_MAX_LENGTH) {
+      toast.error(`Reply exceeds ${COMMENT_MAX_LENGTH} character limit`);
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -111,9 +129,13 @@ export default function CommentSection({ postId }: CommentSectionProps) {
         setReplyingTo(null);
         // Expand replies to show the new one
         setExpandedReplies((prev) => new Set(prev).add(parentId));
+        toast.success('Reply posted!');
+      } else {
+        toast.error(data.error || 'Failed to post reply');
       }
     } catch (error) {
       console.error('Failed to post reply:', error);
+      toast.error('Failed to post reply');
     } finally {
       setSubmitting(false);
     }
@@ -177,12 +199,32 @@ export default function CommentSection({ postId }: CommentSectionProps) {
                 onChange={(e) => setNewComment(e.target.value)}
                 placeholder="Share your thoughts..."
                 rows={3}
-                className="w-full px-4 py-3 bg-(--background) border border-(--border) rounded-xl text-(--foreground) placeholder:text-(--muted-foreground) focus:outline-none focus:ring-2 focus:ring-(--primary) focus:border-transparent resize-none transition-all"
+                maxLength={COMMENT_MAX_LENGTH}
+                className={`w-full px-4 py-3 bg-(--background) border rounded-xl text-(--foreground) placeholder:text-(--muted-foreground) focus:outline-none focus:ring-2 focus:ring-(--primary) focus:border-transparent resize-none transition-all ${
+                  newComment.length > COMMENT_MAX_LENGTH
+                    ? 'border-red-500'
+                    : 'border-(--border)'
+                }`}
               />
-              <div className="flex justify-end mt-2">
+              <div className="flex justify-between items-center mt-2">
+                <span
+                  className={`text-xs ${
+                    newComment.length > COMMENT_MAX_LENGTH * 0.9
+                      ? newComment.length > COMMENT_MAX_LENGTH
+                        ? 'text-red-500'
+                        : 'text-yellow-500'
+                      : 'text-(--muted-foreground)'
+                  }`}
+                >
+                  {newComment.length}/{COMMENT_MAX_LENGTH}
+                </span>
                 <button
                   type="submit"
-                  disabled={!newComment.trim() || submitting}
+                  disabled={
+                    !newComment.trim() ||
+                    submitting ||
+                    newComment.length > COMMENT_MAX_LENGTH
+                  }
                   className="inline-flex items-center gap-2 px-4 py-2 bg-(--primary) text-(--primary-foreground) rounded-full font-medium text-sm hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Send className="h-4 w-4" />
@@ -274,21 +316,43 @@ export default function CommentSection({ postId }: CommentSectionProps) {
 
                   {/* Reply input */}
                   {replyingTo === comment.id && (
-                    <div className="mt-3 flex gap-2">
-                      <input
-                        type="text"
-                        value={replyContent}
-                        onChange={(e) => setReplyContent(e.target.value)}
-                        placeholder="Write a reply..."
-                        className="flex-1 px-3 py-2 bg-(--background) border border-(--border) rounded-lg text-sm text-(--foreground) placeholder:text-(--muted-foreground) focus:outline-none focus:ring-2 focus:ring-(--primary)"
-                      />
-                      <button
-                        onClick={() => handleSubmitReply(comment.id)}
-                        disabled={!replyContent.trim() || submitting}
-                        className="px-3 py-2 bg-(--primary) text-(--primary-foreground) rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50"
+                    <div className="mt-3 space-y-1">
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={replyContent}
+                          onChange={(e) => setReplyContent(e.target.value)}
+                          placeholder="Write a reply..."
+                          maxLength={COMMENT_MAX_LENGTH}
+                          className={`flex-1 px-3 py-2 bg-(--background) border rounded-lg text-sm text-(--foreground) placeholder:text-(--muted-foreground) focus:outline-none focus:ring-2 focus:ring-(--primary) ${
+                            replyContent.length > COMMENT_MAX_LENGTH
+                              ? 'border-red-500'
+                              : 'border-(--border)'
+                          }`}
+                        />
+                        <button
+                          onClick={() => handleSubmitReply(comment.id)}
+                          disabled={
+                            !replyContent.trim() ||
+                            submitting ||
+                            replyContent.length > COMMENT_MAX_LENGTH
+                          }
+                          className="px-3 py-2 bg-(--primary) text-(--primary-foreground) rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50"
+                        >
+                          <Send className="h-4 w-4" />
+                        </button>
+                      </div>
+                      <span
+                        className={`text-xs ${
+                          replyContent.length > COMMENT_MAX_LENGTH * 0.9
+                            ? replyContent.length > COMMENT_MAX_LENGTH
+                              ? 'text-red-500'
+                              : 'text-yellow-500'
+                            : 'text-(--muted-foreground)'
+                        }`}
                       >
-                        <Send className="h-4 w-4" />
-                      </button>
+                        {replyContent.length}/{COMMENT_MAX_LENGTH}
+                      </span>
                     </div>
                   )}
 
