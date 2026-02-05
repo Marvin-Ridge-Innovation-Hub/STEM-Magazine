@@ -257,7 +257,9 @@ export default function DashboardPage() {
 
   const loadNewsletter = async () => {
     try {
-      const response = await fetch('/api/newsletter');
+      const response = await fetch('/api/newsletter', {
+        cache: 'no-store',
+      });
       const data = await response.json();
       if (data.subscription) {
         setNewsletter({
