@@ -25,29 +25,56 @@ const poppins = Poppins({
 });
 
 export const metadata = {
-  title: 'MRHS STEM Magazine',
+  title: {
+    default: 'MRHS STEM Magazine',
+    template: '%s | MRHS STEM Magazine',
+  },
   description:
-    'A highly opinionated and production-ready Next.js 15 boilerplate with TypeScript, Tailwind CSS, ESLint, Prettier, Husky, and comprehensive SEO optimization.',
-  keywords:
-    'next.js, boilerplate, typescript, tailwind css, eslint, prettier, husky, seo, nextjs 15, react, web development',
-  authors: [{ name: 'Arjun Cattamanchi' }],
+    'MRHS STEM Magazine is a student-run platform featuring STEM projects, articles, and podcasts from the MRHS community.',
+  keywords: [
+    'MRHS',
+    'STEM',
+    'STEM Magazine',
+    'student projects',
+    'science',
+    'technology',
+    'engineering',
+    'mathematics',
+    'podcasts',
+    'articles',
+    'high school',
+  ],
+  authors: [{ name: 'MRHS STEM Magazine' }, { name: 'Arjun Cattamanchi' }],
   creator: 'Arjun Cattamanchi',
-  metadataBase: new URL('https://your-domain.com'),
+  metadataBase: new URL('https://mrhsstemmag.com'),
+  alternates: {
+    canonical: '/',
+  },
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://your-domain.com',
+    url: 'https://mrhsstemmag.com',
     title: 'MRHS STEM Magazine',
     description:
-      'Production-ready Next.js 15 boilerplate with all the essential tools',
+      'A student-run platform featuring STEM projects, articles, and podcasts.',
     siteName: 'MRHS STEM Magazine',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Next.js Boilerplate',
+    title: 'MRHS STEM Magazine',
     description:
-      'Production-ready Next.js 15 boilerplate with all the essential tools',
-    creator: '@anwarhossainsr',
+      'A student-run platform featuring STEM projects, articles, and podcasts.',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+      'max-video-preview': -1,
+    },
   },
 };
 
