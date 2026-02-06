@@ -193,7 +193,6 @@ export async function approveSubmissionAction(submissionId: string) {
     revalidatePath('/dashboard');
     revalidatePath('/admin/submissions');
     revalidatePath('/posts');
-    revalidatePath(`/posts/${submission.id}`);
     revalidatePath(`/posts/${submissionId}`);
 
     return {
@@ -246,6 +245,7 @@ export async function approveSubmissionByToken(token: string) {
     }
 
     revalidatePath('/posts');
+    revalidatePath(`/posts/${submission.id}`);
 
     return {
       success: true,
