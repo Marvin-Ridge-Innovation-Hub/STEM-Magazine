@@ -55,6 +55,11 @@ export const metadata = {
   alternates: {
     canonical: '/',
   },
+  icons: {
+    icon: '/images/logo-normal.png',
+    shortcut: '/images/logo-normal.png',
+    apple: '/images/logo-normal.png',
+  },
   openGraph: {
     type: 'website',
     locale: 'en_US',

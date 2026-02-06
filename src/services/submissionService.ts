@@ -1,9 +1,11 @@
 import { prisma } from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 import type {
   Submission,
   CreateSubmissionInput,
   PostType,
   SubmissionStatus,
+  ImageAttribution,
 } from '@/types';
 import { randomBytes } from 'crypto';
 import { deletePostImages } from './cloudinaryService';
@@ -46,6 +48,19 @@ function validateSubmissionAttributions(data: CreateSubmissionInput) {
   }
 }
 
+const toJsonValue = (value: unknown) =>
+  value as unknown as Prisma.InputJsonValue;
+
+function mapSubmission(record: any): Submission {
+  return {
+    ...record,
+    imageAttributions:
+      (record.imageAttributions as ImageAttribution[] | null) ?? undefined,
+    thumbnailAttribution:
+      (record.thumbnailAttribution as ImageAttribution | null) ?? undefined,
+  };
+}
+
 /**
  * Create a new submission
  */
@@ -63,8 +78,12 @@ export async function createSubmission(
       content: data.content,
       thumbnailUrl: data.thumbnailUrl,
       images: data.images || [], // For SM Expo: array of image URLs
-      imageAttributions: data.imageAttributions ?? undefined,
-      thumbnailAttribution: data.thumbnailAttribution ?? undefined,
+      imageAttributions: data.imageAttributions
+        ? toJsonValue(data.imageAttributions)
+        : undefined,
+      thumbnailAttribution: data.thumbnailAttribution
+        ? toJsonValue(data.thumbnailAttribution)
+        : undefined,
       projectLinks: data.projectLinks || [],
       sources: data.sources,
       tags: data.tags || [],
@@ -84,7 +103,7 @@ export async function createSubmission(
     },
   });
 
-  return submission as Submission;
+  return mapSubmission(submission);
 }
 
 /**
@@ -97,7 +116,7 @@ export async function getSubmissionById(
     where: { id: submissionId },
   });
 
-  return submission as Submission | null;
+  return submission ? mapSubmission(submission) : null;
 }
 
 /**
@@ -110,7 +129,7 @@ export async function getSubmissionByToken(
     where: { approvalToken: token },
   });
 
-  return submission as Submission | null;
+  return submission ? mapSubmission(submission) : null;
 }
 
 /**
@@ -130,7 +149,7 @@ export async function getUserSubmissions(
     orderBy: { createdAt: 'desc' },
   });
 
-  return submissions as Submission[];
+  return submissions.map(mapSubmission);
 }
 
 /**
@@ -142,7 +161,7 @@ export async function getAllPendingSubmissions(): Promise<Submission[]> {
     orderBy: { submittedAt: 'desc' },
   });
 
-  return submissions as Submission[];
+  return submissions.map(mapSubmission);
 }
 
 /**
@@ -225,7 +244,7 @@ export async function approveSubmission(
   });
 
   return {
-    submission: updatedSubmission as Submission,
+    submission: mapSubmission(updatedSubmission),
     postId: post.id,
   };
 }
@@ -285,7 +304,7 @@ export async function rejectSubmission(
     return updatedSubmission;
   });
 
-  return updatedSubmission as Submission;
+  return mapSubmission(updatedSubmission);
 }
 
 /**

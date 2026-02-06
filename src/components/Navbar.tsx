@@ -1,9 +1,10 @@
 'use client';
 
 import { SignInButton, SignOutButton, useUser } from '@clerk/nextjs';
-import { Github, Menu, X, BookOpenText } from 'lucide-react';
+import { Github, Menu, X } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 
 import ThemeToggle from './ThemeToggle';
 
@@ -27,9 +28,14 @@ export default function MainNavbar() {
     <header className="sticky top-0 z-50 w-full bg-(--background)/85 backdrop-blur-lg border-b border-(--border) shadow-sm">
       <div className="container flex h-16 items-center justify-between px-4 sm:px-6 max-w-full">
         <Link href="/" className="flex items-center space-x-2">
-          <span className="text-xl sm:text-2xl font-bold font-poppins bg-linear-to-r from-(--primary) to-(--accent) bg-clip-text text-transparent">
-            <BookOpenText className="inline-block h-8 w-8 mr-2 -mt-1 text-(--accent)" />
-          </span>
+          <Image
+            src="/images/logo-normal.png"
+            alt="MRHS STEM Magazine"
+            width={32}
+            height={32}
+            className="h-8 w-8"
+            priority
+          />
         </Link>
 
         <nav className="hidden md:flex items-center gap-8">

@@ -4,12 +4,12 @@ import React, { useState, useCallback } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import type { ImageAttribution } from '@/types';
-import ImageAttribution from '@/components/ImageAttribution';
+import type { ImageAttribution as ImageAttributionType } from '@/types';
+import ImageAttributionDisplay from '@/components/ImageAttribution';
 
 interface ImageCarouselProps {
   images: string[];
-  attributions?: ImageAttribution[];
+  attributions?: ImageAttributionType[];
   author?: {
     id?: string;
     name?: string;
@@ -93,7 +93,7 @@ export default function ImageCarousel({
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 70vw"
           />
         </div>
-        <ImageAttribution
+        <ImageAttributionDisplay
           attribution={attributions?.[0]}
           author={author}
           className="px-1"
@@ -198,7 +198,7 @@ export default function ImageCarousel({
         </div>
       </div>
 
-      <ImageAttribution
+      <ImageAttributionDisplay
         attribution={attributions?.[currentIndex]}
         author={author}
         className="px-1"

@@ -32,16 +32,21 @@ export default function MarkdownContent({
               </a>
             );
           },
-          code: ({ inline, children, ...props }) => (
-            <code
-              {...props}
-              className={`rounded bg-(--muted) px-1.5 py-0.5 text-sm ${
-                inline ? '' : 'block p-3 overflow-x-auto'
-              }`}
-            >
-              {children}
-            </code>
-          ),
+          code: ({ children, className, ...props }) => {
+            const isBlock = Boolean(
+              className && className.includes('language-')
+            );
+            return (
+              <code
+                {...props}
+                className={`rounded bg-(--muted) px-1.5 py-0.5 text-sm ${
+                  isBlock ? 'block p-3 overflow-x-auto' : ''
+                } ${className || ''}`}
+              >
+                {children}
+              </code>
+            );
+          },
         }}
       >
         {content}

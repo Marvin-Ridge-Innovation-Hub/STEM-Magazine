@@ -1,6 +1,25 @@
 import { prisma } from '@/lib/prisma';
-import type { Draft, CreateDraftInput, UpdateDraftInput } from '@/types';
+import { Prisma } from '@prisma/client';
+import type {
+  Draft,
+  CreateDraftInput,
+  UpdateDraftInput,
+  ImageAttribution,
+} from '@/types';
 import { deletePostImages } from './cloudinaryService';
+
+function mapDraft(record: any): Draft {
+  return {
+    ...record,
+    imageAttributions:
+      (record.imageAttributions as ImageAttribution[] | null) ?? undefined,
+    thumbnailAttribution:
+      (record.thumbnailAttribution as ImageAttribution | null) ?? undefined,
+  };
+}
+
+const toJsonValue = (value: unknown) =>
+  value as unknown as Prisma.InputJsonValue;
 
 function validateDraftAttributions(draft: Draft) {
   if (draft.postType === 'SM_EXPO') {
@@ -69,8 +88,12 @@ export async function createDraft(
       content: data.content,
       thumbnailFile: data.thumbnailFile,
       images: data.images || [], // For SM Expo: array of image URLs
-      imageAttributions: data.imageAttributions ?? undefined,
-      thumbnailAttribution: data.thumbnailAttribution ?? undefined,
+      imageAttributions: data.imageAttributions
+        ? toJsonValue(data.imageAttributions)
+        : undefined,
+      thumbnailAttribution: data.thumbnailAttribution
+        ? toJsonValue(data.thumbnailAttribution)
+        : undefined,
       projectLinks: data.projectLinks || [],
       sources: data.sources,
       tags: data.tags || [],
@@ -89,7 +112,7 @@ export async function createDraft(
     },
   });
 
-  return draft as Draft;
+  return mapDraft(draft);
 }
 
 /**
@@ -102,11 +125,17 @@ export async function updateDraft(data: UpdateDraftInput): Promise<Draft> {
     where: { id },
     data: {
       ...updateData,
+      imageAttributions: updateData.imageAttributions
+        ? toJsonValue(updateData.imageAttributions)
+        : undefined,
+      thumbnailAttribution: updateData.thumbnailAttribution
+        ? toJsonValue(updateData.thumbnailAttribution)
+        : undefined,
       updatedAt: new Date(),
     },
   });
 
-  return draft as Draft;
+  return mapDraft(draft);
 }
 
 /**
@@ -117,7 +146,7 @@ export async function getDraftById(draftId: string): Promise<Draft | null> {
     where: { id: draftId },
   });
 
-  return draft as Draft | null;
+  return draft ? mapDraft(draft) : null;
 }
 
 /**
@@ -129,7 +158,7 @@ export async function getUserDrafts(authorId: string): Promise<Draft[]> {
     orderBy: { updatedAt: 'desc' },
   });
 
-  return drafts as Draft[];
+  return drafts.map(mapDraft);
 }
 
 /**
@@ -183,7 +212,7 @@ export async function convertDraftToSubmission(
   if (!draft || !draft.postType || !draft.title || !draft.content) {
     throw new Error('Draft is incomplete or not found');
   }
-  validateDraftAttributions(draft as Draft);
+  validateDraftAttributions(mapDraft(draft));
 
   // Create submission from draft
   const submission = await prisma.submission.create({
@@ -193,8 +222,12 @@ export async function convertDraftToSubmission(
       content: draft.content,
       thumbnailUrl: draft.thumbnailFile, // Assuming uploaded
       images: draft.images || [],
-      imageAttributions: draft.imageAttributions ?? undefined,
-      thumbnailAttribution: draft.thumbnailAttribution ?? undefined,
+      imageAttributions: draft.imageAttributions
+        ? toJsonValue(draft.imageAttributions)
+        : undefined,
+      thumbnailAttribution: draft.thumbnailAttribution
+        ? toJsonValue(draft.thumbnailAttribution)
+        : undefined,
       projectLinks: draft.projectLinks,
       sources: draft.sources,
       authorId: draft.authorId,
