@@ -27,13 +27,13 @@ export default function MainNavbar() {
   return (
     <header className="sticky top-0 z-50 w-full bg-(--background)/85 backdrop-blur-lg border-b border-(--border) shadow-sm">
       <div className="container flex h-16 items-center justify-between px-4 sm:px-6 max-w-full">
-        <Link href="/" className="flex items-center space-x-2">
+        <Link href="/" className="flex h-full items-center">
           <Image
-            src="/images/logo-normal.png"
+            src="/images/carouselimages/logo-padded.png"
             alt="MRHS STEM Magazine"
-            width={32}
-            height={32}
-            className="h-8 w-8"
+            width={48}
+            height={48}
+            className="h-12 w-12 rounded-full shadow-sm ring-1 ring-white/30"
             priority
           />
         </Link>
