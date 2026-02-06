@@ -72,6 +72,8 @@ export async function GET(request: NextRequest) {
         sources: post.sources,
         tags: post.tags || [],
         images: post.images || [],
+        imageAttributions: post.imageAttributions ?? undefined,
+        thumbnailAttribution: post.thumbnailAttribution ?? undefined,
         youtubeUrl: post.youtubeUrl,
         likeCount: post._count.likes,
         commentCount: post._count.comments,

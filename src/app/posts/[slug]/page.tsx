@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { prisma } from '@/lib/prisma';
 import PostContent, { type PostContentProps } from './PostContent';
+import type { ImageAttribution } from '@/types';
 
 export const revalidate = 60;
 
@@ -55,6 +56,10 @@ const serializePost = (post: PostRecord): SerializedPost => ({
   thumbnailUrl: post.thumbnailUrl ?? undefined,
   coverImage: post.thumbnailUrl ?? undefined,
   images: post.images || [],
+  imageAttributions:
+    (post.imageAttributions as ImageAttribution[] | null) ?? undefined,
+  thumbnailAttribution:
+    (post.thumbnailAttribution as ImageAttribution | null) ?? undefined,
   youtubeUrl: post.youtubeUrl ?? undefined,
   projectLinks: post.projectLinks || [],
   sources: post.sources ?? undefined,

@@ -53,6 +53,8 @@ export async function GET(
         thumbnailUrl: postData.thumbnailUrl,
         coverImage: postData.thumbnailUrl,
         images: postData.images || [], // For SM Expo: array of image URLs
+        imageAttributions: postData.imageAttributions ?? undefined,
+        thumbnailAttribution: postData.thumbnailAttribution ?? undefined,
         youtubeUrl: postData.youtubeUrl, // For SM Pods: YouTube video URL
         projectLinks: postData.projectLinks || [],
         sources: postData.sources,

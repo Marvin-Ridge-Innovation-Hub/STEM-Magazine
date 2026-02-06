@@ -17,6 +17,9 @@ import {
 import CommentSection from '@/components/CommentSection';
 import LikeButton from '@/components/LikeButton';
 import ImageCarousel from '@/components/ImageCarousel';
+import MarkdownContent from '@/components/MarkdownContent';
+import ImageAttribution from '@/components/ImageAttribution';
+import type { ImageAttribution as ImageAttributionType } from '@/types';
 
 // Helper for consistent iconography
 const PostTypeIcon = ({
@@ -60,6 +63,8 @@ export interface PostContentProps {
     thumbnailUrl?: string;
     coverImage?: string;
     images: string[];
+    imageAttributions?: ImageAttributionType[];
+    thumbnailAttribution?: ImageAttributionType;
     youtubeUrl?: string;
     projectLinks: string[];
     sources?: string;
@@ -251,11 +256,13 @@ export default function PostContent({ post }: PostContentProps) {
               alt={post.title ?? undefined}
               showThumbnails={post.images.length > 1}
               aspectRatio="video"
+              attributions={post.imageAttributions}
+              author={{ id: post.author.id, name: post.author.name }}
             />
           </div>
         ) : (
           post.coverImage && (
-            <div className="mb-10">
+            <div className="mb-10 space-y-2">
               <div className="relative w-full h-64 md:h-96 rounded-xl overflow-hidden">
                 <Image
                   src={post.coverImage}
@@ -264,15 +271,21 @@ export default function PostContent({ post }: PostContentProps) {
                   className="object-cover"
                 />
               </div>
+              <ImageAttribution
+                attribution={post.thumbnailAttribution}
+                author={{ id: post.author.id, name: post.author.name }}
+                className="px-1"
+              />
             </div>
           )
         )}
 
         {/* Article Content */}
-        <div className="prose prose-lg dark:prose-invert max-w-none mb-12">
-          <div className="text-lg leading-relaxed text-(--foreground) whitespace-pre-wrap">
-            {post.content}
-          </div>
+        <div className="mb-12">
+          <MarkdownContent
+            content={post.content}
+            className="prose prose-lg dark:prose-invert max-w-none"
+          />
         </div>
 
         {/* Project Links - SM EXPO */}

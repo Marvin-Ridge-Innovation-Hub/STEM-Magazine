@@ -2,6 +2,41 @@ import { prisma } from '@/lib/prisma';
 import type { Draft, CreateDraftInput, UpdateDraftInput } from '@/types';
 import { deletePostImages } from './cloudinaryService';
 
+function validateDraftAttributions(draft: Draft) {
+  if (draft.postType === 'SM_EXPO') {
+    if (!draft.images || draft.images.length === 0) {
+      throw new Error('SM Expo submissions require at least one image.');
+    }
+    const attributions = (draft.imageAttributions as any[]) || [];
+    if (attributions.length !== draft.images.length) {
+      throw new Error('Each SM Expo image requires a credit selection.');
+    }
+    attributions.forEach((attr, index) => {
+      if (!attr || !attr.type) {
+        throw new Error(`Image ${index + 1} is missing a credit.`);
+      }
+      if (attr.type === 'custom' && !attr.creditText?.trim()) {
+        throw new Error(
+          `Image ${index + 1} requires custom credit text when not original.`
+        );
+      }
+    });
+  }
+
+  if (draft.postType === 'SM_NOW') {
+    if (!draft.thumbnailFile) {
+      throw new Error('SM Now submissions require a thumbnail.');
+    }
+    const attribution = draft.thumbnailAttribution as any;
+    if (!attribution || !attribution.type) {
+      throw new Error('SM Now submissions require a thumbnail credit.');
+    }
+    if (attribution.type === 'custom' && !attribution.creditText?.trim()) {
+      throw new Error('Thumbnail custom credit text is required.');
+    }
+  }
+}
+
 /**
  * Generate a draft name based on current date/time
  */
@@ -34,6 +69,8 @@ export async function createDraft(
       content: data.content,
       thumbnailFile: data.thumbnailFile,
       images: data.images || [], // For SM Expo: array of image URLs
+      imageAttributions: data.imageAttributions ?? undefined,
+      thumbnailAttribution: data.thumbnailAttribution ?? undefined,
       projectLinks: data.projectLinks || [],
       sources: data.sources,
       tags: data.tags || [],
@@ -146,6 +183,7 @@ export async function convertDraftToSubmission(
   if (!draft || !draft.postType || !draft.title || !draft.content) {
     throw new Error('Draft is incomplete or not found');
   }
+  validateDraftAttributions(draft as Draft);
 
   // Create submission from draft
   const submission = await prisma.submission.create({
@@ -154,6 +192,9 @@ export async function convertDraftToSubmission(
       title: draft.title,
       content: draft.content,
       thumbnailUrl: draft.thumbnailFile, // Assuming uploaded
+      images: draft.images || [],
+      imageAttributions: draft.imageAttributions ?? undefined,
+      thumbnailAttribution: draft.thumbnailAttribution ?? undefined,
       projectLinks: draft.projectLinks,
       sources: draft.sources,
       authorId: draft.authorId,

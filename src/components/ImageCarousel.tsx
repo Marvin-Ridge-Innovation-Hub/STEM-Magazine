@@ -4,9 +4,16 @@ import React, { useState, useCallback } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import type { ImageAttribution } from '@/types';
+import ImageAttribution from '@/components/ImageAttribution';
 
 interface ImageCarouselProps {
   images: string[];
+  attributions?: ImageAttribution[];
+  author?: {
+    id?: string;
+    name?: string;
+  };
   alt?: string;
   className?: string;
   showThumbnails?: boolean;
@@ -15,6 +22,8 @@ interface ImageCarouselProps {
 
 export default function ImageCarousel({
   images,
+  attributions,
+  author,
   alt = 'Image',
   className = '',
   showThumbnails = true,
@@ -66,21 +75,28 @@ export default function ImageCarousel({
   // If only one image, show it without carousel controls
   if (images.length === 1) {
     return (
-      <div
-        className={`relative overflow-hidden ${className} ${
-          aspectRatio === 'video'
-            ? 'aspect-video'
-            : aspectRatio === 'square'
-              ? 'aspect-square'
-              : ''
-        }`}
-      >
-        <Image
-          src={images[0]}
-          alt={alt}
-          fill
-          className="object-cover"
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 70vw"
+      <div className={`flex flex-col gap-2 ${className}`}>
+        <div
+          className={`relative overflow-hidden ${
+            aspectRatio === 'video'
+              ? 'aspect-video'
+              : aspectRatio === 'square'
+                ? 'aspect-square'
+                : ''
+          }`}
+        >
+          <Image
+            src={images[0]}
+            alt={alt}
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 70vw"
+          />
+        </div>
+        <ImageAttribution
+          attribution={attributions?.[0]}
+          author={author}
+          className="px-1"
         />
       </div>
     );
@@ -181,6 +197,12 @@ export default function ImageCarousel({
           {currentIndex + 1} / {images.length}
         </div>
       </div>
+
+      <ImageAttribution
+        attribution={attributions?.[currentIndex]}
+        author={author}
+        className="px-1"
+      />
 
       {/* Thumbnail Strip */}
       {showThumbnails && (

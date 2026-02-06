@@ -108,6 +108,8 @@ model Submission {
   content           String
   thumbnailUrl      String?            // URL of uploaded thumbnail (legacy, or first image for SM Expo)
   images            String[]           @default([]) // For SM Expo: array of image URLs (1-5 images)
+  imageAttributions Json?              // Attribution metadata aligned with images[]
+  thumbnailAttribution Json?           // Attribution metadata for thumbnail (SM Now)
   youtubeUrl        String?            // For SM Pods: YouTube video URL
   projectLinks      String[]           // For SM Expo posts
   sources           String?            // For SM Now posts
@@ -150,6 +152,8 @@ model Draft {
   content         String?
   thumbnailFile   String?    // Store file name/metadata (legacy)
   images          String[]   @default([]) // For SM Expo: array of image URLs (1-5 images)
+  imageAttributions Json?    // Attribution metadata aligned with images[]
+  thumbnailAttribution Json? // Attribution metadata for thumbnail (SM Now)
   projectLinks    String[]   @default([]) // For SM Expo drafts
   sources         String?    // For SM Now drafts
   tags            String[]   @default([]) // Tags for categorization

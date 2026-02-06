@@ -8,6 +8,44 @@ import type {
 import { randomBytes } from 'crypto';
 import { deletePostImages } from './cloudinaryService';
 
+function validateSubmissionAttributions(data: CreateSubmissionInput) {
+  if (data.postType === 'SM_EXPO') {
+    const images = data.images || [];
+    const attributions = data.imageAttributions || [];
+    if (images.length === 0) {
+      throw new Error('SM Expo submissions require at least one image.');
+    }
+    if (attributions.length !== images.length) {
+      throw new Error('Each SM Expo image requires a credit selection.');
+    }
+    attributions.forEach((attr, index) => {
+      if (!attr || !attr.type) {
+        throw new Error(`Image ${index + 1} is missing a credit.`);
+      }
+      if (attr.type === 'custom' && !attr.creditText?.trim()) {
+        throw new Error(
+          `Image ${index + 1} requires custom credit text when not original.`
+        );
+      }
+    });
+  }
+
+  if (data.postType === 'SM_NOW') {
+    if (!data.thumbnailUrl) {
+      throw new Error('SM Now submissions require a thumbnail.');
+    }
+    if (!data.thumbnailAttribution || !data.thumbnailAttribution.type) {
+      throw new Error('SM Now submissions require a thumbnail credit.');
+    }
+    if (
+      data.thumbnailAttribution.type === 'custom' &&
+      !data.thumbnailAttribution.creditText?.trim()
+    ) {
+      throw new Error('Thumbnail custom credit text is required.');
+    }
+  }
+}
+
 /**
  * Create a new submission
  */
@@ -16,6 +54,7 @@ export async function createSubmission(
   data: CreateSubmissionInput
 ): Promise<Submission> {
   const approvalToken = randomBytes(32).toString('hex');
+  validateSubmissionAttributions(data);
 
   const submission = await prisma.submission.create({
     data: {
@@ -24,6 +63,8 @@ export async function createSubmission(
       content: data.content,
       thumbnailUrl: data.thumbnailUrl,
       images: data.images || [], // For SM Expo: array of image URLs
+      imageAttributions: data.imageAttributions ?? undefined,
+      thumbnailAttribution: data.thumbnailAttribution ?? undefined,
       projectLinks: data.projectLinks || [],
       sources: data.sources,
       tags: data.tags || [],

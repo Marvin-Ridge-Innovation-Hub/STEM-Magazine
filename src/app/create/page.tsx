@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useUser } from '@clerk/nextjs';
 import { submitPost } from '@/actions/submission.actions';
 import {
   saveDraft,
@@ -21,16 +22,25 @@ import {
   Newspaper,
 } from 'lucide-react';
 import OnboardingTooltip from '@/components/OnboardingTooltip';
+import PostingRules from '@/components/PostingRules';
+import ImageCitationHelp from '@/components/ImageCitationHelp';
+import MarkdownContent from '@/components/MarkdownContent';
+import ImageAttributionDisplay from '@/components/ImageAttribution';
+import type { ImageAttribution } from '@/types';
 
 type PostType = 'SM Expo' | 'SM Now' | null;
 
 const MAX_IMAGES = 5;
 const MIN_IMAGES = 1;
+const DEFAULT_ATTRIBUTION: ImageAttribution = { type: 'original' };
 
 export default function CreatePostPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const draftId = searchParams.get('draftId');
+  const { user } = useUser();
+  const authorName =
+    user?.fullName || user?.username || user?.firstName || 'MRHS Student';
 
   const [postType, setPostType] = useState<PostType>(null);
   const [postTypeConfirmed, setPostTypeConfirmed] = useState(false);
@@ -66,18 +76,77 @@ export default function CreatePostPage() {
   const [content, setContent] = useState('');
   const [sources, setSources] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [imageAttributions, setImageAttributions] = useState<
+    ImageAttribution[]
+  >([]);
+  const [thumbnailAttribution, setThumbnailAttribution] =
+    useState<ImageAttribution>({ type: 'original' });
 
   // UI helpers
   const [showTypeTooltip, setShowTypeTooltip] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [showContentPreview, setShowContentPreview] = useState(false);
 
   // Toggle tag selection
   const toggleTag = (tag: string) => {
     setSelectedTags((prev) =>
       prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
     );
+  };
+
+  const normalizeImageAttributions = (
+    previews: string[],
+    existing?: ImageAttribution[]
+  ) => previews.map((_, idx) => existing?.[idx] ?? DEFAULT_ATTRIBUTION);
+
+  const setImageAttributionType = (
+    index: number,
+    type: ImageAttribution['type']
+  ) => {
+    setImageAttributions((prev) => {
+      const next = [...prev];
+      if (type === 'original') {
+        next[index] = { type: 'original' };
+      } else {
+        const current = prev[index];
+        next[index] = {
+          type: 'custom',
+          creditText: current?.creditText || '',
+          creditUrl: current?.creditUrl || '',
+        };
+      }
+      return next;
+    });
+  };
+
+  const updateImageAttribution = (
+    index: number,
+    update: Partial<ImageAttribution>
+  ) => {
+    setImageAttributions((prev) => {
+      const next = [...prev];
+      const current = prev[index] ?? DEFAULT_ATTRIBUTION;
+      next[index] = { ...current, ...update };
+      return next;
+    });
+  };
+
+  const setThumbnailAttributionType = (type: ImageAttribution['type']) => {
+    if (type === 'original') {
+      setThumbnailAttribution({ type: 'original' });
+      return;
+    }
+    setThumbnailAttribution((prev) => ({
+      type: 'custom',
+      creditText: prev.creditText || '',
+      creditUrl: prev.creditUrl || '',
+    }));
+  };
+
+  const updateThumbnailAttribution = (update: Partial<ImageAttribution>) => {
+    setThumbnailAttribution((prev) => ({ ...prev, ...update }));
   };
 
   // Multi-image handling for SM Expo
@@ -99,6 +168,10 @@ export default function CreatePostPage() {
     const previewUrls = filesToAdd.map((file) => URL.createObjectURL(file));
 
     setImagePreviews((prev) => [...prev, ...previewUrls]);
+    setImageAttributions((prev) => [
+      ...prev,
+      ...previewUrls.map(() => DEFAULT_ATTRIBUTION),
+    ]);
     setImageFileMap((prev) => {
       const next = { ...prev };
       previewUrls.forEach((url, idx) => {
@@ -131,6 +204,7 @@ export default function CreatePostPage() {
       return next;
     });
     setImagePreviews((prev) => prev.filter((_, i) => i !== index));
+    setImageAttributions((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleDragStart = (index: number) => {
@@ -149,6 +223,12 @@ export default function CreatePostPage() {
     newPreviews.splice(index, 0, draggedPreview);
 
     setImagePreviews(newPreviews);
+    setImageAttributions((prev) => {
+      const next = [...prev];
+      const [draggedAttribution] = next.splice(draggedIndex, 1);
+      next.splice(index, 0, draggedAttribution);
+      return next;
+    });
     setDraggedIndex(index);
   };
 
@@ -197,9 +277,26 @@ export default function CreatePostPage() {
         // Load images for SM Expo
         if (draft.images && draft.images.length > 0) {
           setImagePreviews(draft.images);
+          setImageAttributions(
+            normalizeImageAttributions(
+              draft.images,
+              draft.imageAttributions as ImageAttribution[] | undefined
+            )
+          );
         } else if (draft.thumbnailFile) {
           // Legacy: single thumbnail
           setThumbnailPreview(draft.thumbnailFile);
+          setImageAttributions([]);
+        } else {
+          setImageAttributions([]);
+        }
+
+        if (draft.thumbnailAttribution) {
+          setThumbnailAttribution(
+            draft.thumbnailAttribution as ImageAttribution
+          );
+        } else {
+          setThumbnailAttribution(DEFAULT_ATTRIBUTION);
         }
       } else {
         setMessage('Failed to load draft');
@@ -259,6 +356,56 @@ export default function CreatePostPage() {
   const removeProjectLink = (index: number) =>
     setProjectLinks((prev) => prev.filter((_, i) => i !== index));
 
+  const isValidUrl = (value: string) => {
+    try {
+      new URL(value);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  const validateAttributions = () => {
+    if (postType === 'SM Expo') {
+      for (let i = 0; i < imagePreviews.length; i += 1) {
+        const attribution = imageAttributions[i];
+        if (!attribution || !attribution.type) {
+          return `Please choose an image credit option for image ${i + 1}.`;
+        }
+        if (attribution.type === 'custom') {
+          if (!attribution.creditText?.trim()) {
+            return `Custom credit text is required for image ${i + 1}.`;
+          }
+          if (
+            attribution.creditUrl &&
+            !isValidUrl(attribution.creditUrl.trim())
+          ) {
+            return `Please enter a valid credit link for image ${i + 1}.`;
+          }
+        }
+      }
+    }
+
+    if (postType === 'SM Now') {
+      if (!thumbnailAttribution || !thumbnailAttribution.type) {
+        return 'Please choose a thumbnail credit option.';
+      }
+      if (thumbnailAttribution.type === 'custom') {
+        if (!thumbnailAttribution.creditText?.trim()) {
+          return 'Custom credit text is required for the thumbnail.';
+        }
+        if (
+          thumbnailAttribution.creditUrl &&
+          !isValidUrl(thumbnailAttribution.creditUrl.trim())
+        ) {
+          return 'Please enter a valid thumbnail credit link.';
+        }
+      }
+    }
+
+    return null;
+  };
+
   // Submit for review
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -278,6 +425,12 @@ export default function CreatePostPage() {
     // For SM Now, require a thumbnail
     if (postType === 'SM Now' && !thumbnailFile && !thumbnailPreview) {
       setMessage('SM Now posts require a thumbnail image.');
+      return;
+    }
+
+    const attributionError = validateAttributions();
+    if (attributionError) {
+      setMessage(attributionError);
       return;
     }
 
@@ -334,6 +487,12 @@ export default function CreatePostPage() {
         content,
         thumbnailUrl,
         images: postType === 'SM Expo' ? uploadedImages : undefined,
+        imageAttributions:
+          postType === 'SM Expo'
+            ? normalizeImageAttributions(imagePreviews, imageAttributions)
+            : undefined,
+        thumbnailAttribution:
+          postType === 'SM Now' ? thumbnailAttribution : undefined,
         projectLinks:
           postType === 'SM Expo'
             ? projectLinks.filter((p) => p.trim() !== '')
@@ -390,6 +549,11 @@ export default function CreatePostPage() {
       setMessage('SM Now posts require a thumbnail image.');
       return;
     }
+    const attributionError = validateAttributions();
+    if (attributionError) {
+      setMessage(attributionError);
+      return;
+    }
     setShowReview(true);
     setMessage(null);
     // Scroll to top to see the review
@@ -414,10 +578,12 @@ export default function CreatePostPage() {
       });
       setImageFileMap({});
       setImagePreviews([]);
+      setImageAttributions([]);
       setProjectLinks(['']);
       setContent('');
       setSources('');
       setSelectedTags([]);
+      setThumbnailAttribution(DEFAULT_ATTRIBUTION);
       setMessage(null);
     }
   };
@@ -474,6 +640,12 @@ export default function CreatePostPage() {
           content: content || undefined,
           thumbnailFile: thumbnailFileInfo,
           images: postType === 'SM Expo' ? uploadedImages : undefined,
+          imageAttributions:
+            postType === 'SM Expo'
+              ? normalizeImageAttributions(imagePreviews, imageAttributions)
+              : undefined,
+          thumbnailAttribution:
+            postType === 'SM Now' ? thumbnailAttribution : undefined,
           projectLinks: projectLinks.filter((p) => p.trim() !== ''),
           sources: sources || undefined,
           tags: selectedTags,
@@ -491,6 +663,12 @@ export default function CreatePostPage() {
           content: content || undefined,
           thumbnailFile: thumbnailFileInfo,
           images: postType === 'SM Expo' ? uploadedImages : undefined,
+          imageAttributions:
+            postType === 'SM Expo'
+              ? normalizeImageAttributions(imagePreviews, imageAttributions)
+              : undefined,
+          thumbnailAttribution:
+            postType === 'SM Now' ? thumbnailAttribution : undefined,
           projectLinks: projectLinks.filter((p) => p.trim() !== ''),
           sources: sources || undefined,
           tags: selectedTags,
@@ -732,12 +910,18 @@ export default function CreatePostPage() {
                 {postType === 'SM Expo' && imagePreviews.length > 0 && (
                   <div className="relative w-full">
                     {imagePreviews.length === 1 ? (
-                      <div className="relative w-full h-64 bg-(--muted)">
-                        <Image
-                          src={imagePreviews[0]}
-                          alt={title}
-                          fill
-                          className="object-cover"
+                      <div className="space-y-2">
+                        <div className="relative w-full h-64 bg-(--muted)">
+                          <Image
+                            src={imagePreviews[0]}
+                            alt={title}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                        <ImageAttributionDisplay
+                          attribution={imageAttributions[0]}
+                          author={{ name: authorName }}
                         />
                       </div>
                     ) : (
@@ -749,21 +933,26 @@ export default function CreatePostPage() {
                         </div>
                         <div className="grid grid-cols-5 gap-2">
                           {imagePreviews.map((preview, idx) => (
-                            <div
-                              key={idx}
-                              className={`relative aspect-square rounded overflow-hidden ${idx === 0 ? 'ring-2 ring-(--primary)' : ''}`}
-                            >
-                              <Image
-                                src={preview}
-                                alt={`Preview ${idx + 1}`}
-                                fill
-                                className="object-cover"
+                            <div key={idx} className="flex flex-col gap-1">
+                              <div
+                                className={`relative aspect-square rounded overflow-hidden ${idx === 0 ? 'ring-2 ring-(--primary)' : ''}`}
+                              >
+                                <Image
+                                  src={preview}
+                                  alt={`Preview ${idx + 1}`}
+                                  fill
+                                  className="object-cover"
+                                />
+                                {idx === 0 && (
+                                  <div className="absolute bottom-0 left-0 right-0 bg-(--primary) text-(--primary-foreground) text-xs text-center py-0.5">
+                                    Cover
+                                  </div>
+                                )}
+                              </div>
+                              <ImageAttributionDisplay
+                                attribution={imageAttributions[idx]}
+                                author={{ name: authorName }}
                               />
-                              {idx === 0 && (
-                                <div className="absolute bottom-0 left-0 right-0 bg-(--primary) text-(--primary-foreground) text-xs text-center py-0.5">
-                                  Cover
-                                </div>
-                              )}
                             </div>
                           ))}
                         </div>
@@ -772,12 +961,18 @@ export default function CreatePostPage() {
                   </div>
                 )}
                 {postType === 'SM Now' && thumbnailPreview && (
-                  <div className="relative w-full h-64 bg-(--muted)">
-                    <Image
-                      src={thumbnailPreview}
-                      alt={title}
-                      fill
-                      className="object-cover"
+                  <div className="space-y-2">
+                    <div className="relative w-full h-64 bg-(--muted)">
+                      <Image
+                        src={thumbnailPreview}
+                        alt={title}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                    <ImageAttributionDisplay
+                      attribution={thumbnailAttribution}
+                      author={{ name: authorName }}
                     />
                   </div>
                 )}
@@ -823,11 +1018,10 @@ export default function CreatePostPage() {
                     )}
 
                   {/* Content Body */}
-                  <div className="prose prose-sm md:prose-base max-w-none text-(--foreground)">
-                    <div className="whitespace-pre-wrap leading-relaxed">
-                      {content}
-                    </div>
-                  </div>
+                  <MarkdownContent
+                    content={content}
+                    className="prose prose-sm md:prose-base max-w-none text-(--foreground)"
+                  />
 
                   {/* Sources for SM Now */}
                   {postType === 'SM Now' && sources.trim() && (
@@ -906,6 +1100,8 @@ export default function CreatePostPage() {
                 Start Over
               </button>
             </div>
+
+            <PostingRules />
 
             {/* Title */}
             <div className="bg-(--card) p-6 rounded-lg shadow-sm border border-(--border) space-y-2">
@@ -993,6 +1189,101 @@ export default function CreatePostPage() {
                     </label>
                   )}
                 </div>
+
+                <div className="space-y-4">
+                  <div className="text-sm font-medium text-(--foreground)">
+                    Image Credits
+                  </div>
+                  {imagePreviews.length === 0 ? (
+                    <p className="text-xs text-(--muted-foreground)">
+                      Add at least one image to set credits.
+                    </p>
+                  ) : (
+                    <div className="space-y-4">
+                      {imagePreviews.map((preview, index) => (
+                        <div
+                          key={`credit-${index}`}
+                          className="flex flex-col sm:flex-row gap-3 border border-(--border) rounded-lg p-3 bg-(--background)"
+                        >
+                          <div className="relative w-full sm:w-28 h-20 rounded overflow-hidden bg-(--muted)">
+                            <Image
+                              src={preview}
+                              alt={`Credit preview ${index + 1}`}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                          <div className="flex-1 space-y-2">
+                            <div className="text-sm font-medium text-(--foreground)">
+                              Image {index + 1} credit
+                            </div>
+                            <div className="flex flex-wrap gap-3 text-sm">
+                              <label className="inline-flex items-center gap-2">
+                                <input
+                                  type="radio"
+                                  name={`credit-type-${index}`}
+                                  checked={
+                                    imageAttributions[index]?.type ===
+                                    'original'
+                                  }
+                                  onChange={() =>
+                                    setImageAttributionType(index, 'original')
+                                  }
+                                />
+                                Original photo
+                              </label>
+                              <label className="inline-flex items-center gap-2">
+                                <input
+                                  type="radio"
+                                  name={`credit-type-${index}`}
+                                  checked={
+                                    imageAttributions[index]?.type === 'custom'
+                                  }
+                                  onChange={() =>
+                                    setImageAttributionType(index, 'custom')
+                                  }
+                                />
+                                Custom credit
+                              </label>
+                            </div>
+                            {imageAttributions[index]?.type === 'custom' && (
+                              <div className="grid gap-2 sm:grid-cols-2">
+                                <input
+                                  type="text"
+                                  value={
+                                    imageAttributions[index]?.creditText || ''
+                                  }
+                                  onChange={(e) =>
+                                    updateImageAttribution(index, {
+                                      creditText: e.target.value,
+                                    })
+                                  }
+                                  placeholder="Credit text (required)"
+                                  className="w-full border border-(--border) rounded px-3 py-2 bg-(--background) text-(--foreground) placeholder:text-(--muted-foreground) focus:outline-none focus:ring-2 focus:ring-(--primary)"
+                                />
+                                <input
+                                  type="url"
+                                  value={
+                                    imageAttributions[index]?.creditUrl || ''
+                                  }
+                                  onChange={(e) =>
+                                    updateImageAttribution(index, {
+                                      creditUrl: e.target.value,
+                                    })
+                                  }
+                                  placeholder="Credit link (optional)"
+                                  className="w-full border border-(--border) rounded px-3 py-2 bg-(--background) text-(--foreground) placeholder:text-(--muted-foreground) focus:outline-none focus:ring-2 focus:ring-(--primary)"
+                                />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <ImageCitationHelp />
 
                 <div className="text-xs text-(--muted-foreground) space-y-1">
                   <p>
@@ -1121,6 +1412,60 @@ export default function CreatePostPage() {
                   </>
                 )}
 
+                <div className="space-y-3">
+                  <div className="text-sm font-medium text-(--foreground)">
+                    Thumbnail Credit
+                  </div>
+                  <div className="flex flex-wrap gap-3 text-sm">
+                    <label className="inline-flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="thumbnail-credit-type"
+                        checked={thumbnailAttribution.type === 'original'}
+                        onChange={() => setThumbnailAttributionType('original')}
+                      />
+                      Original photo
+                    </label>
+                    <label className="inline-flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name="thumbnail-credit-type"
+                        checked={thumbnailAttribution.type === 'custom'}
+                        onChange={() => setThumbnailAttributionType('custom')}
+                      />
+                      Custom credit
+                    </label>
+                  </div>
+                  {thumbnailAttribution.type === 'custom' && (
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      <input
+                        type="text"
+                        value={thumbnailAttribution.creditText || ''}
+                        onChange={(e) =>
+                          updateThumbnailAttribution({
+                            creditText: e.target.value,
+                          })
+                        }
+                        placeholder="Credit text (required)"
+                        className="w-full border border-(--border) rounded px-3 py-2 bg-(--background) text-(--foreground) placeholder:text-(--muted-foreground) focus:outline-none focus:ring-2 focus:ring-(--primary)"
+                      />
+                      <input
+                        type="url"
+                        value={thumbnailAttribution.creditUrl || ''}
+                        onChange={(e) =>
+                          updateThumbnailAttribution({
+                            creditUrl: e.target.value,
+                          })
+                        }
+                        placeholder="Credit link (optional)"
+                        className="w-full border border-(--border) rounded px-3 py-2 bg-(--background) text-(--foreground) placeholder:text-(--muted-foreground) focus:outline-none focus:ring-2 focus:ring-(--primary)"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <ImageCitationHelp />
+
                 <div className="text-xs text-(--muted-foreground)">
                   A thumbnail helps attract attention. Recommended: JPG/PNG,
                   1200x628 or similar aspect.
@@ -1177,15 +1522,56 @@ export default function CreatePostPage() {
 
             {/* Content */}
             <div className="bg-(--card) p-6 rounded-lg shadow-sm border border-(--border) space-y-2">
-              <label className="block text-sm font-medium text-(--foreground)">
-                Content <span className="text-red-500">*</span>
-              </label>
-              <textarea
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                placeholder="Write your post content here. You can include sections, headings, or markdown (rendering not provided here)."
-                className="w-full border border-(--border) rounded px-3 py-2 min-h-50 resize-vertical bg-(--background) text-(--foreground) placeholder:text-(--muted-foreground) focus:outline-none focus:ring-2 focus:ring-(--primary)"
-              />
+              <div className="flex items-center justify-between gap-3">
+                <label className="block text-sm font-medium text-(--foreground)">
+                  Content <span className="text-red-500">*</span>
+                </label>
+                <div className="flex items-center gap-2 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setShowContentPreview(false)}
+                    className={`px-3 py-1 rounded-full border transition-colors ${
+                      !showContentPreview
+                        ? 'bg-(--primary) text-(--primary-foreground) border-(--primary)'
+                        : 'bg-(--card) text-(--foreground) border-(--border) hover:border-(--primary)'
+                    }`}
+                  >
+                    Write
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowContentPreview(true)}
+                    className={`px-3 py-1 rounded-full border transition-colors ${
+                      showContentPreview
+                        ? 'bg-(--primary) text-(--primary-foreground) border-(--primary)'
+                        : 'bg-(--card) text-(--foreground) border-(--border) hover:border-(--primary)'
+                    }`}
+                  >
+                    Preview
+                  </button>
+                </div>
+              </div>
+              {showContentPreview ? (
+                <div className="rounded border border-(--border) bg-(--background) p-4">
+                  {content.trim().length === 0 ? (
+                    <p className="text-sm text-(--muted-foreground)">
+                      Nothing to preview yet.
+                    </p>
+                  ) : (
+                    <MarkdownContent
+                      content={content}
+                      className="prose prose-sm md:prose-base max-w-none text-(--foreground)"
+                    />
+                  )}
+                </div>
+              ) : (
+                <textarea
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  placeholder="Write your post content here. Markdown is supported."
+                  className="w-full border border-(--border) rounded px-3 py-2 min-h-50 resize-vertical bg-(--background) text-(--foreground) placeholder:text-(--muted-foreground) focus:outline-none focus:ring-2 focus:ring-(--primary)"
+                />
+              )}
               <div className="text-xs text-(--muted-foreground)">
                 Provide helpful context: what, why, how, and any notes readers
                 should know.

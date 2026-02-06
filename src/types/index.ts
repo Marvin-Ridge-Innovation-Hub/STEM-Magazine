@@ -47,6 +47,14 @@ export enum SubmissionStatus {
   REJECTED = 'REJECTED',
 }
 
+export type ImageAttributionType = 'original' | 'custom';
+
+export interface ImageAttribution {
+  type: ImageAttributionType;
+  creditText?: string;
+  creditUrl?: string;
+}
+
 export interface Submission {
   id: string;
   postType: PostType;
@@ -54,6 +62,8 @@ export interface Submission {
   content: string;
   thumbnailUrl?: string;
   images: string[]; // For SM Expo: array of image URLs (1-5)
+  imageAttributions?: ImageAttribution[];
+  thumbnailAttribution?: ImageAttribution;
   youtubeUrl?: string; // For SM Pods: YouTube video URL
   projectLinks: string[];
   sources?: string;
@@ -80,6 +90,8 @@ export interface Draft {
   content?: string;
   thumbnailFile?: string;
   images: string[]; // For SM Expo: array of image URLs (1-5)
+  imageAttributions?: ImageAttribution[];
+  thumbnailAttribution?: ImageAttribution;
   projectLinks: string[];
   sources?: string;
   tags: string[];
@@ -111,6 +123,8 @@ export interface CreateSubmissionInput {
   content: string;
   thumbnailUrl?: string;
   images?: string[]; // For SM Expo: array of image URLs (1-5)
+  imageAttributions?: ImageAttribution[];
+  thumbnailAttribution?: ImageAttribution;
   projectLinks?: string[];
   sources?: string;
   tags?: string[];
@@ -122,6 +136,8 @@ export interface CreateDraftInput {
   content?: string;
   thumbnailFile?: string;
   images?: string[]; // For SM Expo: array of image URLs (1-5)
+  imageAttributions?: ImageAttribution[];
+  thumbnailAttribution?: ImageAttribution;
   projectLinks?: string[];
   sources?: string;
   tags?: string[];

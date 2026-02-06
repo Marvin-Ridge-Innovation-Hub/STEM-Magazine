@@ -8,6 +8,10 @@ import {
   approveSubmissionAction,
   rejectSubmissionAction,
 } from '@/actions/submission.actions';
+import PostingRules from '@/components/PostingRules';
+import MarkdownContent from '@/components/MarkdownContent';
+import ImageAttributionDisplay from '@/components/ImageAttribution';
+import type { ImageAttribution } from '@/types';
 import {
   Target,
   Newspaper,
@@ -17,6 +21,7 @@ import {
   List,
   BookOpen,
   LayoutGrid,
+  ExternalLink,
 } from 'lucide-react';
 
 // Helper components for consistent iconography
@@ -97,9 +102,13 @@ interface Submission {
   title: string;
   content: string;
   thumbnailUrl?: string;
+  images: string[];
+  imageAttributions?: ImageAttribution[];
+  thumbnailAttribution?: ImageAttribution;
   projectLinks: string[];
   sources?: string;
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  tags?: string[];
   createdAt: string;
   author: {
     id: string;
@@ -370,6 +379,8 @@ export default function ModeratorDashboard() {
           )}
         </motion.div>
 
+        <PostingRules className="mb-6" />
+
         {/* Submissions List */}
         {authorized === false ? (
           <motion.div
@@ -455,12 +466,21 @@ export default function ModeratorDashboard() {
                     </div>
 
                     {submission.thumbnailUrl && (
-                      <div className="relative w-24 h-16 md:w-32 md:h-20 rounded-lg overflow-hidden">
-                        <Image
-                          src={submission.thumbnailUrl}
-                          alt={submission.title}
-                          fill
-                          className="object-cover"
+                      <div className="space-y-1">
+                        <div className="relative w-24 h-16 md:w-32 md:h-20 rounded-lg overflow-hidden">
+                          <Image
+                            src={submission.thumbnailUrl}
+                            alt={submission.title}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                        <ImageAttributionDisplay
+                          attribution={submission.thumbnailAttribution}
+                          author={{
+                            id: submission.author.id,
+                            name: submission.author.name || undefined,
+                          }}
                         />
                       </div>
                     )}
@@ -472,10 +492,53 @@ export default function ModeratorDashboard() {
                   <h4 className="font-semibold text-(--foreground) mb-2">
                     Content
                   </h4>
-                  <p className="text-(--muted-foreground) whitespace-pre-wrap line-clamp-6">
-                    {submission.content}
-                  </p>
+                  <div className="text-(--muted-foreground) line-clamp-6">
+                    <MarkdownContent
+                      content={submission.content}
+                      className="prose prose-sm max-w-none text-(--foreground)"
+                    />
+                  </div>
                 </div>
+
+                {/* Images for SM Expo */}
+                {submission.postType === 'SM_EXPO' &&
+                  submission.images &&
+                  submission.images.length > 0 && (
+                    <div className="p-4 md:p-6 border-b border-(--border)">
+                      <h4 className="font-semibold text-(--foreground) mb-3">
+                        🖼️ Project Images ({submission.images.length})
+                      </h4>
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                        {submission.images.map((image, idx) => (
+                          <div key={idx} className="flex flex-col gap-1">
+                            <a
+                              href={image}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="relative aspect-video rounded-lg overflow-hidden border border-(--border) hover:opacity-80 transition-opacity group"
+                            >
+                              <Image
+                                src={image}
+                                alt={`Project image ${idx + 1}`}
+                                fill
+                                className="object-cover"
+                              />
+                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                                <ExternalLink className="h-5 w-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                              </div>
+                            </a>
+                            <ImageAttributionDisplay
+                              attribution={submission.imageAttributions?.[idx]}
+                              author={{
+                                id: submission.author.id,
+                                name: submission.author.name || undefined,
+                              }}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                 {/* Project Links / Sources */}
                 {(submission.projectLinks.length > 0 || submission.sources) && (
