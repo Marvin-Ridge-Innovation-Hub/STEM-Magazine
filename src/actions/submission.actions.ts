@@ -193,6 +193,8 @@ export async function approveSubmissionAction(submissionId: string) {
     revalidatePath('/dashboard');
     revalidatePath('/admin/submissions');
     revalidatePath('/posts');
+    revalidatePath(`/posts/${submission.id}`);
+    revalidatePath(`/posts/${submissionId}`);
 
     return {
       success: true,
@@ -314,6 +316,7 @@ export async function rejectSubmissionAction(
 
     revalidatePath('/dashboard');
     revalidatePath('/admin/submissions');
+    revalidatePath(`/posts/${submissionId}`);
 
     return {
       success: true,
@@ -372,6 +375,7 @@ export async function deleteSubmissionAction(submissionId: string) {
 
     revalidatePath('/dashboard');
     revalidatePath('/posts');
+    revalidatePath(`/posts/${submissionId}`);
 
     return { success: true, message: 'Submission deleted successfully' };
   } catch (error) {
@@ -426,6 +430,7 @@ export async function moveToDraftAction(submissionId: string) {
 
     revalidatePath('/dashboard');
     revalidatePath('/create');
+    revalidatePath(`/posts/${submissionId}`);
 
     return {
       success: true,
