@@ -9,7 +9,7 @@ const transporter = nodemailer.createTransport({
   secure: false,
   auth: {
     user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASSWORD,
+    pass: process.env.SMTP_PASS,
   },
 });
 
@@ -30,6 +30,7 @@ interface SubscriptionWithUser {
   subscribeNow: boolean;
   subscribePods: boolean;
   tags: string[];
+  emailEnabled: boolean; // Master email toggle
   user: {
     email: string;
     name: string | null;
@@ -69,10 +70,13 @@ export async function notifySubscribers({
       },
     });
 
-    // Filter subscriptions based on post type and tags
+    // Filter subscriptions based on master email toggle, post type, and tags
     const matchingSubscriptions = (
       subscriptions as SubscriptionWithUser[]
     ).filter((sub: SubscriptionWithUser) => {
+      // Check master email toggle first
+      if (sub.emailEnabled === false) return false;
+
       // Check post type subscription
       const typeMatch =
         (postType === 'SM_EXPO' && sub.subscribeExpo) ||
@@ -104,7 +108,7 @@ export async function notifySubscribers({
         : postType === 'SM_NOW'
           ? 'SM Now'
           : 'SM Pods';
-    const postUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/posts/${postId}`;
+    const postUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/posts/${postId}`;
 
     // Send emails to all matching subscribers
     const emailPromises = matchingSubscriptions.map(
@@ -126,10 +130,13 @@ export async function notifySubscribers({
         <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
           <!-- Header -->
           <tr>
-            <td style="background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%); padding: 32px 40px; text-align: center;">
+            <td style="background: linear-gradient(135deg, #1e3a5f 0%, #2d4a6f 100%); padding: 32px 40px; text-align: center;">
               <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 700;">
                 New ${postTypeName} Post!
               </h1>
+              <p style="margin: 8px 0 0; color: rgba(255,255,255,0.8); font-size: 14px;">
+                STEM Magazine Newsletter
+              </p>
             </td>
           </tr>
           
@@ -144,7 +151,7 @@ export async function notifySubscribers({
               </p>
               
               <!-- Post Card -->
-              <div style="background-color: #f9fafb; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
+              <div style="background-color: #f9fafb; border-radius: 8px; padding: 24px; margin-bottom: 24px; border-left: 4px solid #f97316;">
                 ${thumbnailUrl ? `<img src="${thumbnailUrl}" alt="${title}" style="width: 100%; height: 160px; object-fit: cover; border-radius: 8px; margin-bottom: 16px;">` : ''}
                 <h2 style="margin: 0 0 12px; color: #111827; font-size: 20px; font-weight: 600;">
                   ${title}
@@ -163,7 +170,7 @@ export async function notifySubscribers({
                     .slice(0, 4)
                     .map(
                       (tag) => `
-                    <span style="display: inline-block; background-color: #e0e7ff; color: #4338ca; padding: 4px 12px; border-radius: 16px; font-size: 12px; font-weight: 500; margin-right: 8px; margin-bottom: 8px; text-transform: capitalize;">
+                    <span style="display: inline-block; background-color: #1e3a5f; color: #ffffff; padding: 4px 12px; border-radius: 16px; font-size: 12px; font-weight: 500; margin-right: 8px; margin-bottom: 8px; text-transform: capitalize;">
                       ${tag.replace('-', ' ')}
                     </span>
                   `
@@ -179,7 +186,7 @@ export async function notifySubscribers({
               <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                 <tr>
                   <td style="text-align: center;">
-                    <a href="${postUrl}" style="display: inline-block; background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                    <a href="${postUrl}" style="display: inline-block; background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
                       Read Post
                     </a>
                   </td>
@@ -195,7 +202,7 @@ export async function notifySubscribers({
                 You're receiving this because you subscribed to ${postTypeName} notifications.
               </p>
               <p style="margin: 0; color: #9ca3af; font-size: 12px;">
-                Manage your preferences in your <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/dashboard" style="color: #8B5CF6;">dashboard</a>.
+                Manage your preferences in your <a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard?tab=email-preferences" style="color: #f97316;">dashboard</a>.
               </p>
             </td>
           </tr>

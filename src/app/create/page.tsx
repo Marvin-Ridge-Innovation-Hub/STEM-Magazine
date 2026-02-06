@@ -20,6 +20,7 @@ import {
   Target,
   Newspaper,
 } from 'lucide-react';
+import OnboardingTooltip from '@/components/OnboardingTooltip';
 
 type PostType = 'SM Expo' | 'SM Now' | null;
 
@@ -564,87 +565,94 @@ export default function CreatePostPage() {
             animate={{ opacity: 1, y: 0 }}
             className="bg-(--card) p-8 rounded-lg shadow-sm border border-(--border) space-y-6"
           >
-            <div>
-              <label className="flex items-center gap-2 text-sm font-medium text-(--foreground) mb-3">
-                Where would you like to post?{' '}
-                <span className="text-red-500">*</span>
-                <button
-                  type="button"
-                  className="ml-2 text-xs px-2 py-1 border border-(--border) rounded hover:bg-(--accent) transition-colors duration-200"
-                  aria-expanded={showTypeTooltip}
-                  onClick={() => setShowTypeTooltip((v) => !v)}
-                >
-                  ?
-                </button>
-              </label>
-              {showTypeTooltip && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="p-3 border border-(--border) rounded bg-(--muted) text-sm shadow-sm mb-3 text-(--foreground)"
-                >
-                  <strong>SM Expo</strong>: For showcasing projects, demos, and
-                  portfolio-style posts. Best for completed or in-progress
-                  projects with links or media.
-                  <div className="mt-2">
-                    <strong>SM Now</strong>: For quick updates, thoughts,
-                    announcements, or news-style posts. Shorter, fast
-                    publishing; include sources if referencing research.
-                  </div>
-                </motion.div>
-              )}
-
-              <div className="flex flex-col sm:flex-row gap-4">
-                <label
-                  className={`flex-1 p-4 border-2 rounded-xl cursor-pointer transition-all duration-300 ${postType === 'SM Expo' ? 'border-blue-500 bg-blue-500/10 shadow-lg ring-2 ring-blue-500/30' : 'border-(--border) bg-(--card) hover:border-blue-500/50'} hover:shadow-md`}
-                >
-                  <input
-                    type="radio"
-                    name="postType"
-                    value="SM Expo"
-                    className="sr-only"
-                    checked={postType === 'SM Expo'}
-                    onChange={() => setPostType('SM Expo')}
-                  />
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center">
-                      <Target className="h-4 w-4 text-blue-500" />
-                    </div>
-                    <span className="font-semibold text-(--foreground)">
-                      SM Expo
-                    </span>
-                  </div>
-                  <div className="text-sm text-(--muted-foreground)">
-                    Showcase projects, demos, and portfolio-style posts.
-                  </div>
+            <OnboardingTooltip
+              id="create-post-type"
+              title="Choose Your Post Type"
+              content="SM Expo is for showcasing projects with images and links. SM Now is for news articles and quick updates. Choose based on what you're sharing!"
+              position="bottom"
+            >
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium text-(--foreground) mb-3">
+                  Where would you like to post?{' '}
+                  <span className="text-red-500">*</span>
+                  <button
+                    type="button"
+                    className="ml-2 text-xs px-2 py-1 border border-(--border) rounded hover:bg-(--accent) transition-colors duration-200"
+                    aria-expanded={showTypeTooltip}
+                    onClick={() => setShowTypeTooltip((v) => !v)}
+                  >
+                    ?
+                  </button>
                 </label>
-
-                <label
-                  className={`flex-1 p-4 border-2 rounded-xl cursor-pointer transition-all duration-300 ${postType === 'SM Now' ? 'border-purple-500 bg-purple-500/10 shadow-lg ring-2 ring-purple-500/30' : 'border-(--border) bg-(--card) hover:border-purple-500/50'} hover:shadow-md`}
-                >
-                  <input
-                    type="radio"
-                    name="postType"
-                    value="SM Now"
-                    className="sr-only"
-                    checked={postType === 'SM Now'}
-                    onChange={() => setPostType('SM Now')}
-                  />
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center">
-                      <Newspaper className="h-4 w-4 text-purple-500" />
+                {showTypeTooltip && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-3 border border-(--border) rounded bg-(--muted) text-sm shadow-sm mb-3 text-(--foreground)"
+                  >
+                    <strong>SM Expo</strong>: For showcasing projects, demos,
+                    and portfolio-style posts. Best for completed or in-progress
+                    projects with links or media.
+                    <div className="mt-2">
+                      <strong>SM Now</strong>: For quick updates, thoughts,
+                      announcements, or news-style posts. Shorter, fast
+                      publishing; include sources if referencing research.
                     </div>
-                    <span className="font-semibold text-(--foreground)">
-                      SM Now
-                    </span>
-                  </div>
-                  <div className="text-sm text-(--muted-foreground)">
-                    Quick updates, announcements, or news-style posts. Include
-                    sources if needed.
-                  </div>
-                </label>
+                  </motion.div>
+                )}
+
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <label
+                    className={`flex-1 p-4 border-2 rounded-xl cursor-pointer transition-all duration-300 ${postType === 'SM Expo' ? 'border-blue-500 bg-blue-500/10 shadow-lg ring-2 ring-blue-500/30' : 'border-(--border) bg-(--card) hover:border-blue-500/50'} hover:shadow-md`}
+                  >
+                    <input
+                      type="radio"
+                      name="postType"
+                      value="SM Expo"
+                      className="sr-only"
+                      checked={postType === 'SM Expo'}
+                      onChange={() => setPostType('SM Expo')}
+                    />
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                        <Target className="h-4 w-4 text-blue-500" />
+                      </div>
+                      <span className="font-semibold text-(--foreground)">
+                        SM Expo
+                      </span>
+                    </div>
+                    <div className="text-sm text-(--muted-foreground)">
+                      Showcase projects, demos, and portfolio-style posts.
+                    </div>
+                  </label>
+
+                  <label
+                    className={`flex-1 p-4 border-2 rounded-xl cursor-pointer transition-all duration-300 ${postType === 'SM Now' ? 'border-purple-500 bg-purple-500/10 shadow-lg ring-2 ring-purple-500/30' : 'border-(--border) bg-(--card) hover:border-purple-500/50'} hover:shadow-md`}
+                  >
+                    <input
+                      type="radio"
+                      name="postType"
+                      value="SM Now"
+                      className="sr-only"
+                      checked={postType === 'SM Now'}
+                      onChange={() => setPostType('SM Now')}
+                    />
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                        <Newspaper className="h-4 w-4 text-purple-500" />
+                      </div>
+                      <span className="font-semibold text-(--foreground)">
+                        SM Now
+                      </span>
+                    </div>
+                    <div className="text-sm text-(--muted-foreground)">
+                      Quick updates, announcements, or news-style posts. Include
+                      sources if needed.
+                    </div>
+                  </label>
+                </div>
               </div>
-            </div>
+            </OnboardingTooltip>
 
             {message && (
               <motion.div

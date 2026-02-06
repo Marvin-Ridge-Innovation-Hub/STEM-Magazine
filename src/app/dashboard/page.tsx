@@ -20,7 +20,6 @@ import {
   LayoutDashboard,
   Headphones,
   Eye,
-  BookOpen,
   RotateCcw,
   Settings,
   Heart,
@@ -28,6 +27,7 @@ import {
   Mail,
   User,
 } from 'lucide-react';
+import OnboardingTooltip from '@/components/OnboardingTooltip';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
@@ -90,21 +90,258 @@ interface Submission {
 }
 
 interface NewsletterSubscription {
+  // Newsletter preferences (new posts)
   subscribeExpo: boolean;
   subscribeNow: boolean;
   subscribePods: boolean;
   tags: string[];
   isActive: boolean;
-}
-
-interface NotificationPreferences {
+  // Author notification preferences (unified)
+  emailOnApproval: boolean;
+  emailOnRejection: boolean;
+  // Activity digest preferences (daily summary)
+  digestEnabled: boolean;
   emailOnLike: boolean;
   emailOnComment: boolean;
   emailOnReply: boolean;
-  emailOnApproval: boolean;
-  emailOnRejection: boolean;
+  // Master email toggle
   emailEnabled: boolean;
 }
+
+// Newsletter Modal Component
+const NewsletterModal = ({
+  isOpen,
+  onClose,
+  newsletter,
+  setNewsletter,
+  onSave,
+  loading,
+  isEditing,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  newsletter: NewsletterSubscription;
+  setNewsletter: React.Dispatch<React.SetStateAction<NewsletterSubscription>>;
+  onSave: () => void;
+  loading: boolean;
+  isEditing: boolean;
+}) => {
+  const hasPostType =
+    newsletter.subscribeExpo ||
+    newsletter.subscribeNow ||
+    newsletter.subscribePods;
+  const hasTopic = newsletter.tags.length > 0;
+  const isValid = hasPostType && hasTopic;
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={onClose}
+      />
+
+      {/* Modal */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="relative bg-(--card) border border-(--border) rounded-2xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto"
+      >
+        {/* Header */}
+        <div className="sticky top-0 bg-(--card) border-b border-(--border) px-6 py-4 flex items-center justify-between">
+          <h2 className="text-xl font-bold text-(--foreground)">
+            {isEditing
+              ? 'Edit Newsletter Preferences'
+              : 'Subscribe to Newsletter'}
+          </h2>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-(--muted) rounded-lg transition-colors"
+          >
+            <XCircle className="h-5 w-5 text-(--muted-foreground)" />
+          </button>
+        </div>
+
+        <div className="p-6 space-y-6">
+          {/* Post Types Section */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <h3 className="font-semibold text-(--foreground)">Post Types</h3>
+              <span className="text-xs text-red-500">*Required</span>
+            </div>
+            <p className="text-sm text-(--muted-foreground) mb-4">
+              Choose which types of posts you want to receive in your
+              newsletter:
+            </p>
+            <div className="space-y-3">
+              <label className="flex items-center gap-3 p-3 bg-(--background) rounded-xl cursor-pointer hover:bg-(--accent) transition-colors border-2 border-transparent data-[checked=true]:border-(--primary)">
+                <input
+                  type="checkbox"
+                  checked={newsletter.subscribeExpo}
+                  onChange={(e) =>
+                    setNewsletter((prev) => ({
+                      ...prev,
+                      subscribeExpo: e.target.checked,
+                    }))
+                  }
+                  className="w-5 h-5 rounded border-2 border-(--border) accent-(--primary)"
+                />
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
+                    <Target className="h-4 w-4 text-blue-500" />
+                  </div>
+                  <div>
+                    <span className="font-medium text-(--foreground)">
+                      SM Expo
+                    </span>
+                    <p className="text-xs text-(--muted-foreground)">
+                      Project showcases
+                    </p>
+                  </div>
+                </div>
+              </label>
+              <label className="flex items-center gap-3 p-3 bg-(--background) rounded-xl cursor-pointer hover:bg-(--accent) transition-colors">
+                <input
+                  type="checkbox"
+                  checked={newsletter.subscribeNow}
+                  onChange={(e) =>
+                    setNewsletter((prev) => ({
+                      ...prev,
+                      subscribeNow: e.target.checked,
+                    }))
+                  }
+                  className="w-5 h-5 rounded border-2 border-(--border) accent-(--primary)"
+                />
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-purple-500/10 flex items-center justify-center shrink-0">
+                    <Newspaper className="h-4 w-4 text-purple-500" />
+                  </div>
+                  <div>
+                    <span className="font-medium text-(--foreground)">
+                      SM Now
+                    </span>
+                    <p className="text-xs text-(--muted-foreground)">
+                      News and articles
+                    </p>
+                  </div>
+                </div>
+              </label>
+              <label className="flex items-center gap-3 p-3 bg-(--background) rounded-xl cursor-pointer hover:bg-(--accent) transition-colors">
+                <input
+                  type="checkbox"
+                  checked={newsletter.subscribePods}
+                  onChange={(e) =>
+                    setNewsletter((prev) => ({
+                      ...prev,
+                      subscribePods: e.target.checked,
+                    }))
+                  }
+                  className="w-5 h-5 rounded border-2 border-(--border) accent-(--primary)"
+                />
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-red-500/10 flex items-center justify-center shrink-0">
+                    <Headphones className="h-4 w-4 text-red-500" />
+                  </div>
+                  <div>
+                    <span className="font-medium text-(--foreground)">
+                      SM Pods
+                    </span>
+                    <p className="text-xs text-(--muted-foreground)">
+                      Podcast episodes
+                    </p>
+                  </div>
+                </div>
+              </label>
+            </div>
+            {!hasPostType && (
+              <p className="mt-2 text-xs text-red-500">
+                Please select at least one post type
+              </p>
+            )}
+          </div>
+
+          {/* Topics Section */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <h3 className="font-semibold text-(--foreground)">
+                Topics of Interest
+              </h3>
+              <span className="text-xs text-red-500">*Required</span>
+            </div>
+            <p className="text-sm text-(--muted-foreground) mb-4">
+              Select topics you&apos;re interested in:
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {ALL_TAGS.map((tag) => (
+                <button
+                  key={tag}
+                  onClick={() =>
+                    setNewsletter((prev) => ({
+                      ...prev,
+                      tags: prev.tags.includes(tag)
+                        ? prev.tags.filter((t) => t !== tag)
+                        : [...prev.tags, tag],
+                    }))
+                  }
+                  className={`px-3 py-2 text-sm rounded-lg font-medium capitalize transition-all ${
+                    newsletter.tags.includes(tag)
+                      ? 'bg-(--accent) text-(--accent-foreground) shadow-md'
+                      : 'bg-(--muted) text-(--muted-foreground) hover:bg-(--accent) hover:text-(--foreground)'
+                  }`}
+                >
+                  {tag.replace('-', ' ')}
+                </button>
+              ))}
+            </div>
+            {!hasTopic && (
+              <p className="mt-2 text-xs text-red-500">
+                Please select at least one topic
+              </p>
+            )}
+            {newsletter.tags.length > 0 && (
+              <p className="mt-3 text-sm text-(--muted-foreground)">
+                <span className="font-medium text-(--foreground)">
+                  {newsletter.tags.length}
+                </span>{' '}
+                topic{newsletter.tags.length !== 1 ? 's' : ''} selected
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="sticky bottom-0 bg-(--card) border-t border-(--border) px-6 py-4 flex justify-end gap-3">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-(--muted-foreground) hover:text-(--foreground) transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onSave}
+            disabled={loading || !isValid}
+            className="px-6 py-2 bg-(--primary) text-(--primary-foreground) rounded-lg font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <CheckCircle className="h-4 w-4" />
+                {isEditing ? 'Save Changes' : 'Subscribe'}
+              </>
+            )}
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
 
 // Helper components for consistent iconography
 const PostTypeIcon = ({
@@ -190,36 +427,34 @@ export default function DashboardPage() {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<
-    'overview' | 'drafts' | 'submissions' | 'newsletter' | 'notifications'
+    'overview' | 'drafts' | 'submissions' | 'email-preferences'
   >('overview');
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [showNewsletterModal, setShowNewsletterModal] = useState(false);
+  const [activitySaving, setActivitySaving] = useState(false);
+  const [submissionSaving, setSubmissionSaving] = useState(false);
 
-  // Newsletter state
+  // Newsletter state (unified with notification preferences)
   const [newsletter, setNewsletter] = useState<NewsletterSubscription>({
     subscribeExpo: false,
     subscribeNow: false,
     subscribePods: false,
     tags: [],
     isActive: false,
-  });
-  const [newsletterLoading, setNewsletterLoading] = useState(false);
-
-  // Notification preferences state
-  const [notifications, setNotifications] = useState<NotificationPreferences>({
+    emailOnApproval: true,
+    emailOnRejection: true,
+    digestEnabled: true,
     emailOnLike: true,
     emailOnComment: true,
     emailOnReply: true,
-    emailOnApproval: true,
-    emailOnRejection: true,
     emailEnabled: true,
   });
-  const [notificationsLoading, setNotificationsLoading] = useState(false);
+  const [newsletterLoading, setNewsletterLoading] = useState(false);
   const profileSyncRef = useRef(false);
 
   useEffect(() => {
     loadData();
     loadNewsletter();
-    loadNotifications();
   }, []);
 
   useEffect(() => {
@@ -231,40 +466,6 @@ export default function DashboardPage() {
       console.error('Failed to sync profile:', error);
     });
   }, [isLoaded, user]);
-
-  const loadNotifications = async () => {
-    try {
-      const response = await fetch('/api/notifications');
-      const data = await response.json();
-      if (data.preferences) {
-        setNotifications(data.preferences);
-      }
-    } catch (error) {
-      console.error('Failed to load notification preferences:', error);
-    }
-  };
-
-  const saveNotifications = async () => {
-    setNotificationsLoading(true);
-    try {
-      const response = await fetch('/api/notifications', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(notifications),
-      });
-
-      if (response.ok) {
-        toast.success('Notification preferences saved!');
-      } else {
-        toast.error('Failed to save notification preferences');
-      }
-    } catch (error) {
-      console.error('Failed to save notification preferences:', error);
-      toast.error('Failed to save notification preferences');
-    } finally {
-      setNotificationsLoading(false);
-    }
-  };
 
   const loadNewsletter = async () => {
     try {
@@ -279,6 +480,16 @@ export default function DashboardPage() {
           subscribePods: data.subscription.subscribePods,
           tags: data.subscription.tags || [],
           isActive: data.subscription.isActive,
+          // Unified notification preferences
+          emailOnApproval: data.subscription.emailOnApproval ?? true,
+          emailOnRejection: data.subscription.emailOnRejection ?? true,
+          // Activity digest preferences
+          digestEnabled: data.subscription.digestEnabled ?? true,
+          emailOnLike: data.subscription.emailOnLike ?? true,
+          emailOnComment: data.subscription.emailOnComment ?? true,
+          emailOnReply: data.subscription.emailOnReply ?? true,
+          // Master toggle
+          emailEnabled: data.subscription.emailEnabled ?? true,
         });
       }
     } catch (error) {
@@ -297,18 +508,157 @@ export default function DashboardPage() {
           subscribeNow: newsletter.subscribeNow,
           subscribePods: newsletter.subscribePods,
           tags: newsletter.tags,
+          // Keep existing values for other preferences
+          emailOnApproval: newsletter.emailOnApproval,
+          emailOnRejection: newsletter.emailOnRejection,
+          digestEnabled: newsletter.digestEnabled,
+          emailOnLike: newsletter.emailOnLike,
+          emailOnComment: newsletter.emailOnComment,
+          emailOnReply: newsletter.emailOnReply,
+          emailEnabled: newsletter.emailEnabled,
         }),
       });
 
       if (response.ok) {
         toast.success('Newsletter preferences saved!');
         setNewsletter((prev) => ({ ...prev, isActive: true }));
+        setShowNewsletterModal(false);
       } else {
         toast.error('Failed to save preferences');
       }
     } catch (error) {
       console.error('Failed to save newsletter preferences:', error);
       toast.error('Failed to save preferences');
+    } finally {
+      setNewsletterLoading(false);
+    }
+  };
+
+  const saveActivityPreferences = async () => {
+    setActivitySaving(true);
+    try {
+      const response = await fetch('/api/newsletter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          // Keep newsletter values
+          subscribeExpo: newsletter.subscribeExpo,
+          subscribeNow: newsletter.subscribeNow,
+          subscribePods: newsletter.subscribePods,
+          tags: newsletter.tags,
+          emailOnApproval: newsletter.emailOnApproval,
+          emailOnRejection: newsletter.emailOnRejection,
+          // Activity digest preferences
+          digestEnabled: newsletter.digestEnabled,
+          emailOnLike: newsletter.emailOnLike,
+          emailOnComment: newsletter.emailOnComment,
+          emailOnReply: newsletter.emailOnReply,
+          emailEnabled: newsletter.emailEnabled,
+        }),
+      });
+
+      if (response.ok) {
+        toast.success('Activity preferences saved!');
+      } else {
+        toast.error('Failed to save preferences');
+      }
+    } catch (error) {
+      console.error('Failed to save activity preferences:', error);
+      toast.error('Failed to save preferences');
+    } finally {
+      setActivitySaving(false);
+    }
+  };
+
+  const saveSubmissionPreferences = async () => {
+    setSubmissionSaving(true);
+    try {
+      const response = await fetch('/api/newsletter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          // Keep newsletter values
+          subscribeExpo: newsletter.subscribeExpo,
+          subscribeNow: newsletter.subscribeNow,
+          subscribePods: newsletter.subscribePods,
+          tags: newsletter.tags,
+          // Submission notification preferences
+          emailOnApproval: newsletter.emailOnApproval,
+          emailOnRejection: newsletter.emailOnRejection,
+          // Keep activity values
+          digestEnabled: newsletter.digestEnabled,
+          emailOnLike: newsletter.emailOnLike,
+          emailOnComment: newsletter.emailOnComment,
+          emailOnReply: newsletter.emailOnReply,
+          emailEnabled: newsletter.emailEnabled,
+        }),
+      });
+
+      if (response.ok) {
+        toast.success('Submission notification preferences saved!');
+      } else {
+        toast.error('Failed to save preferences');
+      }
+    } catch (error) {
+      console.error('Failed to save submission preferences:', error);
+      toast.error('Failed to save preferences');
+    } finally {
+      setSubmissionSaving(false);
+    }
+  };
+
+  const saveMasterToggle = async () => {
+    setNewsletterLoading(true);
+    try {
+      const response = await fetch('/api/newsletter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subscribeExpo: newsletter.subscribeExpo,
+          subscribeNow: newsletter.subscribeNow,
+          subscribePods: newsletter.subscribePods,
+          tags: newsletter.tags,
+          emailOnApproval: newsletter.emailOnApproval,
+          emailOnRejection: newsletter.emailOnRejection,
+          digestEnabled: newsletter.digestEnabled,
+          emailOnLike: newsletter.emailOnLike,
+          emailOnComment: newsletter.emailOnComment,
+          emailOnReply: newsletter.emailOnReply,
+          emailEnabled: newsletter.emailEnabled,
+        }),
+      });
+
+      if (response.ok) {
+        toast.success(
+          newsletter.emailEnabled ? 'Emails enabled!' : 'Emails disabled'
+        );
+      } else {
+        toast.error('Failed to save preference');
+      }
+    } catch (error) {
+      console.error('Failed to save master toggle:', error);
+      toast.error('Failed to save preference');
+    } finally {
+      setNewsletterLoading(false);
+    }
+  };
+
+  const unsubscribeNewsletter = async () => {
+    setNewsletterLoading(true);
+    try {
+      const response = await fetch('/api/newsletter', {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        toast.success('Unsubscribed from newsletter');
+        setNewsletter((prev) => ({ ...prev, isActive: false }));
+      } else {
+        toast.error('Failed to unsubscribe');
+      }
+    } catch (error) {
+      console.error('Failed to unsubscribe from newsletter:', error);
+      toast.error('Failed to unsubscribe');
     } finally {
       setNewsletterLoading(false);
     }
@@ -433,8 +783,11 @@ export default function DashboardPage() {
       icon: Send,
       count: submissions.length,
     },
-    { id: 'newsletter' as const, label: 'Newsletter', icon: Bell },
-    { id: 'notifications' as const, label: 'Notifications', icon: Settings },
+    {
+      id: 'email-preferences' as const,
+      label: 'Email Preferences',
+      icon: Mail,
+    },
   ];
 
   return (
@@ -1162,439 +1515,402 @@ export default function DashboardPage() {
                 </div>
               )}
 
-              {activeTab === 'newsletter' && (
+              {activeTab === 'email-preferences' && (
                 <div className="space-y-6">
+                  {/* Header */}
                   <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
                     <div>
                       <h2 className="text-xl sm:text-2xl font-bold text-(--foreground)">
-                        Newsletter Preferences
+                        Email Preferences
                       </h2>
                       <p className="text-sm text-(--muted-foreground) mt-1">
-                        Get notified when new posts matching your interests are
-                        published.
+                        Manage all your email notification settings in one
+                        place.
                       </p>
                     </div>
-                    {newsletter.isActive && (
+                    {newsletter.emailEnabled ? (
                       <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-500/10 text-green-500 rounded-full text-sm font-medium w-fit">
-                        <CheckCircle className="h-4 w-4" /> Subscribed
+                        <CheckCircle className="h-4 w-4" /> Emails Enabled
                       </span>
-                    )}
-                  </div>
-
-                  {/* Post Type Subscriptions */}
-                  <div className="bg-(--card) border border-(--border) rounded-xl p-4 sm:p-6">
-                    <h3 className="font-semibold text-(--foreground) mb-2 flex items-center gap-2">
-                      <Bell className="h-5 w-5 text-(--muted-foreground)" />
-                      Post Types
-                    </h3>
-                    <p className="text-sm text-(--muted-foreground) mb-4">
-                      Choose which types of posts you want to receive
-                      notifications for:
-                    </p>
-                    <div className="space-y-3">
-                      <label className="flex items-center gap-3 p-4 bg-(--background) rounded-xl cursor-pointer hover:bg-(--accent) transition-colors">
-                        <input
-                          type="checkbox"
-                          checked={newsletter.subscribeExpo}
-                          onChange={(e) =>
-                            setNewsletter((prev) => ({
-                              ...prev,
-                              subscribeExpo: e.target.checked,
-                            }))
-                          }
-                          className="w-5 h-5 rounded border-2 border-(--border) accent-(--primary)"
-                        />
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
-                            <Target className="h-5 w-5 text-blue-500" />
-                          </div>
-                          <div>
-                            <span className="font-medium text-(--foreground)">
-                              SM Expo
-                            </span>
-                            <p className="text-xs text-(--muted-foreground)">
-                              Project showcases and exhibitions
-                            </p>
-                          </div>
-                        </div>
-                      </label>
-                      <label className="flex items-center gap-3 p-4 bg-(--background) rounded-xl cursor-pointer hover:bg-(--accent) transition-colors">
-                        <input
-                          type="checkbox"
-                          checked={newsletter.subscribeNow}
-                          onChange={(e) =>
-                            setNewsletter((prev) => ({
-                              ...prev,
-                              subscribeNow: e.target.checked,
-                            }))
-                          }
-                          className="w-5 h-5 rounded border-2 border-(--border) accent-(--primary)"
-                        />
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center shrink-0">
-                            <Newspaper className="h-5 w-5 text-purple-500" />
-                          </div>
-                          <div>
-                            <span className="font-medium text-(--foreground)">
-                              SM Now
-                            </span>
-                            <p className="text-xs text-(--muted-foreground)">
-                              News and articles
-                            </p>
-                          </div>
-                        </div>
-                      </label>
-                      <label className="flex items-center gap-3 p-4 bg-(--background) rounded-xl cursor-pointer hover:bg-(--accent) transition-colors">
-                        <input
-                          type="checkbox"
-                          checked={newsletter.subscribePods}
-                          onChange={(e) =>
-                            setNewsletter((prev) => ({
-                              ...prev,
-                              subscribePods: e.target.checked,
-                            }))
-                          }
-                          className="w-5 h-5 rounded border-2 border-(--border) accent-(--primary)"
-                        />
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-lg bg-red-500/10 flex items-center justify-center shrink-0">
-                            <Headphones className="h-5 w-5 text-red-500" />
-                          </div>
-                          <div>
-                            <span className="font-medium text-(--foreground)">
-                              SM Pods
-                            </span>
-                            <p className="text-xs text-(--muted-foreground)">
-                              Podcast episodes
-                            </p>
-                          </div>
-                        </div>
-                      </label>
-                    </div>
-                  </div>
-
-                  {/* Tag Preferences */}
-                  <div className="bg-(--card) border border-(--border) rounded-lg p-4 sm:p-6">
-                    <h3 className="font-semibold text-(--foreground) mb-4">
-                      Topics of Interest
-                    </h3>
-                    <p className="text-sm text-(--muted-foreground) mb-4">
-                      Select tags you&apos;re interested in. Leave empty to
-                      receive all posts of your subscribed types.
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {ALL_TAGS.map((tag) => (
-                        <button
-                          key={tag}
-                          onClick={() => toggleNewsletterTag(tag)}
-                          className={`px-3 py-2 text-sm rounded-lg font-medium capitalize transition-all ${
-                            newsletter.tags.includes(tag)
-                              ? 'bg-(--accent) text-(--accent-foreground) shadow-md'
-                              : 'bg-(--muted) text-(--muted-foreground) hover:bg-(--accent) hover:text-(--foreground)'
-                          }`}
-                        >
-                          {tag.replace('-', ' ')}
-                        </button>
-                      ))}
-                    </div>
-                    {newsletter.tags.length > 0 && (
-                      <p className="mt-4 text-sm text-(--muted-foreground)">
-                        <span className="font-medium text-(--foreground)">
-                          {newsletter.tags.length}
-                        </span>{' '}
-                        tag{newsletter.tags.length !== 1 ? 's' : ''} selected
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Save Button */}
-                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 pt-2">
-                    {!newsletter.subscribeExpo &&
-                    !newsletter.subscribeNow &&
-                    !newsletter.subscribePods ? (
-                      <p className="text-sm text-(--muted-foreground)">
-                        Select at least one post type to subscribe to the
-                        newsletter.
-                      </p>
                     ) : (
-                      <p className="text-sm text-(--muted-foreground)">
-                        You&apos;ll receive email notifications for new posts
-                        matching your preferences.
-                      </p>
-                    )}
-                    <button
-                      onClick={saveNewsletter}
-                      disabled={
-                        newsletterLoading ||
-                        (!newsletter.subscribeExpo &&
-                          !newsletter.subscribeNow &&
-                          !newsletter.subscribePods)
-                      }
-                      className="w-full sm:w-auto px-6 py-3 bg-(--primary) text-(--primary-foreground) rounded-xl font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                    >
-                      {newsletterLoading ? (
-                        <>
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          Saving...
-                        </>
-                      ) : (
-                        <>
-                          <CheckCircle className="h-4 w-4" />
-                          Save Preferences
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {activeTab === 'notifications' && (
-                <div className="space-y-6">
-                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-                    <div>
-                      <h2 className="text-xl sm:text-2xl font-bold text-(--foreground)">
-                        Notification Settings
-                      </h2>
-                      <p className="text-sm text-(--muted-foreground) mt-1">
-                        Control when you receive email notifications about your
-                        posts and interactions.
-                      </p>
-                    </div>
-                    {notifications.emailEnabled && (
-                      <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-500/10 text-green-500 rounded-full text-sm font-medium w-fit">
-                        <Mail className="h-4 w-4" /> Emails Enabled
+                      <span className="inline-flex items-center gap-1 px-3 py-1 bg-(--muted) text-(--muted-foreground) rounded-full text-sm font-medium w-fit">
+                        <XCircle className="h-4 w-4" /> Emails Disabled
                       </span>
                     )}
                   </div>
 
-                  {/* Master Toggle */}
+                  {/* Newsletter Section */}
+                  <OnboardingTooltip
+                    id="dashboard-newsletter"
+                    title="Newsletter Subscription"
+                    content="Subscribe to get emails when new posts matching your interests are published. Choose your favorite post types and topics!"
+                    position="bottom"
+                  >
+                    <div className="bg-(--card) border border-(--border) rounded-xl p-4 sm:p-6">
+                      <div className="flex items-start gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
+                          <Bell className="h-6 w-6 text-blue-500" />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-(--foreground) text-lg">
+                            Newsletter Subscription
+                          </h3>
+                          <p className="text-sm text-(--muted-foreground) mt-1 mb-4">
+                            Get notified when new posts matching your interests
+                            are published.
+                          </p>
+
+                          {newsletter.isActive ? (
+                            <div>
+                              {/* Current Subscription Status */}
+                              <div className="bg-(--background) rounded-lg p-4 mb-4">
+                                <div className="flex items-center gap-2 mb-3">
+                                  <CheckCircle className="h-4 w-4 text-green-500" />
+                                  <span className="text-sm font-medium text-green-500">
+                                    Active Subscription
+                                  </span>
+                                </div>
+                                <div className="space-y-2 text-sm">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-(--muted-foreground)">
+                                      Post Types:
+                                    </span>
+                                    <div className="flex gap-1 flex-wrap">
+                                      {newsletter.subscribeExpo && (
+                                        <span className="px-2 py-0.5 bg-blue-500/10 text-blue-500 rounded text-xs font-medium">
+                                          SM Expo
+                                        </span>
+                                      )}
+                                      {newsletter.subscribeNow && (
+                                        <span className="px-2 py-0.5 bg-purple-500/10 text-purple-500 rounded text-xs font-medium">
+                                          SM Now
+                                        </span>
+                                      )}
+                                      {newsletter.subscribePods && (
+                                        <span className="px-2 py-0.5 bg-red-500/10 text-red-500 rounded text-xs font-medium">
+                                          SM Pods
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className="flex items-start gap-2">
+                                    <span className="text-(--muted-foreground) shrink-0">
+                                      Topics:
+                                    </span>
+                                    <div className="flex gap-1 flex-wrap">
+                                      {newsletter.tags.map((tag) => (
+                                        <span
+                                          key={tag}
+                                          className="px-2 py-0.5 bg-(--muted) text-(--foreground) rounded text-xs font-medium capitalize"
+                                        >
+                                          {tag.replace('-', ' ')}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Action Buttons */}
+                              <div className="flex flex-wrap gap-3">
+                                <button
+                                  onClick={() => setShowNewsletterModal(true)}
+                                  className="px-4 py-2 bg-(--primary) text-(--primary-foreground) rounded-lg font-medium hover:opacity-90 transition-opacity flex items-center gap-2"
+                                >
+                                  <Edit className="h-4 w-4" />
+                                  Edit Preferences
+                                </button>
+                                <button
+                                  onClick={unsubscribeNewsletter}
+                                  disabled={newsletterLoading}
+                                  className="px-4 py-2 bg-red-500/10 text-red-500 border border-red-500/20 rounded-lg font-medium hover:bg-red-500/20 transition-colors disabled:opacity-50 flex items-center gap-2"
+                                >
+                                  {newsletterLoading ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <XCircle className="h-4 w-4" />
+                                  )}
+                                  Unsubscribe
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div>
+                              <p className="text-sm text-(--muted-foreground) mb-4">
+                                You&apos;re not currently subscribed to the
+                                newsletter. Subscribe to stay updated on new
+                                content!
+                              </p>
+                              <button
+                                onClick={() => setShowNewsletterModal(true)}
+                                className="px-6 py-3 bg-(--primary) text-(--primary-foreground) rounded-xl font-semibold hover:opacity-90 transition-opacity flex items-center gap-2"
+                              >
+                                <Bell className="h-4 w-4" />
+                                Subscribe to Newsletter
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </OnboardingTooltip>
+
+                  {/* Activity Digest Section */}
                   <div className="bg-(--card) border border-(--border) rounded-xl p-4 sm:p-6">
-                    <label className="flex items-center justify-between gap-4 cursor-pointer">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-(--primary)/10 flex items-center justify-center shrink-0">
-                          <Mail className="h-5 w-5 text-(--primary)" />
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center shrink-0">
+                        <Heart className="h-6 w-6 text-purple-500" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-1">
+                          <h3 className="font-semibold text-(--foreground) text-lg">
+                            Activity Digest
+                          </h3>
+                          <label className="relative inline-flex items-center cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={newsletter.digestEnabled}
+                              onChange={(e) =>
+                                setNewsletter((prev) => ({
+                                  ...prev,
+                                  digestEnabled: e.target.checked,
+                                }))
+                              }
+                              className="sr-only peer"
+                            />
+                            <div className="w-11 h-6 bg-(--muted) peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-(--primary)"></div>
+                          </label>
+                        </div>
+                        <p className="text-sm text-(--muted-foreground) mb-4">
+                          Receive a daily email summary of activity on your
+                          posts. No spam - just one digest per day.
+                        </p>
+
+                        {newsletter.digestEnabled && (
+                          <div className="space-y-3 mb-4">
+                            <p className="text-sm font-medium text-(--foreground)">
+                              Include in your digest:
+                            </p>
+                            <div className="grid gap-2">
+                              <label className="flex items-center gap-3 p-3 bg-(--background) rounded-lg cursor-pointer hover:bg-(--accent) transition-colors">
+                                <input
+                                  type="checkbox"
+                                  checked={newsletter.emailOnLike}
+                                  onChange={(e) =>
+                                    setNewsletter((prev) => ({
+                                      ...prev,
+                                      emailOnLike: e.target.checked,
+                                    }))
+                                  }
+                                  className="w-4 h-4 rounded border-2 border-(--border) accent-(--primary)"
+                                />
+                                <div className="flex items-center gap-2">
+                                  <Heart className="h-4 w-4 text-pink-500" />
+                                  <span className="text-sm text-(--foreground)">
+                                    Likes on your posts
+                                  </span>
+                                </div>
+                              </label>
+                              <label className="flex items-center gap-3 p-3 bg-(--background) rounded-lg cursor-pointer hover:bg-(--accent) transition-colors">
+                                <input
+                                  type="checkbox"
+                                  checked={newsletter.emailOnComment}
+                                  onChange={(e) =>
+                                    setNewsletter((prev) => ({
+                                      ...prev,
+                                      emailOnComment: e.target.checked,
+                                    }))
+                                  }
+                                  className="w-4 h-4 rounded border-2 border-(--border) accent-(--primary)"
+                                />
+                                <div className="flex items-center gap-2">
+                                  <MessageSquare className="h-4 w-4 text-blue-500" />
+                                  <span className="text-sm text-(--foreground)">
+                                    Comments on your posts
+                                  </span>
+                                </div>
+                              </label>
+                              <label className="flex items-center gap-3 p-3 bg-(--background) rounded-lg cursor-pointer hover:bg-(--accent) transition-colors">
+                                <input
+                                  type="checkbox"
+                                  checked={newsletter.emailOnReply}
+                                  onChange={(e) =>
+                                    setNewsletter((prev) => ({
+                                      ...prev,
+                                      emailOnReply: e.target.checked,
+                                    }))
+                                  }
+                                  className="w-4 h-4 rounded border-2 border-(--border) accent-(--primary)"
+                                />
+                                <div className="flex items-center gap-2">
+                                  <MessageSquare className="h-4 w-4 text-purple-500" />
+                                  <span className="text-sm text-(--foreground)">
+                                    Replies to your comments
+                                  </span>
+                                </div>
+                              </label>
+                            </div>
+                          </div>
+                        )}
+
+                        {!newsletter.digestEnabled && (
+                          <p className="text-sm text-amber-600 bg-amber-500/10 px-3 py-2 rounded-lg mb-4">
+                            Activity digest is disabled. Enable to receive a
+                            daily summary of interactions.
+                          </p>
+                        )}
+
+                        <button
+                          onClick={saveActivityPreferences}
+                          disabled={activitySaving}
+                          className="px-4 py-2 bg-(--primary) text-(--primary-foreground) rounded-lg font-medium hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-2"
+                        >
+                          {activitySaving ? (
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              Saving...
+                            </>
+                          ) : (
+                            <>
+                              <CheckCircle className="h-4 w-4" />
+                              Save Activity Preferences
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Submission Updates Section */}
+                  <div className="bg-(--card) border border-(--border) rounded-xl p-4 sm:p-6">
+                    <div className="flex items-start gap-4">
+                      <div className="w-12 h-12 rounded-xl bg-green-500/10 flex items-center justify-center shrink-0">
+                        <Send className="h-6 w-6 text-green-500" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-(--foreground) text-lg mb-1">
+                          Submission Updates
+                        </h3>
+                        <p className="text-sm text-(--muted-foreground) mb-4">
+                          Get notified about the status of your submitted posts.
+                        </p>
+
+                        <div className="space-y-2 mb-4">
+                          <label className="flex items-center gap-3 p-3 bg-(--background) rounded-lg cursor-pointer hover:bg-(--accent) transition-colors">
+                            <input
+                              type="checkbox"
+                              checked={newsletter.emailOnApproval}
+                              onChange={(e) =>
+                                setNewsletter((prev) => ({
+                                  ...prev,
+                                  emailOnApproval: e.target.checked,
+                                }))
+                              }
+                              className="w-4 h-4 rounded border-2 border-(--border) accent-(--primary)"
+                            />
+                            <div className="flex items-center gap-2">
+                              <CheckCircle className="h-4 w-4 text-green-500" />
+                              <span className="text-sm text-(--foreground)">
+                                When my submission is approved
+                              </span>
+                            </div>
+                          </label>
+                          <label className="flex items-center gap-3 p-3 bg-(--background) rounded-lg cursor-pointer hover:bg-(--accent) transition-colors">
+                            <input
+                              type="checkbox"
+                              checked={newsletter.emailOnRejection}
+                              onChange={(e) =>
+                                setNewsletter((prev) => ({
+                                  ...prev,
+                                  emailOnRejection: e.target.checked,
+                                }))
+                              }
+                              className="w-4 h-4 rounded border-2 border-(--border) accent-(--primary)"
+                            />
+                            <div className="flex items-center gap-2">
+                              <XCircle className="h-4 w-4 text-amber-500" />
+                              <span className="text-sm text-(--foreground)">
+                                When my submission needs revision
+                              </span>
+                            </div>
+                          </label>
+                        </div>
+
+                        <button
+                          onClick={saveSubmissionPreferences}
+                          disabled={submissionSaving}
+                          className="px-4 py-2 bg-(--primary) text-(--primary-foreground) rounded-lg font-medium hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-2"
+                        >
+                          {submissionSaving ? (
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              Saving...
+                            </>
+                          ) : (
+                            <>
+                              <CheckCircle className="h-4 w-4" />
+                              Save Submission Preferences
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Master Email Toggle */}
+                  <div className="bg-(--card) border border-(--border) rounded-xl p-4 sm:p-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-(--primary)/10 flex items-center justify-center shrink-0">
+                          <Mail className="h-6 w-6 text-(--primary)" />
                         </div>
                         <div>
-                          <span className="font-semibold text-(--foreground)">
-                            Email Notifications
-                          </span>
+                          <h3 className="font-semibold text-(--foreground) text-lg">
+                            Master Email Toggle
+                          </h3>
                           <p className="text-sm text-(--muted-foreground)">
-                            Master toggle for all email notifications
+                            Turn off all email notifications at once
                           </p>
                         </div>
                       </div>
-                      <div className="relative">
+                      <label className="relative inline-flex items-center cursor-pointer">
                         <input
                           type="checkbox"
-                          checked={notifications.emailEnabled}
-                          onChange={(e) =>
-                            setNotifications((prev) => ({
+                          checked={newsletter.emailEnabled}
+                          onChange={(e) => {
+                            setNewsletter((prev) => ({
                               ...prev,
                               emailEnabled: e.target.checked,
-                            }))
-                          }
+                            }));
+                            // Auto-save master toggle
+                            setTimeout(() => saveMasterToggle(), 100);
+                          }}
                           className="sr-only peer"
                         />
-                        <div className="w-11 h-6 bg-(--muted) peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-(--primary)"></div>
-                      </div>
-                    </label>
-                  </div>
-
-                  {/* Notification Types */}
-                  <div
-                    className={`bg-(--card) border border-(--border) rounded-xl p-4 sm:p-6 transition-opacity ${!notifications.emailEnabled ? 'opacity-50 pointer-events-none' : ''}`}
-                  >
-                    <h3 className="font-semibold text-(--foreground) mb-2 flex items-center gap-2">
-                      <Bell className="h-5 w-5 text-(--muted-foreground)" />
-                      Notification Types
-                    </h3>
-                    <p className="text-sm text-(--muted-foreground) mb-4">
-                      Choose which activities you want to be notified about:
-                    </p>
-                    <div className="space-y-3">
-                      {/* Likes */}
-                      <label className="flex items-center justify-between gap-3 p-4 bg-(--background) rounded-xl cursor-pointer hover:bg-(--accent) transition-colors">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-lg bg-pink-500/10 flex items-center justify-center shrink-0">
-                            <Heart className="h-5 w-5 text-pink-500" />
-                          </div>
-                          <div>
-                            <span className="font-medium text-(--foreground)">
-                              Likes
-                            </span>
-                            <p className="text-xs text-(--muted-foreground)">
-                              When someone likes your post
-                            </p>
-                          </div>
-                        </div>
-                        <input
-                          type="checkbox"
-                          checked={notifications.emailOnLike}
-                          onChange={(e) =>
-                            setNotifications((prev) => ({
-                              ...prev,
-                              emailOnLike: e.target.checked,
-                            }))
-                          }
-                          className="w-5 h-5 rounded border-2 border-(--border) accent-(--primary)"
-                        />
-                      </label>
-
-                      {/* Comments */}
-                      <label className="flex items-center justify-between gap-3 p-4 bg-(--background) rounded-xl cursor-pointer hover:bg-(--accent) transition-colors">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
-                            <MessageSquare className="h-5 w-5 text-blue-500" />
-                          </div>
-                          <div>
-                            <span className="font-medium text-(--foreground)">
-                              Comments
-                            </span>
-                            <p className="text-xs text-(--muted-foreground)">
-                              When someone comments on your post
-                            </p>
-                          </div>
-                        </div>
-                        <input
-                          type="checkbox"
-                          checked={notifications.emailOnComment}
-                          onChange={(e) =>
-                            setNotifications((prev) => ({
-                              ...prev,
-                              emailOnComment: e.target.checked,
-                            }))
-                          }
-                          className="w-5 h-5 rounded border-2 border-(--border) accent-(--primary)"
-                        />
-                      </label>
-
-                      {/* Replies */}
-                      <label className="flex items-center justify-between gap-3 p-4 bg-(--background) rounded-xl cursor-pointer hover:bg-(--accent) transition-colors">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-lg bg-cyan-500/10 flex items-center justify-center shrink-0">
-                            <MessageSquare className="h-5 w-5 text-cyan-500" />
-                          </div>
-                          <div>
-                            <span className="font-medium text-(--foreground)">
-                              Replies
-                            </span>
-                            <p className="text-xs text-(--muted-foreground)">
-                              When someone replies to your comment
-                            </p>
-                          </div>
-                        </div>
-                        <input
-                          type="checkbox"
-                          checked={notifications.emailOnReply}
-                          onChange={(e) =>
-                            setNotifications((prev) => ({
-                              ...prev,
-                              emailOnReply: e.target.checked,
-                            }))
-                          }
-                          className="w-5 h-5 rounded border-2 border-(--border) accent-(--primary)"
-                        />
+                        <div className="w-11 h-6 bg-(--muted) peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-(--primary)"></div>
                       </label>
                     </div>
-                  </div>
-
-                  {/* Submission Status Notifications */}
-                  <div
-                    className={`bg-(--card) border border-(--border) rounded-xl p-4 sm:p-6 transition-opacity ${!notifications.emailEnabled ? 'opacity-50 pointer-events-none' : ''}`}
-                  >
-                    <h3 className="font-semibold text-(--foreground) mb-2 flex items-center gap-2">
-                      <Send className="h-5 w-5 text-(--muted-foreground)" />
-                      Submission Updates
-                    </h3>
-                    <p className="text-sm text-(--muted-foreground) mb-4">
-                      Get notified about your submission review status:
-                    </p>
-                    <div className="space-y-3">
-                      {/* Approval */}
-                      <label className="flex items-center justify-between gap-3 p-4 bg-(--background) rounded-xl cursor-pointer hover:bg-(--accent) transition-colors">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0">
-                            <CheckCircle className="h-5 w-5 text-emerald-500" />
-                          </div>
-                          <div>
-                            <span className="font-medium text-(--foreground)">
-                              Approvals
-                            </span>
-                            <p className="text-xs text-(--muted-foreground)">
-                              When your submission is approved
-                            </p>
-                          </div>
-                        </div>
-                        <input
-                          type="checkbox"
-                          checked={notifications.emailOnApproval}
-                          onChange={(e) =>
-                            setNotifications((prev) => ({
-                              ...prev,
-                              emailOnApproval: e.target.checked,
-                            }))
-                          }
-                          className="w-5 h-5 rounded border-2 border-(--border) accent-(--primary)"
-                        />
-                      </label>
-
-                      {/* Rejection */}
-                      <label className="flex items-center justify-between gap-3 p-4 bg-(--background) rounded-xl cursor-pointer hover:bg-(--accent) transition-colors">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-lg bg-red-500/10 flex items-center justify-center shrink-0">
-                            <XCircle className="h-5 w-5 text-red-500" />
-                          </div>
-                          <div>
-                            <span className="font-medium text-(--foreground)">
-                              Rejections
-                            </span>
-                            <p className="text-xs text-(--muted-foreground)">
-                              When your submission is rejected
-                            </p>
-                          </div>
-                        </div>
-                        <input
-                          type="checkbox"
-                          checked={notifications.emailOnRejection}
-                          onChange={(e) =>
-                            setNotifications((prev) => ({
-                              ...prev,
-                              emailOnRejection: e.target.checked,
-                            }))
-                          }
-                          className="w-5 h-5 rounded border-2 border-(--border) accent-(--primary)"
-                        />
-                      </label>
-                    </div>
-                  </div>
-
-                  {/* Save Button */}
-                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 pt-2">
-                    <p className="text-sm text-(--muted-foreground)">
-                      {notifications.emailEnabled
-                        ? "You'll receive emails based on your selected preferences."
-                        : 'All email notifications are currently disabled.'}
-                    </p>
-                    <button
-                      onClick={saveNotifications}
-                      disabled={notificationsLoading}
-                      className="w-full sm:w-auto px-6 py-3 bg-(--primary) text-(--primary-foreground) rounded-xl font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                    >
-                      {notificationsLoading ? (
-                        <>
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          Saving...
-                        </>
-                      ) : (
-                        <>
-                          <CheckCircle className="h-4 w-4" />
-                          Save Settings
-                        </>
-                      )}
-                    </button>
+                    {!newsletter.emailEnabled && (
+                      <p className="mt-4 text-sm text-amber-600 bg-amber-500/10 px-3 py-2 rounded-lg">
+                        All email notifications are currently disabled. Your
+                        preferences are saved but no emails will be sent until
+                        you enable this.
+                      </p>
+                    )}
                   </div>
                 </div>
               )}
+
+              {/* Newsletter Modal */}
+              <NewsletterModal
+                isOpen={showNewsletterModal}
+                onClose={() => setShowNewsletterModal(false)}
+                newsletter={newsletter}
+                setNewsletter={setNewsletter}
+                onSave={saveNewsletter}
+                loading={newsletterLoading}
+                isEditing={newsletter.isActive}
+              />
             </>
           )}
         </motion.div>

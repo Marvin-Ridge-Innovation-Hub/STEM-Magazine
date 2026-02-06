@@ -48,7 +48,7 @@ export async function GET() {
   }
 }
 
-// POST - Create or update newsletter subscription
+// POST - Create or update newsletter subscription (unified with notification preferences)
 export async function POST(request: NextRequest) {
   try {
     const { userId: clerkId } = await auth();
@@ -58,7 +58,21 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { subscribeExpo, subscribeNow, subscribePods, tags } = body;
+    const {
+      subscribeExpo,
+      subscribeNow,
+      subscribePods,
+      tags,
+      // Unified notification preferences
+      emailOnApproval,
+      emailOnRejection,
+      emailEnabled,
+      // Activity digest preferences
+      digestEnabled,
+      emailOnLike,
+      emailOnComment,
+      emailOnReply,
+    } = body;
 
     // Find user
     const user = await prisma.user.findUnique({
@@ -70,24 +84,55 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Upsert subscription
+    // Build update data - only include fields that were provided
+    const updateData: Record<string, unknown> = {
+      updatedAt: new Date(),
+    };
+
+    // Newsletter preferences
+    if (subscribeExpo !== undefined) updateData.subscribeExpo = subscribeExpo;
+    if (subscribeNow !== undefined) updateData.subscribeNow = subscribeNow;
+    if (subscribePods !== undefined) updateData.subscribePods = subscribePods;
+    if (tags !== undefined) updateData.tags = tags;
+
+    // If any newsletter subscription is being set, activate subscription
+    if (subscribeExpo || subscribeNow || subscribePods) {
+      updateData.isActive = true;
+    }
+
+    // Notification preferences
+    if (emailOnApproval !== undefined)
+      updateData.emailOnApproval = emailOnApproval;
+    if (emailOnRejection !== undefined)
+      updateData.emailOnRejection = emailOnRejection;
+    if (emailEnabled !== undefined) updateData.emailEnabled = emailEnabled;
+
+    // Activity digest preferences
+    if (digestEnabled !== undefined) updateData.digestEnabled = digestEnabled;
+    if (emailOnLike !== undefined) updateData.emailOnLike = emailOnLike;
+    if (emailOnComment !== undefined)
+      updateData.emailOnComment = emailOnComment;
+    if (emailOnReply !== undefined) updateData.emailOnReply = emailOnReply;
+
+    // Upsert subscription with unified preferences
     const subscription = await prisma.newsletterSubscription.upsert({
       where: { userId: user.id },
-      update: {
-        subscribeExpo: subscribeExpo ?? false,
-        subscribeNow: subscribeNow ?? false,
-        subscribePods: subscribePods ?? false,
-        tags: tags ?? [],
-        isActive: true,
-        updatedAt: new Date(),
-      },
+      update: updateData,
       create: {
         userId: user.id,
         subscribeExpo: subscribeExpo ?? false,
         subscribeNow: subscribeNow ?? false,
         subscribePods: subscribePods ?? false,
         tags: tags ?? [],
-        isActive: true,
+        isActive: subscribeExpo || subscribeNow || subscribePods ? true : false,
+        emailOnApproval: emailOnApproval ?? true,
+        emailOnRejection: emailOnRejection ?? true,
+        emailEnabled: emailEnabled ?? true,
+        // Activity digest defaults
+        digestEnabled: digestEnabled ?? true,
+        emailOnLike: emailOnLike ?? true,
+        emailOnComment: emailOnComment ?? true,
+        emailOnReply: emailOnReply ?? true,
       },
     });
 

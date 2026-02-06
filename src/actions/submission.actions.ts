@@ -164,12 +164,13 @@ export async function approveSubmissionAction(submissionId: string) {
       console.warn('Author not found for submission:', submissionId);
     }
 
-    // Send approval notification to author
+    // Send approval notification to author (respects user preferences)
     if (authorProfile) {
       void sendApprovalNotification(
         result.submission,
         authorProfile.name || 'User',
-        authorProfile.email
+        authorProfile.email,
+        authorProfile.id // Pass authorId to check email preferences
       ).catch((error) => {
         console.error('Error sending approval email:', error);
       });
@@ -232,12 +233,13 @@ export async function approveSubmissionByToken(token: string) {
     // Get author info for email by database ID
     const authorProfile = await getUserById(submission.authorId);
 
-    // Send approval notification
+    // Send approval notification (respects user preferences)
     if (authorProfile) {
       await sendApprovalNotification(
         result.submission,
         authorProfile.name || 'User',
-        authorProfile.email
+        authorProfile.email,
+        authorProfile.id // Pass authorId to check email preferences
       );
     }
 
@@ -297,13 +299,14 @@ export async function rejectSubmissionAction(
     // Get author info for email by database ID
     const authorProfile = await getUserById(rejectedSubmission.authorId);
 
-    // Send rejection notification to author
+    // Send rejection notification to author (respects user preferences)
     if (authorProfile) {
       void sendRejectionNotification(
         rejectedSubmission,
         authorProfile.name || 'User',
         authorProfile.email,
-        rejectionReason
+        rejectionReason,
+        authorProfile.id // Pass authorId to check email preferences
       ).catch((error) => {
         console.error('Error sending rejection email:', error);
       });

@@ -8,8 +8,15 @@ import {
   Target,
   Newspaper,
   Headphones,
+  ChevronDown,
+  ChevronUp,
+  Bell,
+  Heart,
+  Clock,
+  Tag,
 } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useUser } from '@clerk/nextjs';
 import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
@@ -23,8 +30,135 @@ const heroImages = [
   '/images/carouselimages/image4.jpg',
   '/images/carouselimages/image5.jpg',
   '/images/carouselimages/image6.jpg',
-  // Add more images as needed
 ];
+
+// Category tags for the tag cloud
+const CATEGORY_TAGS = [
+  {
+    name: 'Technology',
+    color:
+      'bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20',
+  },
+  {
+    name: 'Biology',
+    color:
+      'bg-green-500/10 text-green-600 dark:text-green-400 hover:bg-green-500/20',
+  },
+  {
+    name: 'Chemistry',
+    color:
+      'bg-purple-500/10 text-purple-600 dark:text-purple-400 hover:bg-purple-500/20',
+  },
+  {
+    name: 'Physics',
+    color:
+      'bg-orange-500/10 text-orange-600 dark:text-orange-400 hover:bg-orange-500/20',
+  },
+  {
+    name: 'Engineering',
+    color: 'bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500/20',
+  },
+  {
+    name: 'Mathematics',
+    color:
+      'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20',
+  },
+  {
+    name: 'Computer Science',
+    color:
+      'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 hover:bg-cyan-500/20',
+  },
+  {
+    name: 'AI',
+    color:
+      'bg-pink-500/10 text-pink-600 dark:text-pink-400 hover:bg-pink-500/20',
+  },
+  {
+    name: 'Environment',
+    color:
+      'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20',
+  },
+  {
+    name: 'Health',
+    color:
+      'bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20',
+  },
+];
+
+// FAQ data
+const FAQ_ITEMS = [
+  {
+    question: 'Who can submit to MRHS STEM Magazine?',
+    answer:
+      'Any student at Marvin Ridge High School can submit content to STEM Magazine. Whether you have a science project, a tech article, or want to share your thoughts on current STEM events, we welcome your contributions.',
+  },
+  {
+    question: 'What types of content can I submit?',
+    answer:
+      'We accept three types of content: SM Expo for showcasing STEM projects with images, SM Now for written articles and opinion pieces on STEM topics, and SM Pods for podcast-style video content via YouTube links.',
+  },
+  {
+    question: 'How long does the approval process take?',
+    answer:
+      "Our moderation team typically reviews submissions within 24-48 hours. You'll receive an email notification once your submission has been approved or if any changes are requested.",
+  },
+  {
+    question: 'Can I edit my submission after posting?',
+    answer:
+      'Once a submission is approved and published, it cannot be edited directly. However, you can contact our team through the contact form if you need to make corrections to a published post.',
+  },
+  {
+    question: 'How do I get notified about new posts?',
+    answer:
+      'You can subscribe to our newsletter below to receive notifications when new posts are published. You can choose to receive updates for SM Expo projects, SM Now articles, SM Pods episodes, or all of them.',
+  },
+];
+
+// Post type icon component
+const PostTypeIcon = ({
+  type,
+  className,
+}: {
+  type: string;
+  className?: string;
+}) => {
+  switch (type) {
+    case 'SM_EXPO':
+      return <Target className={className} />;
+    case 'SM_NOW':
+      return <Newspaper className={className} />;
+    case 'SM_PODS':
+      return <Headphones className={className} />;
+    default:
+      return <Target className={className} />;
+  }
+};
+
+const getPostTypeLabel = (type: string) => {
+  switch (type) {
+    case 'SM_EXPO':
+      return 'Expo';
+    case 'SM_NOW':
+      return 'Now';
+    case 'SM_PODS':
+      return 'Pods';
+    default:
+      return 'Post';
+  }
+};
+
+const getPostTypeColor = (type: string) => {
+  switch (type) {
+    case 'SM_EXPO':
+      return 'text-blue-600 dark:text-blue-400';
+    case 'SM_NOW':
+      return 'text-purple-600 dark:text-purple-400';
+    case 'SM_PODS':
+      return 'text-red-600 dark:text-red-400';
+    default:
+      return 'text-gray-600';
+  }
+};
 
 export default function Home() {
   const { isSignedIn, user, isLoaded } = useUser();
@@ -38,9 +172,31 @@ export default function Home() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Recent posts state
+  const [recentPosts, setRecentPosts] = useState<any[]>([]);
+  const [loadingPosts, setLoadingPosts] = useState(true);
+
+  // FAQ state
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
+
   useEffect(() => {
     setMounted(true);
+    fetchRecentPosts();
   }, []);
+
+  const fetchRecentPosts = async () => {
+    try {
+      const response = await fetch('/api/posts?take=3');
+      const data = await response.json();
+      if (data.success) {
+        setRecentPosts(data.posts || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch recent posts:', error);
+    } finally {
+      setLoadingPosts(false);
+    }
+  };
 
   // Prevent hydration mismatch
   const showAuthContent = mounted && isLoaded;
@@ -88,6 +244,24 @@ export default function Home() {
       setIsSubmitting(false);
     }
   };
+
+  const getTimeAgo = (date: string | Date) => {
+    const now = new Date();
+    const postDate = new Date(date);
+    const diffMs = now.getTime() - postDate.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return postDate.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
   const fadeIn = {
     initial: { opacity: 0, y: 20 },
     animate: { opacity: 1, y: 0, transition: { duration: 0.6 } },
@@ -115,7 +289,6 @@ export default function Home() {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.8 }}
         >
-          {/* Background Carousel with tinted overlay */}
           <HeroCarousel
             images={heroImages}
             autoplayInterval={8000}
@@ -160,6 +333,155 @@ export default function Home() {
                   </Link>
                 )}
               </div>
+            </motion.div>
+          </div>
+        </motion.section>
+
+        {/* Recent Posts Section */}
+        <motion.section
+          className="w-full py-12 sm:py-16 md:py-20 bg-(--background)"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+        >
+          <div className="container px-4 sm:px-6 max-w-6xl mx-auto">
+            <motion.div
+              className="flex flex-col items-center justify-center space-y-4 text-center mb-10"
+              {...fadeIn}
+            >
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tighter font-poppins text-(--foreground)">
+                Recent Posts
+              </h2>
+              <p className="mx-auto max-w-xl text-(--muted-foreground) text-base">
+                Check out the latest student projects, articles, and podcasts
+                from our community.
+              </p>
+            </motion.div>
+
+            {loadingPosts ? (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="animate-pulse">
+                    <div className="h-48 bg-(--muted) rounded-xl mb-4"></div>
+                    <div className="h-4 bg-(--muted) rounded w-3/4 mb-2"></div>
+                    <div className="h-4 bg-(--muted) rounded w-1/2"></div>
+                  </div>
+                ))}
+              </div>
+            ) : recentPosts.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {recentPosts.map((post, index) => (
+                  <motion.article
+                    key={post.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.4, delay: index * 0.1 }}
+                    className="group"
+                  >
+                    <Link
+                      href={`/posts/${post.slug || post.id}`}
+                      className="block"
+                    >
+                      <div className="relative rounded-xl overflow-hidden bg-(--card) border border-(--border) hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                        {/* Image */}
+                        <div className="relative w-full h-48 overflow-hidden">
+                          {post.coverImage || post.thumbnailUrl ? (
+                            <Image
+                              src={post.coverImage || post.thumbnailUrl}
+                              alt={post.title}
+                              fill
+                              className="object-cover group-hover:scale-105 transition-transform duration-500"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-(--muted) flex items-center justify-center">
+                              <PostTypeIcon
+                                type={post.postType}
+                                className="h-12 w-12 text-(--muted-foreground)"
+                              />
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Content */}
+                        <div className="p-5">
+                          <div className="flex items-center gap-2 mb-3">
+                            <span
+                              className={`text-xs font-bold uppercase flex items-center gap-1 ${getPostTypeColor(post.postType)}`}
+                            >
+                              <PostTypeIcon
+                                type={post.postType}
+                                className="h-3 w-3"
+                              />
+                              SM {getPostTypeLabel(post.postType)}
+                            </span>
+                            <span className="text-xs text-(--muted-foreground) flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              {getTimeAgo(post.publishedAt || post.createdAt)}
+                            </span>
+                          </div>
+                          <h3 className="font-bold text-lg text-(--foreground) group-hover:text-(--primary) transition-colors leading-snug line-clamp-2 mb-2">
+                            {post.title}
+                          </h3>
+                          <p className="text-sm text-(--muted-foreground) line-clamp-2 mb-4">
+                            {post.content?.substring(0, 100)}...
+                          </p>
+                          <div className="flex items-center justify-between pt-3 border-t border-(--border)">
+                            <div className="flex items-center gap-2">
+                              {post.author?.imageUrl ? (
+                                <div className="relative w-6 h-6 rounded-full overflow-hidden">
+                                  <Image
+                                    src={post.author.imageUrl}
+                                    alt={post.author.name || 'Author'}
+                                    fill
+                                    className="object-cover"
+                                  />
+                                </div>
+                              ) : (
+                                <div className="w-6 h-6 rounded-full bg-(--muted) flex items-center justify-center">
+                                  <span className="text-xs font-medium text-(--muted-foreground)">
+                                    {(post.author?.name || 'A')[0]}
+                                  </span>
+                                </div>
+                              )}
+                              <span className="text-sm text-(--muted-foreground)">
+                                {post.author?.name || 'Anonymous'}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1 text-sm text-(--muted-foreground)">
+                              <Heart className="h-4 w-4" />
+                              {post.likeCount || post._count?.likes || 0}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  </motion.article>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <p className="text-(--muted-foreground)">
+                  No posts yet. Be the first to contribute!
+                </p>
+              </div>
+            )}
+
+            <motion.div
+              className="flex justify-center mt-10"
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.3 }}
+            >
+              <Link
+                href="/posts"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-(--primary) text-(--primary-foreground) rounded-full font-semibold hover:opacity-90 transition-all hover:scale-105"
+              >
+                View All Posts
+                <ArrowRight className="h-4 w-4" />
+              </Link>
             </motion.div>
           </div>
         </motion.section>
@@ -231,13 +553,218 @@ export default function Home() {
           </div>
         </motion.section>
 
-        {/* Contact Section */}
+        {/* Category Tags Cloud Section */}
         <motion.section
-          className="w-full py-12 sm:py-14"
+          className="w-full py-12 sm:py-16 bg-(--background)"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+        >
+          <div className="container px-4 sm:px-6 max-w-4xl mx-auto">
+            <motion.div
+              className="flex flex-col items-center justify-center space-y-4 text-center mb-8"
+              {...fadeIn}
+            >
+              <div className="flex items-center gap-2">
+                <Tag className="h-6 w-6 text-(--primary)" />
+                <h2 className="text-2xl sm:text-3xl font-bold tracking-tighter font-poppins text-(--foreground)">
+                  Explore Topics
+                </h2>
+              </div>
+              <p className="mx-auto max-w-xl text-(--muted-foreground) text-base">
+                Discover content across various STEM disciplines and find topics
+                that interest you.
+              </p>
+            </motion.div>
+
+            <motion.div
+              className="flex flex-wrap justify-center gap-3"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
+              {CATEGORY_TAGS.map((tag, index) => (
+                <motion.div
+                  key={tag.name}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.3, delay: index * 0.05 }}
+                >
+                  <Link
+                    href={`/posts?tag=${tag.name.toLowerCase().replace(' ', '-')}`}
+                    className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 hover:scale-105 ${tag.color}`}
+                  >
+                    {tag.name}
+                  </Link>
+                </motion.div>
+              ))}
+            </motion.div>
+          </div>
+        </motion.section>
+
+        {/* FAQ Section */}
+        <motion.section
+          className="w-full py-12 sm:py-16 md:py-20 bg-(--card)"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+        >
+          <div className="container px-4 sm:px-6 max-w-3xl mx-auto">
+            <motion.div
+              className="flex flex-col items-center justify-center space-y-4 text-center mb-10"
+              {...fadeIn}
+            >
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tighter font-poppins text-(--foreground)">
+                Frequently Asked Questions
+              </h2>
+              <p className="mx-auto max-w-xl text-(--muted-foreground) text-base">
+                Have questions about MRHS STEM Magazine? Find answers to common
+                questions below.
+              </p>
+            </motion.div>
+
+            <div className="space-y-4">
+              {FAQ_ITEMS.map((faq, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.4, delay: index * 0.1 }}
+                  className="border border-(--border) rounded-xl overflow-hidden bg-(--background)"
+                >
+                  <button
+                    onClick={() =>
+                      setOpenFaqIndex(openFaqIndex === index ? null : index)
+                    }
+                    className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-(--muted)/50 transition-colors"
+                  >
+                    <span className="font-semibold text-(--foreground) pr-4">
+                      {faq.question}
+                    </span>
+                    {openFaqIndex === index ? (
+                      <ChevronUp className="h-5 w-5 text-(--muted-foreground) shrink-0" />
+                    ) : (
+                      <ChevronDown className="h-5 w-5 text-(--muted-foreground) shrink-0" />
+                    )}
+                  </button>
+                  {openFaqIndex === index && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="px-6 pb-4"
+                    >
+                      <p className="text-(--muted-foreground) leading-relaxed">
+                        {faq.answer}
+                      </p>
+                    </motion.div>
+                  )}
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </motion.section>
+
+        {/* Newsletter Signup Section */}
+        <motion.section
+          className="w-full py-12 sm:py-16"
           style={{
             background:
-              'linear-gradient(to bottom right, var(--primary), var(--accent))',
+              'linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%)',
           }}
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+        >
+          <div className="container px-4 sm:px-6 max-w-2xl mx-auto">
+            <motion.div
+              className="flex flex-col items-center justify-center space-y-4 text-center mb-8"
+              {...fadeIn}
+            >
+              <div className="w-14 h-14 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center mb-2">
+                <Bell
+                  className="h-7 w-7"
+                  style={{ color: 'var(--primary-foreground)' }}
+                />
+              </div>
+              <h2
+                className="text-2xl sm:text-3xl font-bold"
+                style={{ color: 'var(--primary-foreground)' }}
+              >
+                Stay Updated
+              </h2>
+              <p className="mx-auto max-w-md text-white/80">
+                Subscribe to our newsletter and never miss new STEM projects,
+                articles, and podcast episodes from our student community.
+              </p>
+            </motion.div>
+
+            {/* Show different content based on auth state */}
+            {showAuthContent && isSignedIn ? (
+              // Signed-in users: Redirect to dashboard
+              <motion.div
+                className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20 text-center"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+              >
+                <p className="text-white/80 mb-4">
+                  Manage your newsletter subscription and notification
+                  preferences in your dashboard.
+                </p>
+                <Link
+                  href="/dashboard?tab=email-preferences"
+                  className="inline-flex items-center justify-center h-12 rounded-xl px-8 text-sm font-semibold bg-white text-gray-900 shadow-lg transition-all duration-300 hover:scale-[1.02]"
+                >
+                  <Mail className="mr-2 h-4 w-4" />
+                  Manage Email Preferences
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </motion.div>
+            ) : (
+              // Not signed in: Prompt to sign up with redirect
+              <motion.div
+                className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20 text-center"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+              >
+                <p className="text-white/80 mb-4">
+                  Create an account to subscribe to our newsletter and get
+                  notified about new posts.
+                </p>
+                <Link
+                  href="/sign-up?redirect_url=/dashboard?tab=email-preferences"
+                  className="inline-flex items-center justify-center h-12 rounded-xl px-8 text-sm font-semibold bg-white text-gray-900 shadow-lg transition-all duration-300 hover:scale-[1.02]"
+                >
+                  Sign Up to Subscribe
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+                <p className="text-white/60 text-sm mt-4">
+                  Already have an account?{' '}
+                  <Link
+                    href="/sign-in?redirect_url=/dashboard?tab=email-preferences"
+                    className="text-white underline hover:no-underline"
+                  >
+                    Sign in
+                  </Link>
+                </p>
+              </motion.div>
+            )}
+          </div>
+        </motion.section>
+
+        {/* Contact Section */}
+        <motion.section
+          className="w-full py-12 sm:py-14 bg-(--card)"
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
@@ -249,16 +776,10 @@ export default function Home() {
               className="flex items-center justify-center gap-4 mb-6"
               {...fadeIn}
             >
-              <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center">
-                <Mail
-                  className="h-5 w-5"
-                  style={{ color: 'var(--primary-foreground)' }}
-                />
+              <div className="w-10 h-10 rounded-full bg-(--primary)/10 flex items-center justify-center">
+                <Mail className="h-5 w-5 text-(--primary)" />
               </div>
-              <h2
-                className="text-2xl sm:text-3xl font-bold"
-                style={{ color: 'var(--primary-foreground)' }}
-              >
+              <h2 className="text-2xl sm:text-3xl font-bold text-(--foreground)">
                 Get in Touch
               </h2>
             </motion.div>
@@ -266,7 +787,7 @@ export default function Home() {
             {/* Form */}
             <motion.form
               onSubmit={handleSubmit}
-              className="card rounded-2xl shadow-2xl p-6"
+              className="bg-(--background) rounded-2xl shadow-lg border border-(--border) p-6"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}

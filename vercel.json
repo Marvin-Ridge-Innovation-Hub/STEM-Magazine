@@ -15,7 +15,12 @@
       "memory": 1024
     }
   },
-  "crons": [],
+  "crons": [
+    {
+      "path": "/api/cron/digest",
+      "schedule": "0 8 * * *"
+    }
+  ],
   "headers": [
     {
       "source": "/api/(.*)",

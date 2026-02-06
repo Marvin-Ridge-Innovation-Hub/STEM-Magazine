@@ -211,7 +211,7 @@ model SubmissionLike {
   @@index([userId])
 }
 
-// Newsletter Subscription model
+// Newsletter Subscription model (Unified with notification preferences)
 model NewsletterSubscription {
   id            String      @id @default(auto()) @map("_id") @db.ObjectId
   
@@ -219,7 +219,7 @@ model NewsletterSubscription {
   user          User        @relation("UserNewsletterSubscription", fields: [userId], references: [id], onDelete: Cascade)
   userId        String      @unique @db.ObjectId
   
-  // Subscription preferences
+  // Newsletter subscription preferences (for new posts)
   subscribeExpo Boolean     @default(false)  // SM Expo notifications
   subscribeNow  Boolean     @default(false)  // SM Now notifications
   subscribePods Boolean     @default(false)  // SM Pods notifications
@@ -227,15 +227,36 @@ model NewsletterSubscription {
   // Tags of interest
   tags          String[]    @default([])     // Tags user is interested in
   
-  // Active status
+  // Author notification preferences (for your own submissions)
+  emailOnApproval   Boolean @default(true)   // When your submission is approved
+  emailOnRejection  Boolean @default(true)   // When your submission is rejected
+  
+  // Activity digest preferences (daily summary of interactions)
+  digestEnabled     Boolean @default(true)   // Enable daily activity digest
+  emailOnLike       Boolean @default(true)   // Include likes in digest
+  emailOnComment    Boolean @default(true)   // Include comments in digest
+  emailOnReply      Boolean @default(true)   // Include replies in digest
+  
+  // Digest tracking
+  hasPendingDigest  Boolean   @default(false) // Flag set when user has new activity
+  lastDigestSentAt  DateTime?                 // When last digest was sent
+  
+  // Master email toggle
+  emailEnabled      Boolean @default(true)   // Master toggle for all email notifications
+  
+  // Active status (for newsletter specifically)
   isActive      Boolean     @default(true)
   
   // Timestamps
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
+  
+  // Index for efficient cron job queries
+  @@index([hasPendingDigest])
 }
 
-// Notification Preferences model
+// @deprecated - Notification Preferences model (kept for migration, use NewsletterSubscription instead)
+// This model is being phased out. New code should use NewsletterSubscription for unified preferences.
 model NotificationPreferences {
   id            String      @id @default(auto()) @map("_id") @db.ObjectId
   

@@ -183,6 +183,40 @@ export async function POST(
       data: { commentCount: { increment: 1 } },
     });
 
+    // Flag for digest notifications
+    if (parentId) {
+      // This is a reply - flag the parent comment author (if not replying to self)
+      const parentComment = await db.submissionComment.findUnique({
+        where: { id: parentId },
+        select: { authorId: true },
+      });
+
+      if (parentComment && parentComment.authorId !== userProfile.id) {
+        await db.newsletterSubscription.updateMany({
+          where: {
+            userId: parentComment.authorId,
+            digestEnabled: true,
+            emailOnReply: true,
+            emailEnabled: true,
+          },
+          data: { hasPendingDigest: true },
+        });
+      }
+    } else {
+      // This is a top-level comment - flag the post author (if not commenting on own post)
+      if (submission.authorId !== userProfile.id) {
+        await db.newsletterSubscription.updateMany({
+          where: {
+            userId: submission.authorId,
+            digestEnabled: true,
+            emailOnComment: true,
+            emailEnabled: true,
+          },
+          data: { hasPendingDigest: true },
+        });
+      }
+    }
+
     return NextResponse.json({
       success: true,
       comment: {

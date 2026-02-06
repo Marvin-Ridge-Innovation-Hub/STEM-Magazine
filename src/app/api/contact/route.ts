@@ -43,42 +43,66 @@ export async function POST(request: NextRequest) {
         <!DOCTYPE html>
         <html>
           <head>
-            <style>
-              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-              .header { background-color: #4F46E5; color: white; padding: 20px; border-radius: 8px 8px 0 0; }
-              .content { background-color: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; }
-              .info { background-color: white; padding: 20px; border-radius: 8px; margin: 20px 0; }
-              .label { font-weight: bold; color: #4F46E5; }
-              .value { margin-bottom: 15px; }
-            </style>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
           </head>
-          <body>
-            <div class="container">
-              <div class="header">
-                <h1 style="margin: 0;">New Contact Form Submission</h1>
-              </div>
-              <div class="content">
-                <div class="info">
-                  <div class="value">
-                    <span class="label">From:</span> ${name}
-                  </div>
-                  <div class="value">
-                    <span class="label">Email:</span> ${email}
-                  </div>
-                  <div class="value">
-                    <span class="label">Subject:</span> ${subject}
-                  </div>
-                  <div class="value">
-                    <span class="label">Message:</span>
-                    <p style="margin-top: 10px; white-space: pre-wrap;">${message}</p>
-                  </div>
-                </div>
-                <p style="color: #6B7280; font-size: 14px;">
-                  You can reply directly to this email to respond to ${name}.
-                </p>
-              </div>
-            </div>
+          <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;">
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f5f5f5;">
+              <tr>
+                <td style="padding: 40px 20px;">
+                  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                    <!-- Header -->
+                    <tr>
+                      <td style="background: linear-gradient(135deg, #1e3a5f 0%, #2d4a6f 100%); padding: 32px 40px; text-align: center;">
+                        <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 700;">
+                          New Contact Form Submission
+                        </h1>
+                      </td>
+                    </tr>
+                    
+                    <!-- Content -->
+                    <tr>
+                      <td style="padding: 40px;">
+                        <div style="background-color: #f9fafb; border-radius: 8px; padding: 24px; border-left: 4px solid #f97316;">
+                          <div style="margin-bottom: 16px;">
+                            <div style="font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">From</div>
+                            <div style="font-size: 16px; color: #111827; font-weight: 500;">${name}</div>
+                          </div>
+                          
+                          <div style="margin-bottom: 16px;">
+                            <div style="font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Email</div>
+                            <div style="font-size: 16px; color: #1e3a5f;"><a href="mailto:${email}" style="color: #1e3a5f; text-decoration: none;">${email}</a></div>
+                          </div>
+                          
+                          <div style="margin-bottom: 16px;">
+                            <div style="font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Subject</div>
+                            <div style="font-size: 16px; color: #111827; font-weight: 600;">${subject}</div>
+                          </div>
+                          
+                          <div>
+                            <div style="font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Message</div>
+                            <div style="font-size: 15px; color: #374151; line-height: 1.6; white-space: pre-wrap;">${message}</div>
+                          </div>
+                        </div>
+                        
+                        <p style="margin: 24px 0 0; color: #6b7280; font-size: 14px; text-align: center;">
+                          You can reply directly to this email to respond to ${name}.
+                        </p>
+                      </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                      <td style="background-color: #f9fafb; padding: 24px 40px; text-align: center; border-top: 1px solid #e5e7eb;">
+                        <p style="margin: 0; color: #9ca3af; font-size: 12px;">
+                          STEM Magazine Contact System
+                        </p>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
           </body>
         </html>
       `,

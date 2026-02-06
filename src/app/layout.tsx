@@ -26,23 +26,28 @@ const poppins = Poppins({
 
 export const metadata = {
   title: {
-    default: 'MRHS STEM Magazine',
+    default: 'MRHS STEM Magazine | Student Projects, Articles & Podcasts',
     template: '%s | MRHS STEM Magazine',
   },
   description:
-    'MRHS STEM Magazine is a student-run platform featuring STEM projects, articles, and podcasts from the MRHS community.',
+    'Explore MRHS STEM Magazine - a student-run platform showcasing innovative STEM projects, insightful articles, and engaging podcasts. Discover student creativity in science, technology, engineering, and mathematics.',
   keywords: [
-    'MRHS',
-    'STEM',
+    'MRHS STEM Magazine',
     'STEM Magazine',
+    'MRHS STEM',
+    'STEM projects',
     'student projects',
-    'science',
-    'technology',
-    'engineering',
+    'high school STEM',
+    'science magazine',
+    'technology articles',
+    'engineering projects',
     'mathematics',
-    'podcasts',
-    'articles',
-    'high school',
+    'STEM podcasts',
+    'student innovation',
+    'Marvin Ridge High School',
+    'SM Expo',
+    'SM Now',
+    'SM Pods',
   ],
   authors: [{ name: 'MRHS STEM Magazine' }, { name: 'Arjun Cattamanchi' }],
   creator: 'Arjun Cattamanchi',
@@ -54,16 +59,25 @@ export const metadata = {
     type: 'website',
     locale: 'en_US',
     url: 'https://mrhsstemmag.com',
-    title: 'MRHS STEM Magazine',
+    title: 'MRHS STEM Magazine | Explore Student STEM Projects & Articles',
     description:
-      'A student-run platform featuring STEM projects, articles, and podcasts.',
+      'Discover innovative STEM projects, articles, and podcasts created by students. MRHS STEM Magazine celebrates creativity and innovation in science, technology, engineering, and math.',
     siteName: 'MRHS STEM Magazine',
+    images: [
+      {
+        url: '/images/og.png',
+        width: 1200,
+        height: 630,
+        alt: 'MRHS STEM Magazine - Student Projects & Innovation',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'MRHS STEM Magazine',
+    title: 'MRHS STEM Magazine | Student STEM Projects & Podcasts',
     description:
-      'A student-run platform featuring STEM projects, articles, and podcasts.',
+      'Explore innovative STEM projects, insightful articles, and podcasts by students at MRHS STEM Magazine.',
+    images: ['/images/og.png'],
   },
   robots: {
     index: true,

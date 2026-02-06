@@ -120,7 +120,7 @@ export async function POST(
     const currentLikeCount = submission.likeCount || 0;
 
     if (existingLike) {
-      // Unlike
+      // Unlike - don't flag for digest (we only notify on new likes)
       await db.submissionLike.delete({
         where: { id: existingLike.id },
       });
@@ -148,6 +148,19 @@ export async function POST(
         where: { id },
         data: { likeCount: { increment: 1 } },
       });
+
+      // Flag the post author for digest notification (only if not liking own post)
+      if (submission.authorId !== userProfile.id) {
+        await db.newsletterSubscription.updateMany({
+          where: {
+            userId: submission.authorId,
+            digestEnabled: true,
+            emailOnLike: true,
+            emailEnabled: true,
+          },
+          data: { hasPendingDigest: true },
+        });
+      }
 
       return NextResponse.json({
         success: true,
