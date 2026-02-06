@@ -15,7 +15,7 @@
     "lint": "next lint",
     "start": "next start",
     "format": "prettier --write .",
-    "prepare": "husky install",
+    "prepare": "node -e \"if (process.env.HUSKY === '0') process.exit(0); try { require.resolve('husky'); const { execSync } = require('node:child_process'); execSync('npx husky install', { stdio: 'inherit' }); } catch (e) { if (e.code !== 'MODULE_NOT_FOUND') throw e; }\"",
     "lint:staged": "next lint",
     "postbuild": "npx prisma generate",
     "postinstall": "npx prisma generate",
