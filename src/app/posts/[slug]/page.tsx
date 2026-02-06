@@ -6,9 +6,9 @@ import PostContent, { type PostContentProps } from './PostContent';
 export const revalidate = 60;
 
 type PageProps = {
-  params: {
+  params: Promise<{
     slug: string;
-  };
+  }>;
 };
 
 const getDescription = (content: string) => {
@@ -17,7 +17,13 @@ const getDescription = (content: string) => {
   return `${normalized.slice(0, 160)}...`;
 };
 
+const isValidObjectId = (value: string) => /^[0-9a-fA-F]{24}$/.test(value);
+
 async function getPost(id: string) {
+  if (!isValidObjectId(id)) {
+    return null;
+  }
+
   const post = await prisma.submission.findUnique({
     where: { id },
     include: {
@@ -67,7 +73,8 @@ const serializePost = (post: PostRecord): SerializedPost => ({
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
-  const post = await getPost(params.slug);
+  const { slug } = await params;
+  const post = await getPost(slug);
   if (!post) {
     return { title: 'Post Not Found' };
   }
@@ -104,7 +111,8 @@ export async function generateMetadata({
 }
 
 export default async function PostPage({ params }: PageProps) {
-  const post = await getPost(params.slug);
+  const { slug } = await params;
+  const post = await getPost(slug);
   if (!post) {
     notFound();
   }
