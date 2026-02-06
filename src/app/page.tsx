@@ -88,14 +88,14 @@ const CATEGORY_TAGS = [
 // FAQ data
 const FAQ_ITEMS = [
   {
-    question: 'Who can submit to MRHS STEM Magazine?',
+    question: 'Who can submit?',
     answer:
-      'Any student at Marvin Ridge High School can submit content to STEM Magazine. Whether you have a science project, a tech article, or want to share your thoughts on current STEM events, we welcome your contributions.',
+      'Any student at Marvin Ridge High School can submit content to the magazine. Whether you have a science project, a tech article, or want to share your thoughts on current science or technology events, we welcome your contributions.',
   },
   {
     question: 'What types of content can I submit?',
     answer:
-      'We accept three types of content: SM Expo for showcasing STEM projects with images, SM Now for written articles and opinion pieces on STEM topics, and SM Pods for podcast-style video content via YouTube links.',
+      'We accept three types of content: SM Expo for showcasing student projects with images, SM Now for written articles and opinion pieces on science or tech topics, and SM Pods for podcast-style video content via YouTube links.',
   },
   {
     question: 'How long does the approval process take?',
@@ -108,9 +108,9 @@ const FAQ_ITEMS = [
       'Once a submission is approved and published, it cannot be edited directly. However, you can contact our team through the contact form if you need to make corrections to a published post.',
   },
   {
-    question: 'How do I get notified about new posts?',
+    question: 'How do I get updates on new stories?',
     answer:
-      'You can subscribe to our newsletter below to receive notifications when new posts are published. You can choose to receive updates for SM Expo projects, SM Now articles, SM Pods episodes, or all of them.',
+      'You can subscribe to our newsletter below to receive notifications when new stories are published. You can choose to receive updates for SM Expo projects, SM Now articles, SM Pods episodes, or all of them.',
   },
 ];
 
@@ -304,11 +304,11 @@ export default function Home() {
                 MRHS STEM Magazine
               </h1>
               <p className="mx-auto max-w-150 text-white/90 text-base sm:text-lg px-4 drop-shadow-md">
-                STEM Magazine is a student-run platform built to spotlight
-                creativity, innovation, and problem-solving across STEM. Through
-                projects, articles, and conversations, STEM Magazine gives
-                students a space to share what they build, how they think, and
-                why it matters.
+                A student-run publication built to spotlight creativity,
+                innovation, and problem-solving across science, technology,
+                engineering, and math. Through projects, articles, and
+                conversations, the magazine gives students a space to share what
+                they build, how they think, and why it matters.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full sm:w-auto px-4">
                 <Link
@@ -354,8 +354,8 @@ export default function Home() {
                 Recent Posts
               </h2>
               <p className="mx-auto max-w-xl text-(--muted-foreground) text-base">
-                Check out the latest student projects, articles, and podcasts
-                from our community.
+                See the latest student projects, articles, and podcasts from our
+                community.
               </p>
             </motion.div>
 
@@ -503,9 +503,9 @@ export default function Home() {
                 Our Platforms
               </h2>
               <p className="mx-auto max-w-150 text-(--muted-foreground) text-base sm:text-lg px-4">
-                STEM Magazine offers several resources for both consumption and
-                creating. While some are available only to members of Computer
-                Science Club, the managers of this website, others are available
+                The magazine offers several resources for both reading and
+                creating. While some are available only to members of the
+                Computer Science Club, which manages this site, others are open
                 to everyone.
               </p>
             </motion.div>
@@ -515,7 +515,7 @@ export default function Home() {
                   icon: Headphones,
                   title: 'SM Pods',
                   description:
-                    'Every month, our student researchers curate a list of current events in the STEM-world. In these fourty-five minute episodes, we sit down and consider the nuances of our evergrowing field.',
+                    'Every month, our student researchers curate a list of current events in the science and technology world. In these forty-five minute episodes, we sit down and consider the nuances of our ever-growing field.',
                 },
                 {
                   icon: Newspaper,
@@ -527,7 +527,7 @@ export default function Home() {
                   icon: Target,
                   title: 'SM Expo',
                   description:
-                    "Oftentimes, highschool STEM projects can go unseen. To celebrate each other's accomplishments and build on them, this promotional platform helps students find peers with similar goals.",
+                    "Oftentimes, high school student projects can go unseen. To celebrate each other's accomplishments and build on them, this platform helps students find peers with similar goals.",
                 },
               ].map((feature, index) => (
                 <motion.div
@@ -569,11 +569,11 @@ export default function Home() {
               <div className="flex items-center gap-2">
                 <Tag className="h-6 w-6 text-(--primary)" />
                 <h2 className="text-2xl sm:text-3xl font-bold tracking-tighter font-poppins text-(--foreground)">
-                  Explore Topics
+                  Browse Topics
                 </h2>
               </div>
               <p className="mx-auto max-w-xl text-(--muted-foreground) text-base">
-                Discover content across various STEM disciplines and find topics
+                Discover content across different disciplines and find topics
                 that interest you.
               </p>
             </motion.div>
@@ -622,7 +622,7 @@ export default function Home() {
                 Frequently Asked Questions
               </h2>
               <p className="mx-auto max-w-xl text-(--muted-foreground) text-base">
-                Have questions about MRHS STEM Magazine? Find answers to common
+                Have questions about the magazine? Find answers to common
                 questions below.
               </p>
             </motion.div>
@@ -700,7 +700,7 @@ export default function Home() {
                 Stay Updated
               </h2>
               <p className="mx-auto max-w-md text-white/80">
-                Subscribe to our newsletter and never miss new STEM projects,
+                Subscribe to our newsletter and never miss new projects,
                 articles, and podcast episodes from our student community.
               </p>
             </motion.div>
@@ -739,7 +739,7 @@ export default function Home() {
               >
                 <p className="text-white/80 mb-4">
                   Create an account to subscribe to our newsletter and get
-                  notified about new posts.
+                  alerts when new stories are published.
                 </p>
                 <Link
                   href="/sign-up?redirect_url=/dashboard?tab=email-preferences"

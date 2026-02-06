@@ -30,7 +30,7 @@ export const metadata = {
     template: '%s | MRHS STEM Magazine',
   },
   description:
-    'Explore MRHS STEM Magazine - a student-run platform showcasing innovative STEM projects, insightful articles, and engaging podcasts. Discover student creativity in science, technology, engineering, and mathematics.',
+    'MRHS STEM Magazine is a student-run STEM magazine featuring projects, articles, and podcasts from Marvin Ridge High School. Explore student innovation.',
   keywords: [
     'MRHS STEM Magazine',
     'STEM Magazine',
@@ -61,7 +61,7 @@ export const metadata = {
     url: 'https://mrhsstemmag.com',
     title: 'MRHS STEM Magazine | Explore Student STEM Projects & Articles',
     description:
-      'Discover innovative STEM projects, articles, and podcasts created by students. MRHS STEM Magazine celebrates creativity and innovation in science, technology, engineering, and math.',
+      'MRHS STEM Magazine is a student-run STEM magazine featuring projects, articles, and podcasts from Marvin Ridge High School. Explore student innovation.',
     siteName: 'MRHS STEM Magazine',
     images: [
       {
@@ -76,7 +76,7 @@ export const metadata = {
     card: 'summary_large_image',
     title: 'MRHS STEM Magazine | Student STEM Projects & Podcasts',
     description:
-      'Explore innovative STEM projects, insightful articles, and podcasts by students at MRHS STEM Magazine.',
+      'MRHS STEM Magazine is a student-run STEM magazine featuring projects, articles, and podcasts from Marvin Ridge High School. Explore student innovation.',
     images: ['/images/og.png'],
   },
   robots: {
