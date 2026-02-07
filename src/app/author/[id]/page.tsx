@@ -345,17 +345,18 @@ export default function AuthorProfilePage() {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
               {profile.posts.map((post, index) => (
                 <motion.article
                   key={post.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: index * 0.1 }}
+                  className="h-full"
                 >
                   <Link
-                    href={`/posts/${post.slug}`}
-                    className="group block bg-(--card) rounded-xl border border-(--border) overflow-hidden hover:shadow-lg transition-all duration-300"
+                    href={`/posts/${post.slug || post.id}`}
+                    className="group block h-full bg-(--card) rounded-xl border border-(--border) overflow-hidden hover:shadow-lg transition-all duration-300 flex flex-col"
                   >
                     {/* Cover Image */}
                     <div className="relative h-40 overflow-hidden">
@@ -389,7 +390,7 @@ export default function AuthorProfilePage() {
                     </div>
 
                     {/* Content */}
-                    <div className="p-4">
+                    <div className="p-4 flex flex-col flex-1">
                       <h3 className="font-semibold text-(--foreground) line-clamp-2 mb-2 group-hover:text-(--primary) transition-colors">
                         {post.title}
                       </h3>
@@ -400,7 +401,7 @@ export default function AuthorProfilePage() {
                       )}
 
                       {/* Meta */}
-                      <div className="flex items-center justify-between text-xs text-(--muted-foreground)">
+                      <div className="flex items-center justify-between text-xs text-(--muted-foreground) mt-auto pt-3 border-t border-(--border)">
                         <span>{formatDate(post.publishedAt)}</span>
                         <div className="flex items-center gap-3">
                           <span className="flex items-center gap-1">

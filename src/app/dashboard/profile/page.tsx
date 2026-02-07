@@ -34,6 +34,7 @@ export default function ProfilePage() {
   const { user, isLoaded } = useUser();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [profileId, setProfileId] = useState<string | null>(null);
   const [profile, setProfile] = useState<ProfileData>({
     bio: '',
     website: '',
@@ -56,6 +57,7 @@ export default function ProfilePage() {
       const data = await response.json();
 
       if (data.success && data.profile) {
+        setProfileId(data.profile.id || null);
         setProfile({
           bio: data.profile.bio || '',
           website: data.profile.website || '',
@@ -164,8 +166,11 @@ export default function ProfilePage() {
               Back to Dashboard
             </Link>
             <Link
-              href={`/author/${user?.id}`}
-              className="inline-flex items-center gap-2 text-sm text-(--primary) hover:underline"
+              href={profileId ? `/author/${profileId}` : '#'}
+              aria-disabled={!profileId}
+              className={`inline-flex items-center gap-2 text-sm text-(--primary) hover:underline ${
+                profileId ? '' : 'pointer-events-none opacity-60'
+              }`}
             >
               <ExternalLink className="h-4 w-4" />
               View Public Profile
