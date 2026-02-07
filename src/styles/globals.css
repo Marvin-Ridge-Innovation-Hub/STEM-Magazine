@@ -179,6 +179,65 @@
     border-color: var(--primary);
   }
 
+  /* Markdown Content */
+  .markdown-content {
+    color: var(--foreground);
+    line-height: 1.75;
+  }
+  .markdown-content > * + * {
+    margin-top: 1rem;
+  }
+  .markdown-content h1,
+  .markdown-content h2,
+  .markdown-content h3,
+  .markdown-content h4 {
+    font-family: var(--font-family-poppins);
+    font-weight: 700;
+    line-height: 1.2;
+  }
+  .markdown-content h1 {
+    font-size: 2rem;
+    margin-top: 2.5rem;
+  }
+  .markdown-content h2 {
+    font-size: 1.5rem;
+    margin-top: 2rem;
+  }
+  .markdown-content h3 {
+    font-size: 1.25rem;
+    margin-top: 1.75rem;
+  }
+  .markdown-content h4 {
+    font-size: 1.125rem;
+    margin-top: 1.5rem;
+  }
+  .markdown-content p {
+    margin: 0;
+  }
+  .markdown-content ul,
+  .markdown-content ol {
+    padding-left: 1.5rem;
+  }
+  .markdown-content li + li {
+    margin-top: 0.35rem;
+  }
+  .markdown-content blockquote {
+    margin-left: 0;
+    margin-right: 0;
+    padding: 0.75rem 1rem;
+    border-left: 3px solid var(--border);
+    background: color-mix(in oklch, var(--muted) 55%, transparent);
+  }
+  .markdown-content hr {
+    border: 0;
+    border-top: 1px solid var(--border);
+  }
+  .markdown-content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 0.75rem;
+  }
+
   /* Input Fields */
   .input-field {
     @apply w-full px-4 py-3 rounded-lg border focus:outline-none focus:ring-2;

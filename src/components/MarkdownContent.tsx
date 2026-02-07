@@ -11,8 +11,12 @@ export default function MarkdownContent({
   content,
   className,
 }: MarkdownContentProps) {
+  const combinedClassName = ['markdown-content', className]
+    .filter(Boolean)
+    .join(' ');
+
   return (
-    <div className={className}>
+    <div className={combinedClassName}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeSanitize]}
