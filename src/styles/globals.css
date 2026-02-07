@@ -214,6 +214,9 @@
   .markdown-content p {
     margin: 0;
   }
+  .markdown-content p + p {
+    margin-top: 1rem;
+  }
   .markdown-content ul,
   .markdown-content ol {
     padding-left: 1.5rem;

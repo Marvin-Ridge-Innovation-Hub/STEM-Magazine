@@ -231,10 +231,10 @@ const FeaturedCard = ({
               {getTimeAgo(post.publishedAt || post.createdAt)}
             </span>
           </div>
-          <h2 className="text-2xl lg:text-3xl font-bold text-white leading-tight mb-3 line-clamp-3">
+          <h2 className="text-2xl lg:text-3xl font-bold text-white leading-tight mb-3 line-clamp-2 lg:line-clamp-3">
             {post.title}
           </h2>
-          <p className="text-white/80 text-sm lg:text-base line-clamp-2 mb-4 hidden sm:block">
+          <p className="text-white/80 text-sm lg:text-base line-clamp-1 lg:line-clamp-2 mb-3 hidden sm:block">
             {post.excerpt || post.content?.substring(0, 150)}
           </p>
           <div className="flex items-center gap-3">

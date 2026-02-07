@@ -370,7 +370,7 @@ export default function Home() {
                 ))}
               </div>
             ) : recentPosts.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
                 {recentPosts.map((post, index) => (
                   <motion.article
                     key={post.id}
@@ -378,13 +378,13 @@ export default function Home() {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.4, delay: index * 0.1 }}
-                    className="group"
+                    className="group h-full"
                   >
                     <Link
                       href={`/posts/${post.slug || post.id}`}
-                      className="block"
+                      className="block h-full"
                     >
-                      <div className="relative rounded-xl overflow-hidden bg-(--card) border border-(--border) hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                      <div className="relative rounded-xl overflow-hidden bg-(--card) border border-(--border) hover:shadow-lg transition-all duration-300 hover:-translate-y-1 flex flex-col h-full">
                         {/* Image */}
                         <div className="relative w-full h-48 overflow-hidden">
                           {post.coverImage || post.thumbnailUrl ? (
@@ -405,7 +405,7 @@ export default function Home() {
                         </div>
 
                         {/* Content */}
-                        <div className="p-5">
+                        <div className="p-5 flex flex-col flex-1">
                           <div className="flex items-center gap-2 mb-3">
                             <span
                               className={`text-xs font-bold uppercase flex items-center gap-1 ${getPostTypeColor(post.postType)}`}
@@ -427,7 +427,7 @@ export default function Home() {
                           <p className="text-sm text-(--muted-foreground) line-clamp-2 mb-4">
                             {post.content?.substring(0, 100)}...
                           </p>
-                          <div className="flex items-center justify-between pt-3 border-t border-(--border)">
+                          <div className="flex items-center justify-between pt-3 border-t border-(--border) mt-auto">
                             <div className="flex items-center gap-2">
                               {post.author?.imageUrl ? (
                                 <div className="relative w-6 h-6 rounded-full overflow-hidden">

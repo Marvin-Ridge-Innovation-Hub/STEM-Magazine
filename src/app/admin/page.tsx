@@ -208,6 +208,8 @@ export default function AdminDashboard() {
     type: 'success' | 'error';
     text: string;
   } | null>(null);
+  const [expandedSubmission, setExpandedSubmission] =
+    useState<Submission | null>(null);
 
   // Pods state
   const [pods, setPods] = useState<Pod[]>([]);
@@ -895,9 +897,19 @@ export default function AdminDashboard() {
 
                     {/* Content */}
                     <div className="p-4 md:p-6 border-b border-(--border)">
-                      <h4 className="font-semibold text-(--foreground) mb-2">
-                        Content
-                      </h4>
+                      <div className="flex items-center justify-between gap-3 mb-2">
+                        <h4 className="font-semibold text-(--foreground)">
+                          Content
+                        </h4>
+                        <button
+                          type="button"
+                          onClick={() => setExpandedSubmission(submission)}
+                          className="inline-flex items-center gap-1 text-xs font-semibold text-(--primary) hover:underline"
+                        >
+                          <BookOpen className="h-3 w-3" />
+                          View full
+                        </button>
+                      </div>
                       <div className="text-(--muted-foreground) line-clamp-6">
                         <MarkdownContent
                           content={submission.content}
@@ -1623,6 +1635,71 @@ export default function AdminDashboard() {
           </motion.div>
         )}
       </div>
+
+      <AnimatePresence>
+        {expandedSubmission && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setExpandedSubmission(null)}
+          >
+            <motion.div
+              className="absolute inset-0 bg-black/60"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            />
+            <motion.div
+              className="relative w-full max-w-4xl max-h-[85vh] overflow-hidden rounded-2xl border border-(--border) bg-(--card) shadow-xl"
+              initial={{ opacity: 0, y: 20, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 10, scale: 0.98 }}
+              transition={{ duration: 0.2 }}
+              onClick={(event) => event.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="submission-content-title"
+            >
+              <div className="flex items-start justify-between gap-4 p-4 border-b border-(--border)">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-(--muted-foreground)">
+                    {getPostTypeLabel(expandedSubmission.postType)} -{' '}
+                    {expandedSubmission.status.toLowerCase()}
+                  </p>
+                  <h2
+                    id="submission-content-title"
+                    className="text-lg md:text-xl font-bold text-(--foreground)"
+                  >
+                    {expandedSubmission.title}
+                  </h2>
+                  <p className="text-sm text-(--muted-foreground)">
+                    By{' '}
+                    {expandedSubmission.author.name ||
+                      expandedSubmission.author.email}{' '}
+                    - {formatDate(expandedSubmission.createdAt)}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setExpandedSubmission(null)}
+                  className="p-2 rounded-lg text-(--muted-foreground) hover:text-(--foreground) hover:bg-(--muted) transition-colors"
+                  aria-label="Close content preview"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              <div className="p-4 md:p-6 overflow-y-auto max-h-[70vh]">
+                <MarkdownContent
+                  content={expandedSubmission.content}
+                  className="prose prose-sm md:prose-base max-w-none text-(--foreground)"
+                />
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
