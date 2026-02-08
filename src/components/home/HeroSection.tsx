@@ -95,7 +95,7 @@ export default function HeroSection() {
           </motion.div>
 
           <motion.aside
-            className="w-full max-w-xl mx-auto lg:max-w-none rounded-3xl border p-5 sm:p-6 shadow-xl backdrop-blur-xl hero-panel"
+            className="hidden md:block w-full max-w-xl mx-auto lg:max-w-none rounded-3xl border p-5 sm:p-6 shadow-xl backdrop-blur-xl hero-panel"
             initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.7, delay: 0.2 }}
