@@ -111,7 +111,8 @@ function RootLayoutContent({ children }: ChildrenProps) {
         <Toaster
           position="bottom-right"
           toastOptions={{
-            className: 'bg-(--card) text-(--foreground) border-(--border)',
+            className:
+              'bg-[var(--card)] text-[var(--foreground)] border-[color:var(--border)]',
             duration: 3000,
           }}
         />
