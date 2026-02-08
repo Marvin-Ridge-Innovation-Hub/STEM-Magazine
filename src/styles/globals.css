@@ -2,9 +2,7 @@
 
 @font-face {
   font-family: 'Theseasons';
-  src:
-    url('/header-font-format.woff2') format('woff2'),
-    url('/fonnts.com-theseasons-reg.otf') format('opentype');
+  src: url('/header-font-format.woff2') format('woff2');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -12,9 +10,7 @@
 
 @font-face {
   font-family: 'Theseasons';
-  src:
-    url('/header-font-format.woff2') format('woff2'),
-    url('/fonnts.com-theseasons-reg.otf') format('opentype');
+  src: url('/header-font-format.woff2') format('woff2');
   font-weight: 500;
   font-style: normal;
   font-display: swap;
@@ -69,13 +65,10 @@
 }
 
 @theme {
-  --font-family-sans:
-    var(--font-inter), 'Inter', ui-sans-serif, system-ui, sans-serif;
-  --font-family-poppins:
-    var(--font-poppins), 'Poppins', ui-sans-serif, system-ui, sans-serif;
-  --font-family-header:
-    'Theseasons', var(--font-family-poppins), ui-sans-serif, system-ui,
-    sans-serif;
+  --font-sans: var(--font-inter), 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-poppins: 'Poppins', ui-sans-serif, system-ui, sans-serif;
+  --font-header:
+    'Theseasons', var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
 
   --container-padding: 2rem;
   --container-max-width-2xl: 1400px;
@@ -687,13 +680,13 @@
   }
 
   .heading-1 {
-    @apply text-3xl sm:text-4xl md:text-5xl font-bold tracking-tighter;
-    font-family: var(--font-family-header);
+    @apply text-3xl sm:text-4xl md:text-5xl font-normal tracking-tighter;
+    font-family: var(--font-header);
     color: var(--foreground);
   }
   .heading-2 {
-    @apply text-2xl sm:text-3xl md:text-4xl font-bold tracking-tighter;
-    font-family: var(--font-family-header);
+    @apply text-2xl sm:text-3xl md:text-4xl font-normal tracking-tighter;
+    font-family: var(--font-header);
     color: var(--foreground);
   }
   .heading-gradient {
@@ -707,7 +700,8 @@
   h4,
   h5,
   h6 {
-    font-family: var(--font-family-header) !important;
+    font-family: var(--font-header) !important;
+    font-weight: 400 !important;
   }
 
   .message-success {
@@ -819,7 +813,7 @@
   .markdown-content h2,
   .markdown-content h3,
   .markdown-content h4 {
-    font-family: var(--font-family-poppins);
+    font-family: var(--font-poppins);
     font-weight: 700;
     line-height: 1.2;
   }
