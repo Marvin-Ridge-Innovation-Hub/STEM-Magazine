@@ -78,7 +78,7 @@ export const PLATFORM_ROWS: PlatformRow[] = [
 export const PLATFORM_CARD_STYLES = [''];
 
 export const HERO_METRICS = [
-  { value: '150+', label: 'Student creators' },
+  { value: '10+', label: 'In-House Members' },
   { value: '3', label: 'Publishing tracks' },
   { value: '24-48h', label: 'Review window' },
 ];
@@ -135,5 +135,10 @@ export const FAQ_ITEMS = [
     question: 'How do I get updates on new stories?',
     answer:
       'You can subscribe to our newsletter below to receive notifications when new stories are published. You can choose to receive updates for SM Expo projects, SM Now articles, SM Pods episodes, or all of them.',
+  },
+  {
+    question: 'How do I participate in SM Pods?',
+    answer:
+      'Unfortunately, we do not accept direct submissions for SM Pods. Our moderation team is small, and having to validate every video submission would be challenging. If you are interested in participating, please contact our team to see how you can get involved in MRHS Computer Science Club, the managers of the podcast.',
   },
 ];

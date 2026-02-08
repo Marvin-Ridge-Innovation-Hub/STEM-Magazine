@@ -41,20 +41,6 @@ export default function MainFooter() {
             </Link>
           </nav>
         </div>
-        <div className="mt-4 text-center text-xs text-(--muted-foreground)">
-          <div>
-            Icons made from{' '}
-            <a
-              href="https://www.onlinewebfonts.com/icon"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline hover:text-(--primary) transition-colors duration-200"
-            >
-              svg icons
-            </a>
-            is licensed by CC BY 4.0
-          </div>
-        </div>
       </div>
     </footer>
   );

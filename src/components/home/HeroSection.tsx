@@ -47,7 +47,7 @@ export default function HeroSection() {
             <div className="inline-flex items-center gap-2 rounded-full border backdrop-blur-sm px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] hero-label hero-bubble">
               <span className="accent-dot" />
               <Sparkles className="h-3.5 w-3.5" />
-              Student-led STEM Publication
+              Student-led STEM Blog
             </div>
             <h1 className="font-display text-3xl sm:text-5xl md:text-6xl lg:text-7xl hero-title leading-[0.95] tracking-[0.03em]">
               MRHS STEM
@@ -55,7 +55,7 @@ export default function HeroSection() {
               MAGAZINE
             </h1>
             <p className="max-w-xl text-base sm:text-lg leading-relaxed mx-auto lg:mx-0 hero-lead">
-              A publication built to spotlight creativity, innovation, and
+              A platform built to spotlight creativity, innovation, and
               problem-solving across science, technology, engineering, and math.
               Students share what they build, how they think, and why it
               matters.
