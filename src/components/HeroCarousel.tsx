@@ -8,13 +8,15 @@ import Autoplay from 'embla-carousel-autoplay';
 interface HeroCarouselProps {
   images: string[];
   autoplayInterval?: number; // in milliseconds
-  overlayOpacity?: number; // 0-100
+  surfaceOpacity?: number; // 0-1
+  overlayVariant?: 'subtle' | 'strong';
 }
 
 export default function HeroCarousel({
   images,
   autoplayInterval = 10000,
-  overlayOpacity = 50,
+  surfaceOpacity = 0.24,
+  overlayVariant = 'subtle',
 }: HeroCarouselProps) {
   const [emblaRef, emblaApi] = useEmblaCarousel(
     {
@@ -80,13 +82,24 @@ export default function HeroCarousel({
         </div>
       </div>
 
-      {/* Tinted Overlay */}
+      {/* Single surface overlay for readability */}
       <div
-        className="absolute inset-0 bg-black pointer-events-none"
-        style={{ opacity: overlayOpacity / 100 }}
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: 'var(--gradient-hero-surface)',
+          opacity: surfaceOpacity,
+        }}
       />
-      {/* Gradient overlay for extra text readability */}
-      <div className="absolute inset-0 bg-linear-to-b from-black/20 via-transparent to-black/40 pointer-events-none" />
+      {/* Mode-aware tint overlay for text readability */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background:
+            overlayVariant === 'strong'
+              ? 'var(--hero-overlay-strong)'
+              : 'var(--hero-overlay)',
+        }}
+      />
 
       {/* Pagination Dots */}
       {images.length > 1 && (

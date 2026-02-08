@@ -1,7 +1,7 @@
 'use client';
 
-import { SignInButton, SignOutButton, useUser } from '@clerk/nextjs';
-import { Github, Menu, X } from 'lucide-react';
+import { SignInButton, useUser } from '@clerk/nextjs';
+import { Menu, X } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
@@ -23,11 +23,29 @@ export default function MainNavbar() {
 
   // Prevent hydration mismatch by not rendering auth-dependent content until mounted
   const showAuthContent = mounted && isLoaded;
+  const authDesktopItem = showAuthContent ? (
+    isSignedIn ? (
+      <Link
+        href="/dashboard"
+        className="text-sm font-medium text-[var(--foreground)] hover:text-[var(--primary)] transition-colors duration-200"
+      >
+        {user?.firstName ? `${user.firstName}'s Dashboard` : 'Dashboard'}
+      </Link>
+    ) : (
+      <SignInButton mode="modal">
+        <button className="text-sm font-medium text-[var(--foreground)] hover:text-[var(--primary)] transition-colors duration-200">
+          Sign In
+        </button>
+      </SignInButton>
+    )
+  ) : (
+    <span className="text-sm font-medium text-[var(--muted-foreground)] w-20" />
+  );
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-(--background)/85 backdrop-blur-lg border-b border-(--border) shadow-sm">
-      <div className="container flex h-16 items-center justify-between px-4 sm:px-6 max-w-full">
-        <Link href="/" className="flex h-full items-center">
+    <header className="sticky top-0 z-50 w-full border-b border-[color:var(--border)] bg-[color:var(--background)/85] backdrop-blur-lg shadow-sm">
+      <div className="relative grid h-16 w-full grid-cols-[auto_1fr_auto] items-center px-4 sm:px-6">
+        <Link href="/" className="flex h-full items-center justify-start">
           <Image
             src="/images/carouselimages/logo-padded.png"
             alt="MRHS STEM Magazine"
@@ -38,61 +56,51 @@ export default function MainNavbar() {
           />
         </Link>
 
-        <nav className="hidden md:flex items-center gap-8">
+        <nav className="hidden md:flex items-center justify-center gap-8">
           <Link
             href="/posts"
-            className="text-sm font-medium text-(--foreground) hover:text-(--primary) transition-colors duration-200"
+            className="text-sm font-medium text-[var(--foreground)] hover:text-[var(--primary)] transition-colors duration-200"
           >
             Explore
           </Link>
           {showAuthContent && isSignedIn && (
             <Link
               href="/create"
-              className="text-sm font-medium text-(--foreground) hover:text-(--primary) transition-colors duration-200"
+              className="text-sm font-medium text-[var(--foreground)] hover:text-[var(--primary)] transition-colors duration-200"
             >
               Post
             </Link>
           )}
-          {showAuthContent ? (
-            isSignedIn ? (
-              <Link
-                href="/dashboard"
-                className="text-sm font-medium text-(--foreground) hover:text-(--primary) transition-colors duration-200"
-              >
-                {user?.firstName
-                  ? `${user.firstName}'s Dashboard`
-                  : 'Dashboard'}
-              </Link>
-            ) : (
-              <SignInButton mode="modal">
-                <button className="text-sm font-medium text-(--foreground) hover:text-(--primary) transition-colors duration-200">
-                  Sign In
-                </button>
-              </SignInButton>
-            )
-          ) : (
-            <span className="text-sm font-medium text-(--muted-foreground) w-20" />
-          )}
+          {authDesktopItem}
         </nav>
 
-        <button
-          type="button"
-          className="md:hidden text-(--foreground) hover:text-(--primary) transition-colors duration-200"
-          onClick={handleToggle}
-        >
-          {mobileMenuOpen ? (
-            <X className="h-6 w-6" />
-          ) : (
-            <Menu className="h-6 w-6" />
-          )}
-        </button>
+        <div className="flex items-center justify-end gap-2">
+          <div className="hidden md:flex">
+            <ThemeToggle />
+          </div>
+          <div className="flex md:hidden items-center gap-2">
+            <ThemeToggle />
+            <button
+              type="button"
+              className="text-[var(--foreground)] hover:text-[var(--primary)] transition-colors duration-200"
+              onClick={handleToggle}
+              aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+            >
+              {mobileMenuOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
+            </button>
+          </div>
+        </div>
 
         {mobileMenuOpen && (
-          <div className="fixed inset-x-0 top-16 z-50 bg-(--background) border-b border-(--border) shadow-lg md:hidden animate-in slide-in-from-top duration-300 max-w-full">
-            <div className="container py-6 flex flex-col space-y-4 px-4 sm:px-6 max-w-full">
+          <div className="fixed inset-x-0 top-16 z-50 border-b border-[color:var(--border)] bg-[var(--background)] shadow-lg md:hidden animate-in slide-in-from-top duration-300 max-w-full">
+            <div className="w-full py-6 flex flex-col space-y-4 px-4 sm:px-6">
               <Link
                 href="/posts"
-                className="text-sm font-medium text-(--foreground) hover:text-(--primary) transition-colors duration-200"
+                className="text-sm font-medium text-[var(--foreground)] hover:text-[var(--primary)] transition-colors duration-200"
                 onClick={handleToggle}
               >
                 Explore
@@ -100,36 +108,33 @@ export default function MainNavbar() {
               {showAuthContent && isSignedIn && (
                 <Link
                   href="/create"
-                  className="text-sm font-medium text-(--foreground) hover:text-(--primary) transition-colors duration-200"
+                  className="text-sm font-medium text-[var(--foreground)] hover:text-[var(--primary)] transition-colors duration-200"
                   onClick={handleToggle}
                 >
                   Post
                 </Link>
               )}
-              <div className="flex items-center justify-between">
-                {showAuthContent ? (
-                  isSignedIn ? (
-                    <Link
-                      href="/dashboard"
-                      className="text-sm font-medium text-(--foreground) hover:text-(--primary) transition-colors duration-200"
-                      onClick={handleToggle}
-                    >
-                      {user?.firstName
-                        ? `${user.firstName}'s Dashboard`
-                        : 'Dashboard'}
-                    </Link>
-                  ) : (
-                    <SignInButton mode="modal">
-                      <button className="text-sm font-medium text-(--foreground) hover:text-(--primary) transition-colors duration-200">
-                        Sign In
-                      </button>
-                    </SignInButton>
-                  )
+              {showAuthContent ? (
+                isSignedIn ? (
+                  <Link
+                    href="/dashboard"
+                    className="text-sm font-medium text-[var(--foreground)] hover:text-[var(--primary)] transition-colors duration-200"
+                    onClick={handleToggle}
+                  >
+                    {user?.firstName
+                      ? `${user.firstName}'s Dashboard`
+                      : 'Dashboard'}
+                  </Link>
                 ) : (
-                  <span className="text-sm font-medium text-(--muted-foreground)" />
-                )}
-                <ThemeToggle />
-              </div>
+                  <SignInButton mode="modal">
+                    <button className="text-left text-sm font-medium text-[var(--foreground)] hover:text-[var(--primary)] transition-colors duration-200">
+                      Sign In
+                    </button>
+                  </SignInButton>
+                )
+              ) : (
+                <span className="text-sm font-medium text-[var(--muted-foreground)]" />
+              )}
             </div>
           </div>
         )}

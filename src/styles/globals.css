@@ -1,68 +1,417 @@
 @import 'tailwindcss';
 
+@font-face {
+  font-family: 'Theseasons';
+  src:
+    url('/header-font-format.woff2') format('woff2'),
+    url('/fonnts.com-theseasons-reg.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Theseasons';
+  src:
+    url('/header-font-format.woff2') format('woff2'),
+    url('/fonnts.com-theseasons-reg.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Theseasons';
+  src: url('/fonnts.com-theseasons-lt.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Theseasons';
+  src: url('/fonnts.com-theseasons-bd.otf') format('opentype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Theseasons';
+  src: url('/fonnts.com-theseasons-bd.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Theseasons';
+  src: url('/fonnts.com-theseasons-ltit.otf') format('opentype');
+  font-weight: 300;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Theseasons';
+  src: url('/fonnts.com-theseasons-it.otf') format('opentype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Theseasons';
+  src: url('/fonnts.com-theseasons-bdit.otf') format('opentype');
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
 @theme {
-  --font-family-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
-  --font-family-poppins: 'Poppins', ui-sans-serif, system-ui, sans-serif;
+  --font-family-sans:
+    var(--font-inter), 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-family-poppins:
+    var(--font-poppins), 'Poppins', ui-sans-serif, system-ui, sans-serif;
+  --font-family-header:
+    'Theseasons', var(--font-family-poppins), ui-sans-serif, system-ui,
+    sans-serif;
 
   --container-padding: 2rem;
   --container-max-width-2xl: 1400px;
 
-  --color-border: oklch(88% 0.03 260);
-  --color-input: oklch(88% 0.03 260);
-  --color-ring: oklch(65% 0.2 270);
-  --color-background: oklch(100% 0 0);
-  --color-foreground: oklch(25% 0.15 260);
-  --color-primary: oklch(65% 0.2 270);
-  --color-primary-foreground: oklch(98% 0.01 270);
-  --color-secondary: oklch(80% 0.1 190);
-  --color-secondary-foreground: oklch(25% 0.15 260);
-  --color-accent: oklch(80% 0.15 60);
-  --color-accent-foreground: oklch(25% 0.15 260);
-  --color-muted: oklch(90% 0.02 260);
-  --color-muted-foreground: oklch(60% 0.05 260);
-  --color-card: oklch(98% 0.01 260);
-  --color-card-foreground: oklch(25% 0.15 260);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
 }
 
 @layer base {
   :root {
-    --background: oklch(100% 0 0);
-    --foreground: oklch(25% 0.15 260);
-    --card: oklch(98% 0.01 260);
-    --card-foreground: oklch(25% 0.15 260);
-    --popover: oklch(98% 0.01 260);
-    --popover-foreground: oklch(25% 0.15 260);
-    --primary: oklch(65% 0.2 270);
-    --primary-foreground: oklch(98% 0.01 270);
-    --secondary: oklch(80% 0.1 190);
-    --secondary-foreground: oklch(25% 0.15 260);
-    --muted: oklch(90% 0.02 260);
-    --muted-foreground: oklch(60% 0.05 260);
-    --accent: oklch(80% 0.15 60);
-    --accent-foreground: oklch(25% 0.15 260);
-    --border: oklch(88% 0.03 260);
-    --input: oklch(88% 0.03 260);
-    --ring: oklch(65% 0.2 270);
+    color-scheme: light;
+    --brand-blue: oklch(34% 0.078 250);
+    --brand-orange: oklch(70% 0.148 58);
+    --navy-ink: oklch(19% 0.03 252);
+
+    --background: oklch(93.9% 0.011 92);
+    --foreground: oklch(24.5% 0.032 252);
+    --card: oklch(96.9% 0.007 92);
+    --card-foreground: var(--foreground);
+    --popover: var(--card);
+    --popover-foreground: var(--foreground);
+    --primary: var(--brand-blue);
+    --primary-foreground: oklch(98% 0.003 92);
+    --secondary: color-mix(in oklch, var(--brand-blue) 10%, var(--background));
+    --secondary-foreground: var(--foreground);
+    --muted: color-mix(in oklch, var(--brand-blue) 6%, var(--background));
+    --muted-foreground: oklch(47.5% 0.022 252);
+    --accent: var(--brand-orange);
+    --accent-foreground: oklch(23% 0.028 252);
+    --border: color-mix(in oklch, var(--brand-blue) 16%, var(--background));
+    --input: color-mix(in oklch, var(--brand-blue) 20%, var(--background));
+    --ring: color-mix(in oklch, var(--accent) 72%, white);
+    --destructive: oklch(55% 0.165 29);
+    --destructive-foreground: oklch(98% 0.003 92);
+
+    --program-expo: color-mix(in oklch, var(--accent) 90%, white);
+    --program-now: color-mix(in oklch, var(--primary) 84%, white);
+    --program-pods: oklch(58% 0.12 24);
+
+    --status-success: oklch(58% 0.13 160);
+    --status-warning: oklch(69% 0.14 82);
+    --status-danger: var(--destructive);
+    --status-info: var(--primary);
+
+    --gradient-brand: linear-gradient(
+      135deg,
+      color-mix(in oklch, var(--primary) 86%, black),
+      color-mix(in oklch, var(--accent) 82%, black)
+    );
+    --gradient-brand-soft: linear-gradient(
+      135deg,
+      color-mix(in oklch, var(--primary) 12%, var(--background)),
+      color-mix(in oklch, var(--accent) 14%, var(--background))
+    );
+    --gradient-hero-surface: linear-gradient(
+      135deg,
+      color-mix(in oklch, var(--primary) 58%, black),
+      color-mix(in oklch, var(--accent) 46%, black)
+    );
+    --hero-overlay: color-mix(in oklch, white 70%, transparent);
+    --hero-overlay-strong: color-mix(in oklch, white 82%, transparent);
+    --gradient-home-cta: linear-gradient(
+      135deg,
+      color-mix(in oklch, var(--primary) 78%, black),
+      color-mix(in oklch, var(--accent) 68%, black)
+    );
+
+    --color-black: oklch(0% 0 0);
+    --color-white: oklch(100% 0 0);
+
+    /* Global remap for legacy utility colors used across pages/components. */
+    --color-blue-50: color-mix(in oklch, var(--primary) 6%, var(--background));
+    --color-blue-100: color-mix(
+      in oklch,
+      var(--primary) 12%,
+      var(--background)
+    );
+    --color-blue-200: color-mix(
+      in oklch,
+      var(--primary) 20%,
+      var(--background)
+    );
+    --color-blue-400: color-mix(in oklch, var(--primary) 70%, white);
+    --color-blue-500: var(--primary);
+    --color-blue-600: color-mix(in oklch, var(--primary) 84%, black);
+    --color-blue-700: color-mix(in oklch, var(--primary) 70%, black);
+    --color-blue-900: color-mix(in oklch, var(--primary) 42%, black);
+    --color-blue-950: color-mix(in oklch, var(--primary) 30%, black);
+
+    --color-purple-50: color-mix(
+      in oklch,
+      var(--program-now) 6%,
+      var(--background)
+    );
+    --color-purple-100: color-mix(
+      in oklch,
+      var(--program-now) 12%,
+      var(--background)
+    );
+    --color-purple-400: color-mix(in oklch, var(--program-now) 70%, white);
+    --color-purple-500: var(--program-now);
+    --color-purple-600: color-mix(in oklch, var(--program-now) 84%, black);
+    --color-purple-700: color-mix(in oklch, var(--program-now) 70%, black);
+    --color-purple-900: color-mix(in oklch, var(--program-now) 42%, black);
+
+    --color-red-50: color-mix(
+      in oklch,
+      var(--status-danger) 6%,
+      var(--background)
+    );
+    --color-red-100: color-mix(
+      in oklch,
+      var(--status-danger) 12%,
+      var(--background)
+    );
+    --color-red-200: color-mix(
+      in oklch,
+      var(--status-danger) 20%,
+      var(--background)
+    );
+    --color-red-400: color-mix(in oklch, var(--status-danger) 72%, white);
+    --color-red-500: var(--status-danger);
+    --color-red-600: color-mix(in oklch, var(--status-danger) 86%, black);
+    --color-red-700: color-mix(in oklch, var(--status-danger) 72%, black);
+    --color-red-900: color-mix(in oklch, var(--status-danger) 44%, black);
+    --color-red-950: color-mix(in oklch, var(--status-danger) 32%, black);
+
+    --color-green-50: color-mix(
+      in oklch,
+      var(--status-success) 6%,
+      var(--background)
+    );
+    --color-green-100: color-mix(
+      in oklch,
+      var(--status-success) 12%,
+      var(--background)
+    );
+    --color-green-200: color-mix(
+      in oklch,
+      var(--status-success) 20%,
+      var(--background)
+    );
+    --color-green-400: color-mix(in oklch, var(--status-success) 72%, white);
+    --color-green-500: var(--status-success);
+    --color-green-600: color-mix(in oklch, var(--status-success) 86%, black);
+    --color-green-900: color-mix(in oklch, var(--status-success) 44%, black);
+    --color-green-950: color-mix(in oklch, var(--status-success) 32%, black);
+
+    --color-emerald-500: var(--status-success);
+    --color-emerald-600: color-mix(in oklch, var(--status-success) 86%, black);
+    --color-emerald-950: color-mix(in oklch, var(--status-success) 32%, black);
+
+    --color-amber-50: color-mix(
+      in oklch,
+      var(--status-warning) 6%,
+      var(--background)
+    );
+    --color-amber-100: color-mix(
+      in oklch,
+      var(--status-warning) 12%,
+      var(--background)
+    );
+    --color-amber-200: color-mix(
+      in oklch,
+      var(--status-warning) 20%,
+      var(--background)
+    );
+    --color-amber-500: var(--status-warning);
+    --color-amber-600: color-mix(in oklch, var(--status-warning) 86%, black);
+    --color-amber-900: color-mix(in oklch, var(--status-warning) 42%, black);
+    --color-yellow-500: var(--status-warning);
+    --color-yellow-600: color-mix(in oklch, var(--status-warning) 86%, black);
+
+    --color-orange-400: color-mix(in oklch, var(--accent) 72%, white);
+    --color-orange-500: var(--accent);
+    --color-orange-600: color-mix(in oklch, var(--accent) 86%, black);
+
+    --color-sky-500: color-mix(in oklch, var(--primary) 72%, white);
+    --color-indigo-400: color-mix(in oklch, var(--primary) 72%, white);
+    --color-indigo-500: color-mix(in oklch, var(--primary) 86%, white);
+    --color-indigo-600: color-mix(in oklch, var(--primary) 84%, black);
+    --color-cyan-400: color-mix(in oklch, var(--primary) 72%, white);
+    --color-cyan-500: color-mix(in oklch, var(--primary) 82%, white);
+    --color-cyan-600: color-mix(in oklch, var(--primary) 82%, black);
+
+    --color-pink-400: color-mix(in oklch, var(--accent) 70%, white);
+    --color-pink-500: color-mix(in oklch, var(--accent) 76%, white);
+    --color-pink-600: color-mix(in oklch, var(--accent) 82%, black);
+    --color-rose-400: color-mix(in oklch, var(--program-pods) 70%, white);
+    --color-rose-500: var(--program-pods);
+    --color-rose-600: color-mix(in oklch, var(--program-pods) 84%, black);
   }
 
   .dark {
-    --background: oklch(15% 0.05 260);
-    --foreground: oklch(90% 0.02 260);
-    --card: oklch(20% 0.05 260);
-    --card-foreground: oklch(90% 0.02 260);
-    --popover: oklch(20% 0.05 260);
-    --popover-foreground: oklch(90% 0.02 260);
-    --primary: oklch(30% 0.05 260);
-    --primary-foreground: oklch(90% 0.02 260);
-    --secondary: oklch(40% 0.06 260);
-    --secondary-foreground: oklch(90% 0.02 260);
-    --muted: oklch(30% 0.04 260);
-    --muted-foreground: oklch(65% 0.05 260);
-    --accent: oklch(75% 0.15 60);
-    --accent-foreground: oklch(90% 0.02 260);
-    --border: oklch(30% 0.04 260);
-    --input: oklch(30% 0.04 260);
-    --ring: oklch(30% 0.05 260);
+    color-scheme: dark;
+    --brand-blue: oklch(64% 0.102 252);
+    --brand-orange: oklch(76% 0.165 63);
+    --navy-ink: oklch(17% 0.03 252);
+
+    --background: oklch(16.5% 0.022 252);
+    --foreground: oklch(94% 0.011 255);
+    --card: oklch(20% 0.024 252);
+    --card-foreground: var(--foreground);
+    --popover: var(--card);
+    --popover-foreground: var(--foreground);
+    --primary: var(--brand-blue);
+    --primary-foreground: oklch(14% 0.018 252);
+    --secondary: color-mix(in oklch, var(--brand-blue) 18%, black);
+    --secondary-foreground: var(--foreground);
+    --muted: color-mix(in oklch, var(--brand-blue) 13%, black);
+    --muted-foreground: oklch(75.5% 0.018 255);
+    --accent: var(--brand-orange);
+    --accent-foreground: oklch(18% 0.025 252);
+    --border: color-mix(in oklch, var(--brand-blue) 22%, black);
+    --input: color-mix(in oklch, var(--brand-blue) 26%, black);
+    --ring: color-mix(in oklch, var(--accent) 78%, white);
+    --destructive: oklch(68% 0.175 30);
+    --destructive-foreground: oklch(18% 0.024 252);
+
+    --program-expo: color-mix(in oklch, var(--accent) 88%, white);
+    --program-now: color-mix(in oklch, var(--primary) 88%, white);
+    --program-pods: oklch(70% 0.14 24);
+
+    --status-success: oklch(68% 0.145 160);
+    --status-warning: oklch(77% 0.145 82);
+    --status-danger: var(--destructive);
+    --status-info: var(--primary);
+
+    --gradient-brand: linear-gradient(
+      135deg,
+      color-mix(in oklch, var(--primary) 42%, black),
+      color-mix(in oklch, var(--accent) 48%, black)
+    );
+    --gradient-brand-soft: linear-gradient(
+      135deg,
+      color-mix(in oklch, var(--primary) 24%, transparent),
+      color-mix(in oklch, var(--accent) 28%, transparent)
+    );
+    --gradient-hero-surface: linear-gradient(
+      135deg,
+      color-mix(in oklch, var(--primary) 40%, black),
+      color-mix(in oklch, var(--accent) 48%, black)
+    );
+    --hero-overlay: color-mix(in oklch, black 50%, transparent);
+    --hero-overlay-strong: color-mix(in oklch, black 62%, transparent);
+    --gradient-home-cta: linear-gradient(
+      135deg,
+      color-mix(in oklch, var(--primary) 40%, black),
+      color-mix(in oklch, var(--accent) 48%, black)
+    );
+
+    --color-blue-50: color-mix(in oklch, var(--primary) 8%, black);
+    --color-blue-100: color-mix(in oklch, var(--primary) 12%, black);
+    --color-blue-200: color-mix(in oklch, var(--primary) 18%, black);
+    --color-blue-400: color-mix(in oklch, var(--primary) 74%, white);
+    --color-blue-500: var(--primary);
+    --color-blue-600: color-mix(in oklch, var(--primary) 82%, black);
+    --color-blue-700: color-mix(in oklch, var(--primary) 68%, black);
+    --color-blue-900: color-mix(in oklch, var(--primary) 40%, black);
+    --color-blue-950: color-mix(in oklch, var(--primary) 30%, black);
+
+    --color-purple-50: color-mix(in oklch, var(--program-now) 6%, black);
+    --color-purple-100: color-mix(in oklch, var(--program-now) 10%, black);
+    --color-purple-400: color-mix(in oklch, var(--program-now) 76%, white);
+    --color-purple-500: var(--program-now);
+    --color-purple-600: color-mix(in oklch, var(--program-now) 82%, black);
+    --color-purple-700: color-mix(in oklch, var(--program-now) 68%, black);
+    --color-purple-900: color-mix(in oklch, var(--program-now) 40%, black);
+
+    --color-red-50: color-mix(in oklch, var(--status-danger) 8%, black);
+    --color-red-100: color-mix(in oklch, var(--status-danger) 12%, black);
+    --color-red-200: color-mix(in oklch, var(--status-danger) 18%, black);
+    --color-red-400: color-mix(in oklch, var(--status-danger) 76%, white);
+    --color-red-500: var(--status-danger);
+    --color-red-600: color-mix(in oklch, var(--status-danger) 84%, black);
+    --color-red-700: color-mix(in oklch, var(--status-danger) 70%, black);
+    --color-red-900: color-mix(in oklch, var(--status-danger) 44%, black);
+    --color-red-950: color-mix(in oklch, var(--status-danger) 34%, black);
+
+    --color-green-50: color-mix(in oklch, var(--status-success) 8%, black);
+    --color-green-100: color-mix(in oklch, var(--status-success) 12%, black);
+    --color-green-200: color-mix(in oklch, var(--status-success) 18%, black);
+    --color-green-400: color-mix(in oklch, var(--status-success) 74%, white);
+    --color-green-500: var(--status-success);
+    --color-green-600: color-mix(in oklch, var(--status-success) 84%, black);
+    --color-green-900: color-mix(in oklch, var(--status-success) 44%, black);
+    --color-green-950: color-mix(in oklch, var(--status-success) 34%, black);
+
+    --color-emerald-500: var(--status-success);
+    --color-emerald-600: color-mix(in oklch, var(--status-success) 84%, black);
+    --color-emerald-950: color-mix(in oklch, var(--status-success) 34%, black);
+
+    --color-amber-50: color-mix(in oklch, var(--status-warning) 8%, black);
+    --color-amber-100: color-mix(in oklch, var(--status-warning) 12%, black);
+    --color-amber-200: color-mix(in oklch, var(--status-warning) 18%, black);
+    --color-amber-500: var(--status-warning);
+    --color-amber-600: color-mix(in oklch, var(--status-warning) 86%, black);
+    --color-amber-900: color-mix(in oklch, var(--status-warning) 44%, black);
+    --color-yellow-500: var(--status-warning);
+    --color-yellow-600: color-mix(in oklch, var(--status-warning) 86%, black);
+
+    --color-orange-400: color-mix(in oklch, var(--accent) 74%, white);
+    --color-orange-500: var(--accent);
+    --color-orange-600: color-mix(in oklch, var(--accent) 84%, black);
+
+    --color-sky-500: color-mix(in oklch, var(--primary) 76%, white);
+    --color-indigo-400: color-mix(in oklch, var(--primary) 76%, white);
+    --color-indigo-500: color-mix(in oklch, var(--primary) 86%, white);
+    --color-indigo-600: color-mix(in oklch, var(--primary) 82%, black);
+    --color-cyan-400: color-mix(in oklch, var(--primary) 76%, white);
+    --color-cyan-500: color-mix(in oklch, var(--primary) 84%, white);
+    --color-cyan-600: color-mix(in oklch, var(--primary) 82%, black);
+
+    --color-pink-400: color-mix(in oklch, var(--accent) 72%, white);
+    --color-pink-500: color-mix(in oklch, var(--accent) 78%, white);
+    --color-pink-600: color-mix(in oklch, var(--accent) 82%, black);
+    --color-rose-400: color-mix(in oklch, var(--program-pods) 74%, white);
+    --color-rose-500: var(--program-pods);
+    --color-rose-600: color-mix(in oklch, var(--program-pods) 84%, black);
   }
 }
 
@@ -82,16 +431,19 @@
 
 /* Shared Component Styles */
 @layer components {
-  /* Primary Button */
+  .btn-base,
+  .btn-primary,
+  .btn-secondary {
+    @apply inline-flex items-center justify-center h-11 rounded-xl px-6 text-sm font-semibold shadow-md transition-all duration-300 hover:scale-[1.02];
+  }
   .btn-primary {
-    @apply inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold shadow-lg transition-all duration-300 hover:opacity-90 hover:scale-105;
+    @apply hover:opacity-90;
     background-color: var(--primary);
     color: var(--primary-foreground);
   }
 
-  /* Secondary/Outline Button */
   .btn-secondary {
-    @apply inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold shadow-lg transition-all duration-300 hover:scale-105 border-2;
+    @apply border-2;
     border-color: var(--primary);
     color: var(--primary);
   }
@@ -99,7 +451,6 @@
     background-color: color-mix(in oklch, var(--primary) 10%, transparent);
   }
 
-  /* Card Component */
   .card {
     @apply rounded-xl p-6 shadow-lg border transition-all duration-300;
     background-color: var(--card);
@@ -111,58 +462,275 @@
     border-color: var(--border);
   }
 
-  /* Section Container */
   .section-container {
     @apply container px-4 sm:px-6 max-w-full;
   }
 
-  /* Page Section */
   .page-section {
     @apply w-full py-12 sm:py-16 md:py-24;
   }
 
-  /* Page Header */
   .page-header {
     @apply py-12 sm:py-16 border-b;
-    background: linear-gradient(
-      to bottom right,
-      color-mix(in oklch, var(--primary) 10%, transparent),
-      color-mix(in oklch, var(--secondary) 10%, transparent)
-    );
+    background: var(--gradient-brand-soft);
     border-color: var(--border);
   }
 
-  /* Heading Styles */
+  .home-section {
+    @apply w-full relative py-12 sm:py-16 md:py-24;
+  }
+  .home-section-tall {
+    min-height: clamp(520px, 70vh, 900px);
+  }
+  .home-full-bleed {
+    @apply w-full;
+  }
+  .home-container {
+    @apply w-full px-4 sm:px-6 mx-auto relative;
+    max-width: min(92vw);
+  }
+  .home-grid {
+    @apply grid grid-cols-12;
+  }
+  .home-text {
+    @apply col-span-12 lg:col-span-4;
+  }
+  .home-visual {
+    @apply col-span-12 lg:col-span-8;
+  }
+  .home-overlap {
+    @apply -mt-10 sm:-mt-14;
+  }
+  .home-offset {
+    @apply relative;
+  }
+  .home-split {
+    @apply relative;
+  }
+  .home-flip .home-grid {
+    direction: rtl;
+  }
+  .home-flip .home-grid > * {
+    direction: ltr;
+  }
+  .home-overlap .home-container {
+    @apply pt-10 sm:pt-14;
+  }
+  .home-overlap-stack {
+    @apply relative z-10;
+  }
+  .home-overlap-backdrop {
+    @apply absolute inset-0 rounded-3xl border shadow-2xl;
+    background-color: color-mix(in oklch, var(--card) 92%, transparent);
+    border-color: var(--border);
+  }
+  .home-overlap-backdrop-right {
+    right: -1rem;
+    left: 0;
+  }
+  .home-rail {
+    @apply absolute top-0 bottom-0 w-px;
+    left: 0;
+    background-color: var(--border);
+    opacity: 0.55;
+  }
+  .home-rail-right {
+    right: 0;
+    left: auto;
+  }
+  .home-rail-short {
+    top: 1.5rem;
+    bottom: 1.5rem;
+  }
+  .chip-outline {
+    @apply inline-flex items-center rounded-full border px-3 py-1 text-sm font-medium transition-colors;
+    border-color: var(--border);
+    color: var(--foreground);
+    background-color: transparent;
+  }
+  .chip-outline:hover {
+    border-color: var(--primary);
+    background-color: color-mix(in oklch, var(--primary) 10%, transparent);
+  }
+  .accent-dot {
+    @apply inline-block h-2 w-2 rounded-full;
+    background-color: var(--accent);
+  }
+  .hero-label {
+    color: var(--foreground);
+    text-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+  }
+  .hero-bubble {
+    background-color: var(--color-white);
+    border-color: color-mix(in oklch, var(--accent) 22%, var(--border));
+  }
+  .hero-title {
+    color: var(--foreground);
+    text-shadow: 0 14px 38px rgba(0, 0, 0, 0.22);
+  }
+  .hero-lead {
+    color: var(--foreground);
+    text-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+  }
+  .hero-panel {
+    background-color: var(--card);
+    border-color: color-mix(in oklch, var(--accent) 22%, var(--border));
+    color: var(--foreground);
+  }
+  .hero-panel-card {
+    background-color: var(--background);
+    border-color: var(--border);
+  }
+  .hero-panel-text {
+    color: var(--foreground);
+  }
+  .hero-metric {
+    background-color: var(--card);
+    border-color: color-mix(in oklch, var(--accent) 22%, var(--border));
+  }
+  .hero-metric-value {
+    color: var(--foreground);
+  }
+  .hero-metric-label {
+    color: var(--muted-foreground);
+  }
+  .dark .hero-label,
+  .dark .hero-title,
+  .dark .hero-lead {
+    color: rgba(255, 255, 255, 0.92);
+    text-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+  }
+  .dark .hero-bubble {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.22);
+  }
+  .dark .hero-panel {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.22);
+    color: rgba(255, 255, 255, 0.92);
+  }
+  .dark .hero-panel-card {
+    background-color: rgba(0, 0, 0, 0.16);
+    border-color: rgba(255, 255, 255, 0.16);
+  }
+  .dark .hero-panel-text {
+    color: rgba(255, 255, 255, 0.85);
+  }
+  .dark .hero-metric {
+    background-color: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.22);
+  }
+  .dark .hero-metric-value {
+    color: rgba(255, 255, 255, 0.92);
+  }
+  .dark .hero-metric-label {
+    color: rgba(255, 255, 255, 0.7);
+  }
+  .constellation {
+    @apply relative mx-auto hidden lg:flex;
+    width: min(620px, 100%);
+    height: 380px;
+    isolation: isolate;
+  }
+  .constellation-hub {
+    @apply absolute z-30 rounded-full border px-5 py-2 text-sm font-semibold tracking-[0.2em] uppercase;
+    background-color: color-mix(in oklch, var(--card) 90%, transparent);
+    border-color: var(--accent);
+    color: var(--foreground);
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  .constellation-lines {
+    @apply absolute inset-0 w-full h-full;
+    stroke: var(--accent);
+    stroke-width: 0.9;
+    opacity: 0.4;
+    stroke-linecap: round;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .constellation-node {
+    @apply absolute rounded-2xl border bg-[var(--card)] p-3 shadow-sm w-[210px];
+    border-color: var(--accent);
+    z-index: 2;
+  }
+  .constellation-label {
+    @apply text-xs uppercase tracking-[0.25em] text-[var(--muted-foreground)] mb-2;
+  }
+  .constellation-links {
+    @apply flex flex-wrap gap-2;
+  }
+  .constellation-node-1 {
+    left: -18px;
+    top: 78px;
+  }
+  .constellation-node-2 {
+    right: -18px;
+    top: 78px;
+  }
+  .constellation-node-3 {
+    left: 14px;
+    bottom: -6px;
+  }
+  .constellation-node-4 {
+    right: 14px;
+    bottom: -6px;
+  }
+  .constellation-fallback {
+    @apply grid gap-4 lg:hidden;
+  }
+  .panel-accent {
+    @apply border shadow-xl;
+    background: color-mix(in oklch, var(--card) 90%, var(--background));
+    border-color: var(--border);
+  }
+
   .heading-1 {
     @apply text-3xl sm:text-4xl md:text-5xl font-bold tracking-tighter;
-    font-family: var(--font-family-poppins);
+    font-family: var(--font-family-header);
     color: var(--foreground);
   }
   .heading-2 {
     @apply text-2xl sm:text-3xl md:text-4xl font-bold tracking-tighter;
-    font-family: var(--font-family-poppins);
+    font-family: var(--font-family-header);
     color: var(--foreground);
   }
   .heading-gradient {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(to right, var(--primary), var(--accent));
+    background-image: var(--gradient-brand);
+  }
+  .font-display,
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-family-header) !important;
   }
 
-  /* Message Boxes */
   .message-success {
     @apply p-4 rounded-lg border;
-    background-color: color-mix(in oklch, #22c55e 10%, transparent);
-    border-color: color-mix(in oklch, #22c55e 30%, transparent);
-    color: #22c55e;
+    background-color: color-mix(
+      in oklch,
+      var(--status-success) 10%,
+      transparent
+    );
+    border-color: color-mix(in oklch, var(--status-success) 30%, transparent);
+    color: var(--status-success);
   }
   .message-error {
     @apply p-4 rounded-lg border;
-    background-color: color-mix(in oklch, #ef4444 10%, transparent);
-    border-color: color-mix(in oklch, #ef4444 30%, transparent);
-    color: #ef4444;
+    background-color: color-mix(
+      in oklch,
+      var(--status-danger) 10%,
+      transparent
+    );
+    border-color: color-mix(in oklch, var(--status-danger) 30%, transparent);
+    color: var(--status-danger);
   }
 
-  /* Filter Button */
   .filter-btn {
     @apply px-4 py-2 rounded-full font-semibold transition-all;
   }
@@ -179,7 +747,67 @@
     border-color: var(--primary);
   }
 
-  /* Markdown Content */
+  .program-chip-expo {
+    background-color: color-mix(in oklch, var(--program-expo) 14%, transparent);
+    color: var(--program-expo);
+  }
+  .program-chip-now {
+    background-color: color-mix(in oklch, var(--program-now) 14%, transparent);
+    color: var(--program-now);
+  }
+  .program-chip-pods {
+    background-color: color-mix(in oklch, var(--program-pods) 14%, transparent);
+    color: var(--program-pods);
+  }
+  .program-badge-expo {
+    background-color: var(--program-expo);
+    color: var(--accent-foreground);
+  }
+  .program-badge-now {
+    background-color: var(--program-now);
+    color: var(--primary-foreground);
+  }
+  .program-badge-pods {
+    background-color: var(--program-pods);
+    color: var(--primary-foreground);
+  }
+  .status-chip-pending {
+    background-color: color-mix(
+      in oklch,
+      var(--status-warning) 14%,
+      transparent
+    );
+    color: var(--status-warning);
+  }
+  .status-chip-approved {
+    background-color: color-mix(
+      in oklch,
+      var(--status-success) 14%,
+      transparent
+    );
+    color: var(--status-success);
+  }
+  .status-chip-rejected {
+    background-color: color-mix(
+      in oklch,
+      var(--status-danger) 14%,
+      transparent
+    );
+    color: var(--status-danger);
+  }
+  .alert-danger {
+    background-color: color-mix(
+      in oklch,
+      var(--status-danger) 12%,
+      transparent
+    );
+    border: 1px solid color-mix(in oklch, var(--status-danger) 35%, transparent);
+    color: var(--status-danger);
+  }
+  .required-marker {
+    color: var(--status-danger);
+  }
+
   .markdown-content {
     color: var(--foreground);
     line-height: 1.75;
@@ -241,7 +869,6 @@
     border-radius: 0.75rem;
   }
 
-  /* Input Fields */
   .input-field {
     @apply w-full px-4 py-3 rounded-lg border focus:outline-none focus:ring-2;
     background-color: var(--card);
