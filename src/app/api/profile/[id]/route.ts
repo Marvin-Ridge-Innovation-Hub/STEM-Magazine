@@ -26,23 +26,22 @@ export async function GET(
         instagram: true,
         youtube: true,
         createdAt: true,
-        posts: {
-          where: { published: true },
+        submissions: {
+          where: {
+            status: 'APPROVED',
+            publishedAt: { not: null },
+          },
           orderBy: { publishedAt: 'desc' },
           select: {
             id: true,
             title: true,
-            excerpt: true,
-            coverImage: true,
+            content: true,
+            thumbnailUrl: true,
             postType: true,
-            slug: true,
             tags: true,
             publishedAt: true,
-            _count: {
-              select: {
-                comments: true,
-              },
-            },
+            likeCount: true,
+            commentCount: true,
           },
         },
       },
@@ -52,22 +51,26 @@ export async function GET(
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Get like counts for each post
-    const postsWithLikes = await Promise.all(
-      user.posts.map(async (post) => {
-        const likeCount = await prisma.submissionLike
-          .count({
-            where: { submissionId: post.id },
-          })
-          .catch(() => 0);
+    const posts = user.submissions.map((submission) => {
+      const normalizedContent = submission.content.replace(/\s+/g, ' ').trim();
+      const excerpt =
+        normalizedContent.length > 140
+          ? `${normalizedContent.slice(0, 140).trimEnd()}...`
+          : normalizedContent;
 
-        return {
-          ...post,
-          likeCount,
-          commentCount: post._count.comments,
-        };
-      })
-    );
+      return {
+        id: submission.id,
+        title: submission.title,
+        excerpt,
+        coverImage: submission.thumbnailUrl,
+        postType: submission.postType,
+        slug: submission.id,
+        tags: submission.tags,
+        publishedAt: submission.publishedAt,
+        likeCount: submission.likeCount,
+        commentCount: submission.commentCount,
+      };
+    });
 
     const response = NextResponse.json({
       success: true,
@@ -83,8 +86,8 @@ export async function GET(
         instagram: user.instagram,
         youtube: user.youtube,
         createdAt: user.createdAt,
-        posts: postsWithLikes,
-        postCount: user.posts.length,
+        posts,
+        postCount: posts.length,
       },
     });
 

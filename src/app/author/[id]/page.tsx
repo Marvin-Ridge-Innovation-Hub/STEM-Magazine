@@ -86,9 +86,9 @@ interface AuthorProfile {
     id: string;
     title: string;
     excerpt: string | null;
-    coverImage: string;
+    coverImage: string | null;
     postType: string;
-    slug: string;
+    slug?: string;
     tags: string[];
     publishedAt: string;
     likeCount: number;
@@ -355,7 +355,7 @@ export default function AuthorProfilePage() {
                   className="h-full"
                 >
                   <Link
-                    href={`/posts/${post.slug || post.id}`}
+                    href={`/posts/${post.id}`}
                     className="group block h-full bg-(--card) rounded-xl border border-(--border) overflow-hidden hover:shadow-lg transition-all duration-300 flex flex-col"
                   >
                     {/* Cover Image */}
