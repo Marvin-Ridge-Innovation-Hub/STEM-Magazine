@@ -351,6 +351,8 @@ export async function deleteSubmission(submissionId: string): Promise<void> {
     throw new Error('Submission not found');
   }
 
+  let removedPostId: string | null = null;
+
   // If submission was approved, we need to delete the associated post
   if (submission.status === 'APPROVED') {
     const baseSlug = toBaseSlug(submission.title);
@@ -397,21 +399,7 @@ export async function deleteSubmission(submissionId: string): Promise<void> {
       await prisma.post.delete({
         where: { id: post.id },
       });
-
-      // Remove from user's postIds
-      await prisma.user.update({
-        where: { id: submission.authorId },
-        data: {
-          postIds: {
-            set: (
-              await prisma.user.findUnique({
-                where: { id: submission.authorId },
-                select: { postIds: true },
-              })
-            )?.postIds.filter((id) => id !== post.id),
-          },
-        },
-      });
+      removedPostId = post.id;
     }
   }
 
@@ -441,6 +429,29 @@ export async function deleteSubmission(submissionId: string): Promise<void> {
   await prisma.submission.delete({
     where: { id: submissionId },
   });
+
+  // Keep user arrays in sync for all deletion paths.
+  const author = await prisma.user.findUnique({
+    where: { id: submission.authorId },
+    select: { postIds: true, pendingPostIds: true },
+  });
+
+  if (author) {
+    const nextPendingPostIds = (author.pendingPostIds || []).filter(
+      (id) => id !== submissionId
+    );
+    const nextPostIds = removedPostId
+      ? (author.postIds || []).filter((id) => id !== removedPostId)
+      : author.postIds || [];
+
+    await prisma.user.update({
+      where: { id: submission.authorId },
+      data: {
+        pendingPostIds: { set: nextPendingPostIds },
+        postIds: { set: nextPostIds },
+      },
+    });
+  }
 }
 
 /**
