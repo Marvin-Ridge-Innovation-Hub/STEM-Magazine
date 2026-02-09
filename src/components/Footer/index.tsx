@@ -39,6 +39,18 @@ export default function MainFooter() {
             >
               Credits
             </Link>
+            <Link
+              href="/tos"
+              className="text-sm text-(--muted-foreground) hover:text-(--primary) transition-colors duration-200"
+            >
+              Terms
+            </Link>
+            <Link
+              href="/privacy"
+              className="text-sm text-(--muted-foreground) hover:text-(--primary) transition-colors duration-200"
+            >
+              Privacy
+            </Link>
           </nav>
         </div>
       </div>
