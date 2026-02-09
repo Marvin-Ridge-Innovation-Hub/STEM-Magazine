@@ -78,10 +78,15 @@ interface Draft {
 
 interface Submission {
   id: string;
-  postType: 'SM_EXPO' | 'SM_NOW';
+  postType: 'SM_EXPO' | 'SM_NOW' | 'SM_PODS';
   title: string;
   content: string;
   thumbnailUrl?: string;
+  images?: string[];
+  youtubeUrl?: string;
+  projectLinks?: string[];
+  sources?: string;
+  tags?: string[];
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
   canMoveToDraft: boolean;
   rejectionReason?: string;
@@ -343,6 +348,148 @@ const NewsletterModal = ({
   );
 };
 
+const SubmissionReviewModal = ({
+  submission,
+  onClose,
+}: {
+  submission: Submission | null;
+  onClose: () => void;
+}) => {
+  if (!submission) return null;
+
+  return (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+      <div
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={onClose}
+      />
+
+      <motion.div
+        initial={{ opacity: 0, scale: 0.97, y: 8 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.97, y: 8 }}
+        className="relative bg-(--card) border border-(--border) rounded-2xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto"
+      >
+        <div className="sticky top-0 bg-(--card) border-b border-(--border) px-5 sm:px-6 py-4 flex items-center justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.2em] text-(--muted-foreground)">
+              Pending Review
+            </p>
+            <h2 className="text-lg sm:text-xl font-semibold text-(--foreground)">
+              {submission.title}
+            </h2>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-(--muted) rounded-lg transition-colors"
+            aria-label="Close review modal"
+          >
+            <XCircle className="h-5 w-5 text-(--muted-foreground)" />
+          </button>
+        </div>
+
+        <div className="p-5 sm:p-6 space-y-5">
+          <div className="flex flex-wrap items-center gap-2">
+            <span
+              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium ${getPostTypeColors(submission.postType)}`}
+            >
+              <PostTypeIcon
+                type={submission.postType}
+                className="h-3.5 w-3.5"
+              />
+              {getPostTypeLabel(submission.postType)}
+            </span>
+            <span
+              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium ${getStatusColors(submission.status)}`}
+            >
+              <StatusIcon status={submission.status} className="h-3.5 w-3.5" />
+              {submission.status}
+            </span>
+            <span className="text-xs text-(--muted-foreground) ml-auto">
+              Submitted {new Date(submission.createdAt).toLocaleDateString()}
+            </span>
+          </div>
+
+          {submission.thumbnailUrl && (
+            <div className="relative w-full h-56 sm:h-72 rounded-xl overflow-hidden border border-(--border)">
+              <Image
+                src={submission.thumbnailUrl}
+                alt={submission.title}
+                fill
+                className="object-cover"
+              />
+            </div>
+          )}
+
+          <section className="space-y-2">
+            <h3 className="font-semibold text-(--foreground)">Content</h3>
+            <div className="text-sm sm:text-base leading-relaxed text-(--foreground) whitespace-pre-wrap bg-(--background) border border-(--border) rounded-xl p-4">
+              {submission.content}
+            </div>
+          </section>
+
+          {submission.tags && submission.tags.length > 0 && (
+            <section className="space-y-2">
+              <h3 className="font-semibold text-(--foreground)">Tags</h3>
+              <div className="flex flex-wrap gap-2">
+                {submission.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="px-2.5 py-1 rounded-md text-xs font-medium bg-(--muted) text-(--foreground) capitalize"
+                  >
+                    {tag.replace('-', ' ')}
+                  </span>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {submission.postType === 'SM_EXPO' &&
+            submission.projectLinks &&
+            submission.projectLinks.length > 0 && (
+              <section className="space-y-2">
+                <h3 className="font-semibold text-(--foreground)">
+                  Project Links
+                </h3>
+                <div className="space-y-2">
+                  {submission.projectLinks.map((link, index) => (
+                    <a
+                      key={`${link}-${index}`}
+                      href={link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block text-sm text-(--primary) hover:underline break-all"
+                    >
+                      {link}
+                    </a>
+                  ))}
+                </div>
+              </section>
+            )}
+
+          {submission.postType === 'SM_NOW' && submission.sources && (
+            <section className="space-y-2">
+              <h3 className="font-semibold text-(--foreground)">Sources</h3>
+              <div className="text-sm whitespace-pre-wrap text-(--muted-foreground) bg-(--background) border border-(--border) rounded-xl p-4">
+                {submission.sources}
+              </div>
+            </section>
+          )}
+        </div>
+
+        <div className="sticky bottom-0 bg-(--card) border-t border-(--border) px-5 sm:px-6 py-4 flex justify-end">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-(--primary) text-(--primary-foreground) rounded-lg font-medium hover:opacity-90 transition-opacity"
+          >
+            Close
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
 // Helper components for consistent iconography
 const PostTypeIcon = ({
   type,
@@ -431,6 +578,9 @@ export default function DashboardPage() {
   >('overview');
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [showNewsletterModal, setShowNewsletterModal] = useState(false);
+  const [reviewSubmission, setReviewSubmission] = useState<Submission | null>(
+    null
+  );
   const [activitySaving, setActivitySaving] = useState(false);
   const [submissionSaving, setSubmissionSaving] = useState(false);
 
@@ -1433,22 +1583,33 @@ export default function DashboardPage() {
                                   ).toLocaleDateString()}
                                 </span>
 
-                                {/* Pending: Just delete */}
+                                {/* Pending: Review or delete */}
                                 {submission.status === 'PENDING' && (
-                                  <button
-                                    onClick={() =>
-                                      handleDeleteSubmission(submission.id)
-                                    }
-                                    disabled={actionLoading === submission.id}
-                                    className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
-                                    title="Withdraw submission"
-                                  >
-                                    {actionLoading === submission.id ? (
-                                      <Loader2 className="h-4 w-4 animate-spin" />
-                                    ) : (
-                                      <Trash2 className="h-4 w-4" />
-                                    )}
-                                  </button>
+                                  <div className="flex gap-1">
+                                    <button
+                                      onClick={() =>
+                                        setReviewSubmission(submission)
+                                      }
+                                      className="p-2 text-(--primary) hover:bg-(--primary)/10 rounded-lg transition-colors"
+                                      title="Review submission"
+                                    >
+                                      <Eye className="h-4 w-4" />
+                                    </button>
+                                    <button
+                                      onClick={() =>
+                                        handleDeleteSubmission(submission.id)
+                                      }
+                                      disabled={actionLoading === submission.id}
+                                      className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
+                                      title="Withdraw submission"
+                                    >
+                                      {actionLoading === submission.id ? (
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                      ) : (
+                                        <Trash2 className="h-4 w-4" />
+                                      )}
+                                    </button>
+                                  </div>
                                 )}
 
                                 {/* Rejected: Move to draft or delete */}
@@ -1911,6 +2072,15 @@ export default function DashboardPage() {
                 loading={newsletterLoading}
                 isEditing={newsletter.isActive}
               />
+
+              <AnimatePresence>
+                {reviewSubmission && (
+                  <SubmissionReviewModal
+                    submission={reviewSubmission}
+                    onClose={() => setReviewSubmission(null)}
+                  />
+                )}
+              </AnimatePresence>
             </>
           )}
         </motion.div>

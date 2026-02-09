@@ -51,6 +51,14 @@ function validateSubmissionAttributions(data: CreateSubmissionInput) {
 const toJsonValue = (value: unknown) =>
   value as unknown as Prisma.InputJsonValue;
 
+function toBaseSlug(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
 function mapSubmission(record: any): Submission {
   return {
     ...record,
@@ -191,39 +199,62 @@ export async function approveSubmission(
   const nextPendingPostIds =
     user?.pendingPostIds.filter((id) => id !== submissionId) ?? [];
 
-  // Create a slug from the title
-  const slug = submission.title
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/[\s_]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+  const baseSlug =
+    toBaseSlug(submission.title) || `post-${submission.id.slice(-8)}`;
 
   const { updatedSubmission, post } = await prisma.$transaction(async (tx) => {
-    // Create the public post with all submission data
-    const post = await tx.post.create({
-      data: {
-        title: submission.title,
-        content: submission.content,
-        published: true,
-        authorId: submission.authorId,
-        coverImage:
-          submission.thumbnailUrl || 'https://via.placeholder.com/800x400',
-        slug: slug || `post-${Date.now()}`,
-        postType: submission.postType,
-        projectLinks: submission.projectLinks || [],
-        sources: submission.sources,
-        publishedAt: new Date(),
-      },
-    });
+    const publishedAt = new Date();
 
-    // Update submission status
+    let nextSlug = baseSlug;
+    let suffix = 2;
+
+    let post;
+    while (true) {
+      try {
+        // Create the public post with all submission data.
+        post = await tx.post.create({
+          data: {
+            title: submission.title,
+            content: submission.content,
+            published: true,
+            authorId: submission.authorId,
+            coverImage:
+              submission.thumbnailUrl || 'https://via.placeholder.com/800x400',
+            slug: nextSlug,
+            postType: submission.postType,
+            projectLinks: submission.projectLinks || [],
+            sources: submission.sources,
+            publishedAt,
+          },
+        });
+        break;
+      } catch (error) {
+        const isUniqueError =
+          error instanceof Prisma.PrismaClientKnownRequestError &&
+          error.code === 'P2002';
+        const metaTarget = isUniqueError ? error.meta?.target : null;
+        const slugConflict = Array.isArray(metaTarget)
+          ? metaTarget.includes('slug')
+          : typeof metaTarget === 'string' && metaTarget.includes('slug');
+
+        if (isUniqueError && slugConflict) {
+          nextSlug = `${baseSlug}-${suffix}`;
+          suffix += 1;
+          continue;
+        }
+
+        throw error;
+      }
+    }
+
+    // Create the public post with all submission data
     const updatedSubmission = await tx.submission.update({
       where: { id: submissionId },
       data: {
         status: 'APPROVED',
         reviewedBy: reviewerId,
-        reviewedAt: new Date(),
-        publishedAt: new Date(),
+        reviewedAt: publishedAt,
+        publishedAt,
       },
     });
 
@@ -322,13 +353,36 @@ export async function deleteSubmission(submissionId: string): Promise<void> {
 
   // If submission was approved, we need to delete the associated post
   if (submission.status === 'APPROVED') {
-    // Find and delete the post by matching title and author
-    const post = await prisma.post.findFirst({
-      where: {
-        authorId: submission.authorId,
-        title: submission.title,
-      },
-    });
+    const baseSlug = toBaseSlug(submission.title);
+
+    let post = submission.publishedAt
+      ? await prisma.post.findFirst({
+          where: {
+            authorId: submission.authorId,
+            title: submission.title,
+            publishedAt: submission.publishedAt,
+          },
+        })
+      : null;
+
+    if (!post) {
+      const slugOrTitleFilters: Prisma.PostWhereInput[] = [
+        { title: submission.title },
+      ];
+
+      if (baseSlug) {
+        slugOrTitleFilters.push({ slug: baseSlug });
+        slugOrTitleFilters.push({ slug: { startsWith: `${baseSlug}-` } });
+      }
+
+      post = await prisma.post.findFirst({
+        where: {
+          authorId: submission.authorId,
+          OR: slugOrTitleFilters,
+        },
+        orderBy: [{ publishedAt: 'desc' }, { createdAt: 'desc' }],
+      });
+    }
 
     if (post) {
       // Delete all comments on the post first

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
-import { deletePostImages } from '@/services/cloudinaryService';
+import { deleteSubmission } from '@/services/submissionService';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -123,30 +123,8 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Delete images from Cloudinary
-    await deletePostImages(post.thumbnailUrl, post.images);
-
-    // Delete all comments (replies first, then parents)
-    await prisma.submissionComment.deleteMany({
-      where: {
-        submissionId: postId,
-        parentId: { not: null },
-      },
-    });
-
-    await prisma.submissionComment.deleteMany({
-      where: { submissionId: postId },
-    });
-
-    // Delete all likes
-    await prisma.submissionLike.deleteMany({
-      where: { submissionId: postId },
-    });
-
-    // Delete the submission/post
-    await prisma.submission.delete({
-      where: { id: postId },
-    });
+    // Use the shared service so approved submissions also clean up legacy posts.
+    await deleteSubmission(postId);
 
     return NextResponse.json({
       success: true,
