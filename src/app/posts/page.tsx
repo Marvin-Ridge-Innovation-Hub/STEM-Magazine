@@ -76,6 +76,16 @@ const ALL_TAGS = [
   'ai',
 ];
 
+const getCardPreviewText = (post: any, maxLength = 120) => {
+  const source = (post.excerpt || post.content || '')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (!source) return '';
+  if (source.length <= maxLength) return source;
+  return `${source.slice(0, maxLength).trimEnd()}...`;
+};
+
 // Regular Post Card Component
 const PostCard = ({
   post,
@@ -92,10 +102,10 @@ const PostCard = ({
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.4, delay: Math.min(index * 0.05, 0.5) }}
-    className={`group ${className ?? ''}`}
+    className={`group h-full ${className ?? ''}`}
   >
     <Link href={`/posts/${post.slug || post.id}`} className="block h-full">
-      <div className="relative rounded-2xl overflow-hidden bg-[var(--card)] border border-[color:var(--border)] flex flex-col shadow-sm transition-transform duration-300 group-hover:-translate-y-1 group-hover:shadow-md">
+      <div className="relative h-full rounded-2xl overflow-hidden bg-[var(--card)] border border-[color:var(--border)] flex flex-col shadow-sm transition-transform duration-300 group-hover:-translate-y-1 group-hover:shadow-md">
         <div className="relative w-full aspect-[16/9] overflow-hidden">
           {post.coverImage ? (
             <Image
@@ -129,11 +139,11 @@ const PostCard = ({
                 {getTimeAgo(post.publishedAt || post.createdAt)}
               </span>
             </div>
-            <h3 className="font-display text-lg sm:text-xl text-[var(--foreground)] group-hover:text-[var(--primary)] transition-colors leading-tight line-clamp-2">
+            <h3 className="font-display text-lg sm:text-xl text-[var(--foreground)] group-hover:text-[var(--primary)] transition-colors leading-tight line-clamp-2 min-h-[3.5rem]">
               {post.title}
             </h3>
-            <p className="text-xs text-[var(--muted-foreground)] line-clamp-2 mt-2">
-              {post.excerpt || post.content?.substring(0, 80)}
+            <p className="text-sm leading-5 text-[var(--muted-foreground)] line-clamp-2 min-h-10 mt-2">
+              {getCardPreviewText(post)}
             </p>
           </div>
 
