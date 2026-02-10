@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
@@ -1287,12 +1288,24 @@ export default function CreatePostPage() {
 
                 <div className="text-xs text-(--muted-foreground) space-y-1">
                   <p>
-                    • Upload 1-5 images. The first image will be used as the
+                    - Upload 1-5 images. The first image will be used as the
                     cover/thumbnail.
                   </p>
-                  <p>• Drag images to reorder them. Click the X to remove.</p>
                   <p>
-                    • Recommended: JPG/PNG, 1200x800 or similar aspect ratio.
+                    - Allowed: your own photos/screenshots/diagrams, or media
+                    you are licensed to use.
+                  </p>
+                  <p>
+                    - Not allowed: copyrighted images without permission,
+                    removed watermarks, or uncredited reposts.
+                  </p>
+                  <p>
+                    - Every image must be credited as either "Original photo" or
+                    "Custom credit" with source details.
+                  </p>
+                  <p>- Drag images to reorder them. Click the X to remove.</p>
+                  <p>
+                    - Recommended: JPG/PNG, 1200x800 or similar aspect ratio.
                   </p>
                 </div>
               </div>
@@ -1468,7 +1481,8 @@ export default function CreatePostPage() {
 
                 <div className="text-xs text-(--muted-foreground)">
                   A thumbnail helps attract attention. Recommended: JPG/PNG,
-                  1200x628 or similar aspect.
+                  1200x628 or similar aspect. Use only images you created or
+                  have rights to, and include thumbnail credit when required.
                 </div>
               </div>
             )}
@@ -1574,7 +1588,16 @@ export default function CreatePostPage() {
               )}
               <div className="text-xs text-(--muted-foreground)">
                 Provide helpful context: what, why, how, and any notes readers
-                should know.
+                should know. Cite claims, statistics, quotes, and external
+                research in Sources. Keep content respectful and appropriate for
+                a school audience per{' '}
+                <Link
+                  href="/tos"
+                  className="text-(--primary) underline underline-offset-2"
+                >
+                  Terms of Service
+                </Link>
+                .
               </div>
             </div>
 
@@ -1623,8 +1646,11 @@ export default function CreatePostPage() {
                   className="w-full border border-(--border) rounded px-3 py-2 min-h-30 resize-vertical bg-(--background) text-(--foreground) placeholder:text-(--muted-foreground) focus:outline-none focus:ring-2 focus:ring-(--primary)"
                 />
                 <div className="text-xs text-(--muted-foreground)">
-                  Optional but recommended when referencing external research.
-                  Example: Author. "Title." Journal, Year.
+                  Required for borrowed facts, data, quotes, or non-common
+                  claims. Use MLA format when possible.
+                </div>
+                <div className="text-xs text-(--muted-foreground)">
+                  Example: Author. "Title." Journal, Year. URL (if applicable).
                 </div>
               </div>
             )}

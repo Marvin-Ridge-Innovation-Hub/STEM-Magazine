@@ -8,18 +8,12 @@ import {
   approveSubmissionAction,
   rejectSubmissionAction,
 } from '@/actions/submission.actions';
-import PostingRules from '@/components/PostingRules';
+import SubmissionsModerationPanel from '@/components/admin/SubmissionsModerationPanel';
 import MarkdownContent from '@/components/MarkdownContent';
-import ImageAttributionDisplay from '@/components/ImageAttribution';
 import type { ImageAttribution } from '@/types';
 import {
   Target,
   Newspaper,
-  Clock,
-  CheckCircle,
-  XCircle,
-  List,
-  BookOpen,
   LayoutGrid,
   Youtube,
   Plus,
@@ -61,25 +55,6 @@ const PostTypeIcon = ({
   }
 };
 
-const StatusIcon = ({
-  status,
-  className,
-}: {
-  status: string;
-  className?: string;
-}) => {
-  switch (status) {
-    case 'PENDING':
-      return <Clock className={className} />;
-    case 'APPROVED':
-      return <CheckCircle className={className} />;
-    case 'REJECTED':
-      return <XCircle className={className} />;
-    default:
-      return <Clock className={className} />;
-  }
-};
-
 const getPostTypeColors = (type: string) => {
   switch (type) {
     case 'SM_EXPO':
@@ -87,19 +62,6 @@ const getPostTypeColors = (type: string) => {
     case 'SM_NOW':
       return 'bg-purple-500/10 text-purple-600 dark:text-purple-400';
     case 'SM_PODS':
-      return 'bg-red-500/10 text-red-600 dark:text-red-400';
-    default:
-      return 'bg-gray-500/10 text-gray-600';
-  }
-};
-
-const getStatusColors = (status: string) => {
-  switch (status) {
-    case 'PENDING':
-      return 'bg-amber-500/10 text-amber-600 dark:text-amber-400';
-    case 'APPROVED':
-      return 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400';
-    case 'REJECTED':
       return 'bg-red-500/10 text-red-600 dark:text-red-400';
     default:
       return 'bg-gray-500/10 text-gray-600';
@@ -136,7 +98,7 @@ const AVAILABLE_TAGS = [
 
 interface Submission {
   id: string;
-  postType: 'SM_EXPO' | 'SM_NOW';
+  postType: 'SM_EXPO' | 'SM_NOW' | 'SM_PODS';
   title: string;
   content: string;
   thumbnailUrl?: string;
@@ -201,8 +163,6 @@ export default function AdminDashboard() {
     'PENDING' | 'APPROVED' | 'REJECTED' | 'ALL'
   >('PENDING');
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const [rejectingId, setRejectingId] = useState<string | null>(null);
-  const [rejectionReason, setRejectionReason] = useState('');
   const [allowMoveToDraft, setAllowMoveToDraft] = useState(true);
   const [message, setMessage] = useState<{
     type: 'success' | 'error';
@@ -298,26 +258,39 @@ export default function AdminDashboard() {
     try {
       const result = await approveSubmissionAction(submissionId);
       if (result.success) {
+        setMessage({
+          type: 'success',
+          text: 'Submission approved and published.',
+        });
         toast.success('Submission approved successfully!');
         // Immediately update the UI by refetching submissions
         await loadSubmissions();
       } else {
+        setMessage({
+          type: 'error',
+          text: result.error || 'Failed to approve submission',
+        });
         toast.error(result.error || 'Failed to approve');
       }
     } catch (error) {
+      setMessage({ type: 'error', text: 'An unexpected error occurred.' });
       toast.error('An error occurred');
     } finally {
       setActionLoading(null);
     }
   };
 
-  const handleReject = async (submissionId: string) => {
+  const handleReject = async (
+    submissionId: string,
+    rejectionReason: string
+  ) => {
     if (!rejectionReason.trim()) {
       toast.error('Please provide a reason for rejection');
       return;
     }
 
     setActionLoading(submissionId);
+    setMessage(null);
 
     try {
       const result = await rejectSubmissionAction(
@@ -326,25 +299,28 @@ export default function AdminDashboard() {
         allowMoveToDraft
       );
       if (result.success) {
+        setMessage({
+          type: 'success',
+          text: result.message || 'Submission rejected',
+        });
         toast.success(result.message || 'Submission rejected');
-        setRejectingId(null);
-        setRejectionReason('');
         setAllowMoveToDraft(true);
         // Immediately update the UI by refetching submissions
         await loadSubmissions();
       } else {
+        setMessage({
+          type: 'error',
+          text: result.error || 'Failed to reject submission',
+        });
         toast.error(result.error || 'Failed to reject');
       }
     } catch (error) {
+      setMessage({ type: 'error', text: 'An unexpected error occurred.' });
       toast.error('An error occurred');
     } finally {
       setActionLoading(null);
     }
   };
-
-  const filteredSubmissions = submissions.filter(
-    (s) => filter === 'ALL' || s.status === filter
-  );
 
   const stats = {
     pending: submissions.filter((s) => s.status === 'PENDING').length,
@@ -726,386 +702,22 @@ export default function AdminDashboard() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
           >
-            {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-              <div className="bg-(--card) border border-(--border) rounded-lg p-4 text-center">
-                <div className="text-3xl font-bold text-yellow-500">
-                  {stats.pending}
-                </div>
-                <div className="text-sm text-(--muted-foreground)">Pending</div>
-              </div>
-              <div className="bg-(--card) border border-(--border) rounded-lg p-4 text-center">
-                <div className="text-3xl font-bold text-green-500">
-                  {stats.approved}
-                </div>
-                <div className="text-sm text-(--muted-foreground)">
-                  Approved
-                </div>
-              </div>
-              <div className="bg-(--card) border border-(--border) rounded-lg p-4 text-center">
-                <div className="text-3xl font-bold text-red-500">
-                  {stats.rejected}
-                </div>
-                <div className="text-sm text-(--muted-foreground)">
-                  Rejected
-                </div>
-              </div>
-              <div className="bg-(--card) border border-(--border) rounded-lg p-4 text-center">
-                <div className="text-3xl font-bold text-(--foreground)">
-                  {stats.total}
-                </div>
-                <div className="text-sm text-(--muted-foreground)">Total</div>
-              </div>
-            </div>
-
-            {/* Message */}
-            <AnimatePresence>
-              {message && (
-                <motion.div
-                  className={`mb-6 p-4 rounded-lg ${
-                    message.type === 'success'
-                      ? 'bg-green-500/10 border border-green-500/30 text-green-500'
-                      : 'bg-red-500/10 border border-red-500/30 text-red-500'
-                  }`}
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                >
-                  {message.text}
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Filter Tabs */}
-            <div className="flex gap-2 mb-6 flex-wrap">
-              {(['PENDING', 'APPROVED', 'REJECTED', 'ALL'] as const).map(
-                (status) => (
-                  <button
-                    key={status}
-                    onClick={() => setFilter(status)}
-                    className={`px-4 py-2 rounded-full font-semibold transition-all flex items-center gap-1 ${
-                      filter === status
-                        ? 'bg-(--accent) text-(--accent-foreground) shadow-md'
-                        : 'bg-(--card) border border-(--border) text-(--foreground) hover:border-(--primary)'
-                    }`}
-                  >
-                    {status === 'PENDING' && <Clock className="h-4 w-4" />}
-                    {status === 'APPROVED' && (
-                      <CheckCircle className="h-4 w-4" />
-                    )}
-                    {status === 'REJECTED' && <XCircle className="h-4 w-4" />}
-                    {status === 'ALL' && <List className="h-4 w-4" />}
-                    {status.charAt(0) + status.slice(1).toLowerCase()}
-                    {status !== 'ALL' &&
-                      ` (${status === 'PENDING' ? stats.pending : status === 'APPROVED' ? stats.approved : stats.rejected})`}
-                  </button>
-                )
-              )}
-            </div>
-
-            <PostingRules className="mb-6" />
-
-            {/* Submissions List */}
-            {submissionsLoading ? (
-              <div className="space-y-4">
-                {[1, 2, 3].map((i) => (
-                  <div
-                    key={i}
-                    className="bg-(--card) border border-(--border) rounded-lg p-6 animate-pulse"
-                  >
-                    <div className="h-6 bg-(--muted) rounded w-1/3 mb-4"></div>
-                    <div className="h-4 bg-(--muted) rounded w-full mb-2"></div>
-                    <div className="h-4 bg-(--muted) rounded w-2/3"></div>
-                  </div>
-                ))}
-              </div>
-            ) : filteredSubmissions.length === 0 ? (
-              <div className="text-center py-12 bg-(--card) border border-(--border) rounded-lg">
-                <p className="text-(--muted-foreground) text-lg">
-                  {filter === 'ALL'
-                    ? 'No submissions yet'
-                    : `No ${filter.toLowerCase()} submissions`}
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-6">
-                {filteredSubmissions.map((submission) => (
-                  <motion.div
-                    key={submission.id}
-                    className="bg-(--card) border border-(--border) rounded-lg overflow-hidden"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                  >
-                    {/* Header */}
-                    <div className="p-4 md:p-6 border-b border-(--border)">
-                      <div className="flex flex-wrap gap-4 items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 md:gap-3 mb-2 flex-wrap">
-                            <span
-                              className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${getPostTypeColors(submission.postType)}`}
-                            >
-                              <PostTypeIcon
-                                type={submission.postType}
-                                className="h-3 w-3"
-                              />
-                              {getPostTypeLabel(submission.postType)}
-                            </span>
-                            <span
-                              className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${getStatusColors(submission.status)}`}
-                            >
-                              <StatusIcon
-                                status={submission.status}
-                                className="h-3 w-3"
-                              />
-                              {submission.status.charAt(0) +
-                                submission.status.slice(1).toLowerCase()}
-                            </span>
-                          </div>
-                          <h3 className="text-lg md:text-xl font-bold text-(--foreground) mb-1">
-                            {submission.title}
-                          </h3>
-                          <p className="text-sm text-(--muted-foreground)">
-                            By{' '}
-                            {submission.author.name || submission.author.email}{' '}
-                            •{' '}
-                            {new Date(
-                              submission.createdAt
-                            ).toLocaleDateString()}
-                          </p>
-                        </div>
-                        {submission.thumbnailUrl && (
-                          <div className="space-y-1">
-                            <div className="relative w-24 h-16 md:w-32 md:h-20 rounded-lg overflow-hidden">
-                              <Image
-                                src={submission.thumbnailUrl}
-                                alt={submission.title}
-                                fill
-                                className="object-cover"
-                              />
-                            </div>
-                            <ImageAttributionDisplay
-                              attribution={submission.thumbnailAttribution}
-                              author={{
-                                id: submission.author.id,
-                                name: submission.author.name || undefined,
-                              }}
-                            />
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Content */}
-                    <div className="p-4 md:p-6 border-b border-(--border)">
-                      <div className="flex items-center justify-between gap-3 mb-2">
-                        <h4 className="font-semibold text-(--foreground)">
-                          Content
-                        </h4>
-                        <button
-                          type="button"
-                          onClick={() => setExpandedSubmission(submission)}
-                          className="inline-flex items-center gap-1 text-xs font-semibold text-(--primary) hover:underline"
-                        >
-                          <BookOpen className="h-3 w-3" />
-                          View full
-                        </button>
-                      </div>
-                      <div className="text-(--muted-foreground) line-clamp-6">
-                        <MarkdownContent
-                          content={submission.content}
-                          className="prose prose-sm max-w-none text-(--foreground)"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Tags */}
-                    {submission.tags && submission.tags.length > 0 && (
-                      <div className="p-4 md:p-6 border-b border-(--border) bg-(--muted)/20">
-                        <h4 className="font-semibold text-(--foreground) mb-3">
-                          🏷️ Tags
-                        </h4>
-                        <div className="flex flex-wrap gap-2">
-                          {submission.tags.map((tag, idx) => (
-                            <span
-                              key={idx}
-                              className="px-3 py-1 rounded-full text-xs font-medium capitalize bg-(--accent) text-(--accent-foreground)"
-                            >
-                              {tag}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Images for SM Expo */}
-                    {submission.postType === 'SM_EXPO' &&
-                      submission.images &&
-                      submission.images.length > 0 && (
-                        <div className="p-4 md:p-6 border-b border-(--border)">
-                          <h4 className="font-semibold text-(--foreground) mb-3">
-                            🖼️ Project Images ({submission.images.length})
-                          </h4>
-                          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                            {submission.images.map((image, idx) => (
-                              <div key={idx} className="flex flex-col gap-1">
-                                <a
-                                  href={image}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="relative aspect-video rounded-lg overflow-hidden border border-(--border) hover:opacity-80 transition-opacity group"
-                                >
-                                  <Image
-                                    src={image}
-                                    alt={`Project image ${idx + 1}`}
-                                    fill
-                                    className="object-cover"
-                                  />
-                                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                                    <ExternalLink className="h-5 w-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                                  </div>
-                                </a>
-                                <ImageAttributionDisplay
-                                  attribution={
-                                    submission.imageAttributions?.[idx]
-                                  }
-                                  author={{
-                                    id: submission.author.id,
-                                    name: submission.author.name || undefined,
-                                  }}
-                                />
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                    {/* Links/Sources */}
-                    {(submission.projectLinks.length > 0 ||
-                      submission.sources) && (
-                      <div className="p-4 md:p-6 border-b border-(--border) bg-(--muted)/30">
-                        {submission.projectLinks.length > 0 && (
-                          <div className="mb-4">
-                            <h4 className="font-semibold text-(--foreground) mb-3 flex items-center gap-2">
-                              <ExternalLink className="h-4 w-4" /> Project Links
-                              ({submission.projectLinks.length})
-                            </h4>
-                            <ul className="space-y-2">
-                              {submission.projectLinks.map((link, idx) => (
-                                <li
-                                  key={idx}
-                                  className="flex items-start gap-2"
-                                >
-                                  <span className="text-(--muted-foreground) text-sm mt-0.5">
-                                    {idx + 1}.
-                                  </span>
-                                  <a
-                                    href={link}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-(--primary) hover:underline text-sm break-all flex-1 inline-flex items-center gap-1"
-                                  >
-                                    {link}
-                                    <ExternalLink className="h-3 w-3 shrink-0" />
-                                  </a>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-                        {submission.sources && (
-                          <div>
-                            <h4 className="font-semibold text-(--foreground) mb-2 flex items-center gap-2">
-                              <BookOpen className="h-4 w-4" /> Sources
-                            </h4>
-                            <p className="text-sm text-(--muted-foreground) whitespace-pre-wrap">
-                              {submission.sources}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Actions */}
-                    {submission.status === 'PENDING' && (
-                      <div className="p-4 md:p-6 bg-(--muted)/20">
-                        {rejectingId === submission.id ? (
-                          <div className="space-y-4">
-                            <textarea
-                              value={rejectionReason}
-                              onChange={(e) =>
-                                setRejectionReason(e.target.value)
-                              }
-                              placeholder="Reason for rejection..."
-                              className="w-full p-3 bg-(--background) border border-(--border) rounded-lg text-(--foreground) placeholder-(--muted-foreground) resize-none"
-                              rows={3}
-                            />
-                            <label className="flex items-center gap-2 cursor-pointer">
-                              <input
-                                type="checkbox"
-                                checked={allowMoveToDraft}
-                                onChange={(e) =>
-                                  setAllowMoveToDraft(e.target.checked)
-                                }
-                                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                              />
-                              <span className="text-sm text-(--foreground)">
-                                Allow author to move to drafts (shows button in
-                                their dashboard to revise and resubmit)
-                              </span>
-                            </label>
-                            <div className="flex gap-3 flex-wrap">
-                              <button
-                                onClick={() => {
-                                  setRejectingId(null);
-                                  setRejectionReason('');
-                                  setAllowMoveToDraft(true);
-                                }}
-                                className="px-4 py-2 border border-(--border) rounded-lg hover:bg-(--muted) transition-colors"
-                              >
-                                Cancel
-                              </button>
-                              <button
-                                onClick={() => handleReject(submission.id)}
-                                disabled={actionLoading === submission.id}
-                                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50"
-                              >
-                                {actionLoading === submission.id
-                                  ? 'Rejecting...'
-                                  : 'Confirm Reject'}
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="flex gap-3 flex-wrap">
-                            <button
-                              onClick={() => handleApprove(submission.id)}
-                              disabled={actionLoading === submission.id}
-                              className="px-4 md:px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-semibold disabled:opacity-50"
-                            >
-                              {actionLoading === submission.id ? (
-                                'Approving...'
-                              ) : (
-                                <>
-                                  <CheckCircle className="h-4 w-4 inline mr-1" />{' '}
-                                  Approve
-                                </>
-                              )}
-                            </button>
-                            <button
-                              onClick={() => setRejectingId(submission.id)}
-                              disabled={actionLoading === submission.id}
-                              className="px-4 md:px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-semibold disabled:opacity-50"
-                            >
-                              <XCircle className="h-4 w-4 inline mr-1" /> Reject
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </motion.div>
-                ))}
-              </div>
-            )}
+            <SubmissionsModerationPanel
+              submissions={submissions}
+              submissionsLoading={submissionsLoading}
+              stats={stats}
+              filter={filter}
+              onFilterChange={setFilter}
+              message={message}
+              actionLoading={actionLoading}
+              allowMoveToDraft={allowMoveToDraft}
+              onAllowMoveToDraftChange={setAllowMoveToDraft}
+              onApprove={handleApprove}
+              onReject={handleReject}
+              onOpenFullContent={(submission) =>
+                setExpandedSubmission(submission)
+              }
+            />
           </motion.div>
         )}
 

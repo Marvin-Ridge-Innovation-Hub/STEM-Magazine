@@ -1,19 +1,22 @@
+import Link from 'next/link';
+
 type PostingRulesProps = {
   className?: string;
 };
 
 const EXPO_RULES = [
-  'Only submit work you created or have permission to share.',
-  'Credit every image using one of the two allowed options.',
-  'No copyrighted images or media without permission or a valid license.',
+  'Only submit work you created or media you are licensed/authorized to use.',
+  'Allowed images: your own photos/screenshots/diagrams, or licensed images with proper credit.',
+  'Not allowed: copyrighted images without permission, watermark removal, or uncredited reposts.',
+  'Credit every image with either "Original photo" or a custom citation.',
   'Keep content respectful, student-safe, and appropriate for a school audience.',
   'Include clear project context and links when available (demo, repo, write-up).',
 ];
 
 const NOW_RULES = [
-  'Write in your own words; no copy-pasting articles.',
-  'Cite sources for claims, data, or quotes in the Sources section.',
-  'Credit every thumbnail image using one of the two allowed options.',
+  'Write in your own words; no copy-pasting full sections from articles or websites.',
+  'Cite claims, statistics, quotes, and research in the Sources (MLA) section.',
+  'Credit the thumbnail image with either "Original photo" or a custom citation.',
   'No copyrighted images or media without permission or a valid license.',
   'Keep titles accurate and avoid misleading claims.',
 ];
@@ -49,6 +52,15 @@ export default function PostingRules({ className = '' }: PostingRulesProps) {
             ))}
           </ul>
         </div>
+      </div>
+
+      <div className="mt-4 rounded-md border border-(--border) bg-(--background) p-3 text-xs text-(--muted-foreground)">
+        By submitting, you confirm you have rights to all uploaded media and
+        that your citations are accurate. See{' '}
+        <Link href="/tos" className="text-(--primary) underline">
+          Terms of Service
+        </Link>{' '}
+        for full policy details.
       </div>
     </div>
   );

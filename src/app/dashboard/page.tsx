@@ -490,6 +490,68 @@ const SubmissionReviewModal = ({
   );
 };
 
+const RejectionNotesModal = ({
+  submission,
+  onClose,
+}: {
+  submission: Submission | null;
+  onClose: () => void;
+}) => {
+  if (!submission || !submission.rejectionReason) return null;
+
+  return (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+      <div
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={onClose}
+      />
+
+      <motion.div
+        initial={{ opacity: 0, scale: 0.97, y: 8 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.97, y: 8 }}
+        className="relative w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-2xl border border-(--border) bg-(--card) shadow-xl"
+      >
+        <div className="sticky top-0 flex items-start justify-between gap-4 border-b border-(--border) bg-(--card) px-5 py-4 sm:px-6">
+          <div>
+            <p className="text-xs uppercase tracking-[0.2em] text-(--muted-foreground)">
+              Rejection Notes
+            </p>
+            <h2 className="text-lg font-semibold text-(--foreground) sm:text-xl">
+              {submission.title}
+            </h2>
+            <p className="text-xs text-(--muted-foreground)">
+              Submitted {new Date(submission.createdAt).toLocaleDateString()}
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="rounded-lg p-2 transition-colors hover:bg-(--muted)"
+            aria-label="Close rejection notes modal"
+          >
+            <XCircle className="h-5 w-5 text-(--muted-foreground)" />
+          </button>
+        </div>
+
+        <div className="p-5 sm:p-6">
+          <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-4 text-sm leading-relaxed text-red-700 whitespace-pre-wrap dark:text-red-300 sm:text-base">
+            {submission.rejectionReason}
+          </div>
+        </div>
+
+        <div className="sticky bottom-0 flex justify-end border-t border-(--border) bg-(--card) px-5 py-4 sm:px-6">
+          <button
+            onClick={onClose}
+            className="rounded-lg bg-(--primary) px-4 py-2 font-medium text-(--primary-foreground) transition-opacity hover:opacity-90"
+          >
+            Close
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
 // Helper components for consistent iconography
 const PostTypeIcon = ({
   type,
@@ -581,6 +643,8 @@ export default function DashboardPage() {
   const [reviewSubmission, setReviewSubmission] = useState<Submission | null>(
     null
   );
+  const [rejectionNotesSubmission, setRejectionNotesSubmission] =
+    useState<Submission | null>(null);
   const [activitySaving, setActivitySaving] = useState(false);
   const [submissionSaving, setSubmissionSaving] = useState(false);
 
@@ -1555,12 +1619,24 @@ export default function DashboardPage() {
                                     <motion.div
                                       initial={{ opacity: 0, height: 0 }}
                                       animate={{ opacity: 1, height: 'auto' }}
-                                      className="mt-3 p-3 bg-red-500/5 border border-red-500/20 rounded-lg text-sm text-red-600 dark:text-red-400"
+                                      className="mt-3 rounded-lg border border-red-500/20 bg-red-500/5 p-3 text-sm text-red-600 dark:text-red-400"
                                     >
-                                      <strong className="font-medium">
-                                        Feedback:
-                                      </strong>{' '}
-                                      {submission.rejectionReason}
+                                      <div className="flex items-center justify-between gap-3">
+                                        <strong className="font-medium">
+                                          Feedback available
+                                        </strong>
+                                        <button
+                                          onClick={() =>
+                                            setRejectionNotesSubmission(
+                                              submission
+                                            )
+                                          }
+                                          className="inline-flex items-center gap-1 rounded-md border border-red-500/30 px-2 py-1 text-xs font-medium hover:bg-red-500/10"
+                                        >
+                                          <Eye className="h-3.5 w-3.5" />
+                                          View notes
+                                        </button>
+                                      </div>
                                     </motion.div>
                                   )}
 
@@ -2078,6 +2154,12 @@ export default function DashboardPage() {
                   <SubmissionReviewModal
                     submission={reviewSubmission}
                     onClose={() => setReviewSubmission(null)}
+                  />
+                )}
+                {rejectionNotesSubmission && (
+                  <RejectionNotesModal
+                    submission={rejectionNotesSubmission}
+                    onClose={() => setRejectionNotesSubmission(null)}
                   />
                 )}
               </AnimatePresence>
