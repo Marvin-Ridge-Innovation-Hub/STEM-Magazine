@@ -8,6 +8,7 @@ export interface PlatformRow {
   meta: string[];
   cta: string;
   topics: string[];
+  postType: 'SM_EXPO' | 'SM_NOW' | 'SM_PODS';
 }
 
 export interface HeroModule {
@@ -54,6 +55,7 @@ export const PLATFORM_ROWS: PlatformRow[] = [
     meta: ['Project galleries', 'Build journals', 'Team highlights'],
     cta: 'Explore Expo',
     topics: ['Engineering', 'Technology', 'Physics', 'Environment'],
+    postType: 'SM_EXPO',
   },
   {
     icon: Newspaper,
@@ -63,6 +65,7 @@ export const PLATFORM_ROWS: PlatformRow[] = [
     meta: ['Weekly features', 'Opinion + analysis', 'Student voices'],
     cta: 'Read SM Now',
     topics: ['Biology', 'Chemistry', 'Health', 'AI'],
+    postType: 'SM_NOW',
   },
   {
     icon: Headphones,
@@ -72,6 +75,7 @@ export const PLATFORM_ROWS: PlatformRow[] = [
     meta: ['Audio + video', 'Guest spotlights', 'Monthly drops'],
     cta: 'Listen to Pods',
     topics: ['Computer Science', 'Mathematics', 'AI', 'Technology'],
+    postType: 'SM_PODS',
   },
 ];
 

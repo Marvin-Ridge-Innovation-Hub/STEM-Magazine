@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
   ArrowRight,
@@ -75,6 +76,14 @@ const ALL_TAGS = [
   'computer-science',
   'ai',
 ];
+
+const POST_TYPES = ['ALL', 'SM_EXPO', 'SM_NOW', 'SM_PODS'] as const;
+
+const normalizeTag = (tag: string) =>
+  tag.toLowerCase().trim().replace(/\s+/g, '-');
+
+const isValidPostType = (value: string): value is (typeof POST_TYPES)[number] =>
+  POST_TYPES.includes(value as (typeof POST_TYPES)[number]);
 
 const getCardPreviewText = (post: any, maxLength = 120) => {
   const source = (post.excerpt || post.content || '')
@@ -356,6 +365,8 @@ const PostListRow = ({
 );
 
 export default function PostsPage() {
+  const searchParams = useSearchParams();
+  const searchParamsKey = searchParams.toString();
   const [posts, setPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -372,6 +383,24 @@ export default function PostsPage() {
   useEffect(() => {
     loadPosts(true);
   }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(searchParamsKey);
+    const queryFromParams = params.get('q')?.trim() ?? '';
+    const typeFromParams = params.get('type')?.trim().toUpperCase() ?? 'ALL';
+    const tagsFromParams = params
+      .getAll('tag')
+      .flatMap((value) => value.split(','))
+      .map(normalizeTag)
+      .filter(
+        (tag, index, allTags) =>
+          ALL_TAGS.includes(tag) && allTags.indexOf(tag) === index
+      );
+
+    setSearchQuery(queryFromParams);
+    setSelectedType(isValidPostType(typeFromParams) ? typeFromParams : 'ALL');
+    setSelectedTags(tagsFromParams);
+  }, [searchParamsKey]);
 
   useEffect(() => {
     if (!isFilterOpen) return;
@@ -446,9 +475,12 @@ export default function PostsPage() {
         selectedType === 'ALL' || post.postType === selectedType;
 
       // Tags filter
+      const postTags = Array.isArray(post.tags)
+        ? post.tags.map(normalizeTag)
+        : [];
       const matchesTags =
         selectedTags.length === 0 ||
-        selectedTags.some((tag) => post.tags?.includes(tag));
+        selectedTags.some((tag) => postTags.includes(tag));
 
       return matchesSearch && matchesType && matchesTags;
     });
@@ -625,7 +657,7 @@ export default function PostsPage() {
                       Type
                     </p>
                     <div className="flex flex-wrap gap-2">
-                      {['ALL', 'SM_EXPO', 'SM_NOW', 'SM_PODS'].map((type) => (
+                      {POST_TYPES.map((type) => (
                         <button
                           key={type}
                           onClick={() => setSelectedType(type)}

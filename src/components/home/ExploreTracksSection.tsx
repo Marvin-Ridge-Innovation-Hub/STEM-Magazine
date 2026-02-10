@@ -12,6 +12,9 @@ const fadeIn = {
   animate: { opacity: 1, y: 0, transition: { duration: 0.6 } },
 };
 
+const toTagSlug = (tag: string) =>
+  tag.toLowerCase().trim().replace(/\s+/g, '-');
+
 export default function ExploreTracksSection() {
   const [activeTrackIndex, setActiveTrackIndex] = useState(0);
   const activeTrack = PLATFORM_ROWS[activeTrackIndex] || PLATFORM_ROWS[0];
@@ -59,7 +62,10 @@ export default function ExploreTracksSection() {
                   <div className="text-xs uppercase tracking-[0.3em] text-[var(--muted-foreground)]">
                     Platforms
                   </div>
-                  <Link href="/posts" className="btn-secondary">
+                  <Link
+                    href={`/posts?type=${activeTrack.postType}`}
+                    className="btn-secondary"
+                  >
                     {activeTrack.cta}
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
@@ -151,7 +157,7 @@ export default function ExploreTracksSection() {
                         {group.tags.map((tag) => (
                           <Link
                             key={`${group.label}-${tag}`}
-                            href={`/posts?tag=${tag.toLowerCase().replace(' ', '-')}`}
+                            href={`/posts?tag=${toTagSlug(tag)}`}
                             className="chip-outline text-xs"
                           >
                             {tag}
@@ -184,7 +190,7 @@ export default function ExploreTracksSection() {
                         {group.tags.map((tag) => (
                           <Link
                             key={`${group.label}-${tag}`}
-                            href={`/posts?tag=${tag.toLowerCase().replace(' ', '-')}`}
+                            href={`/posts?tag=${toTagSlug(tag)}`}
                             className="chip-outline text-xs"
                           >
                             {tag}
