@@ -2,15 +2,15 @@
 
 import { motion } from 'framer-motion';
 import { Crown, Users, Star, Heart, Sparkles } from 'lucide-react';
-
+import Image from 'next/image';
 // Team member data
 const founder = {
-  name: 'Founder Name',
+  name: 'Arjun Cattamanchi',
   role: 'Founder & Lead Developer',
-  image: '/images/team/founder.jpg',
+  image: '/images/team/arjuncattamanchi.jpg',
   bio: 'A passionate STEM enthusiast dedicated to creating platforms that empower students to share their knowledge and discoveries.',
   quote:
-    "STEM Magazine represents the power of student-driven innovation. It's a space where curiosity meets creativity, and where the next generation of scientists, engineers, and innovators can share their journey.",
+    'Having attended school on either side of the US, I have yet to find a platform quite like STEM Magazine that provides a way to connect, foster discussion, and collaborate in STEM.',
 };
 
 const committeeLeaders = [
@@ -180,13 +180,12 @@ export default function CreditsPage() {
                     {founder.name.charAt(0)}
                   </span>
                 </div>
-                {/* Uncomment when image is available */}
-                {/* <Image
+                <Image
                   src={founder.image}
                   alt={founder.name}
                   fill
                   className="object-cover"
-                /> */}
+                />
               </div>
               <div className="flex-1 p-6 sm:p-8 md:p-10">
                 <h3 className="text-2xl sm:text-3xl font-bold text-(--foreground) mb-2">
@@ -206,7 +205,7 @@ export default function CreditsPage() {
           </motion.div>
         </motion.section>
 
-        {/* Committee Leaders Section */}
+        {/* Committee Leaders Section 
         <motion.section
           initial="hidden"
           whileInView="visible"
@@ -250,13 +249,13 @@ export default function CreditsPage() {
                         {leader.name.charAt(0)}
                       </span>
                     </div>
-                    {/* Uncomment when image is available */}
-                    {/* <Image
+               
+                    <Image
                       src={leader.image}
                       alt={leader.name}
                       fill
                       className="object-cover"
-                    /> */}
+                    /> 
                   </div>
                   <div className="flex-1 p-5 sm:p-6">
                     <h3 className="text-xl font-bold text-(--foreground) mb-1">
@@ -278,7 +277,7 @@ export default function CreditsPage() {
           </div>
         </motion.section>
 
-        {/* Committee Members Section */}
+        Committee Members Section 
         <motion.section
           initial="hidden"
           whileInView="visible"
@@ -321,13 +320,13 @@ export default function CreditsPage() {
                       {member.name.charAt(0)}
                     </span>
                   </div>
-                  {/* Uncomment when image is available */}
-                  {/* <Image
+                   Uncomment when image is available 
+                   <Image
                     src={member.image}
                     alt={member.name}
                     fill
                     className="object-cover"
-                  /> */}
+                  /> 
                 </div>
                 <h3 className="font-bold text-(--foreground) mb-1">
                   {member.name}
@@ -342,7 +341,7 @@ export default function CreditsPage() {
             ))}
           </div>
         </motion.section>
-
+        */}
         {/* Thank You Section */}
         <motion.section
           initial={{ opacity: 0, y: 20 }}
