@@ -346,7 +346,7 @@ export default function SubmissionsModerationPanel({
         : 'Select at least one issue to enable rejection.';
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-full space-y-6 overflow-x-hidden">
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <div className="rounded-lg border border-(--border) bg-(--card) p-4 text-center">
           <div className="text-3xl font-bold text-yellow-500">
@@ -389,7 +389,7 @@ export default function SubmissionsModerationPanel({
       <PostingRules />
 
       <div className="grid gap-6 lg:grid-cols-[320px_minmax(0,1fr)]">
-        <aside className="space-y-3">
+        <aside className="min-w-0 space-y-3">
           <div className="space-y-2 rounded-lg border border-(--border) bg-(--card) p-3">
             <div className="flex flex-wrap gap-2">
               {(['PENDING', 'APPROVED', 'REJECTED', 'ALL'] as const).map(
@@ -479,7 +479,7 @@ export default function SubmissionsModerationPanel({
           </div>
         </aside>
 
-        <section className="space-y-4">
+        <section className="min-w-0 space-y-4">
           {!selected ? (
             <div className="rounded-lg border border-(--border) bg-(--card) p-6 text-(--muted-foreground)">
               Select a submission to review.
@@ -727,7 +727,7 @@ export default function SubmissionsModerationPanel({
                       >
                         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                           <div>
-                            <p className="font-semibold">
+                            <p className="break-words font-semibold">
                               <AlertTriangle className="mr-1 inline h-4 w-4" />
                               {warning.message}
                             </p>
@@ -736,7 +736,7 @@ export default function SubmissionsModerationPanel({
                               {warning.blocking ? ' - blocking' : ''}
                             </p>
                             {warning.evidence ? (
-                              <p className="mt-1 text-xs">
+                              <p className="mt-1 break-all text-xs">
                                 Evidence: {warning.evidence}
                               </p>
                             ) : null}

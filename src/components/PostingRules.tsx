@@ -24,13 +24,13 @@ const NOW_RULES = [
 export default function PostingRules({ className = '' }: PostingRulesProps) {
   return (
     <div
-      className={`rounded-lg border border-(--border) bg-(--card) p-5 ${className}`}
+      className={`max-w-full overflow-hidden rounded-lg border border-(--border) bg-(--card) p-5 ${className}`}
     >
-      <div className="flex items-center justify-between gap-2 mb-3">
+      <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
         <h3 className="text-lg font-semibold text-(--foreground)">
           Posting Rules
         </h3>
-        <span className="text-xs text-(--muted-foreground)">
+        <span className="break-words text-xs text-(--muted-foreground)">
           Please review before submitting
         </span>
       </div>

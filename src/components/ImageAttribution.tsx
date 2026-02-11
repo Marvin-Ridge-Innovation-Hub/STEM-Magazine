@@ -22,21 +22,23 @@ export default function ImageAttribution({
   const isExternal = display.url?.startsWith('http') ?? false;
 
   return (
-    <div className={`text-xs text-(--muted-foreground) ${className}`}>
+    <div
+      className={`break-words text-xs text-(--muted-foreground) ${className}`}
+    >
       {display.url ? (
         isExternal ? (
           <a
             href={display.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="hover:text-(--foreground) underline decoration-transparent hover:decoration-inherit transition-colors"
+            className="break-all hover:text-(--foreground) underline decoration-transparent hover:decoration-inherit transition-colors"
           >
             {display.text}
           </a>
         ) : (
           <Link
             href={display.url}
-            className="hover:text-(--foreground) underline decoration-transparent hover:decoration-inherit transition-colors"
+            className="break-all hover:text-(--foreground) underline decoration-transparent hover:decoration-inherit transition-colors"
           >
             {display.text}
           </Link>
