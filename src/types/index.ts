@@ -29,7 +29,6 @@ export interface CurrentUserProps {
     email: string | null;
     image: string | null;
     password: string | null;
-    isAdmin: boolean;
   } | null;
 }
 

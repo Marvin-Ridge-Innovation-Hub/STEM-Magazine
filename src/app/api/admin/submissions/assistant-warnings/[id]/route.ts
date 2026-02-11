@@ -24,7 +24,10 @@ export async function GET(
       select: { role: true },
     });
 
-    if (!user || (user.role !== 'MODERATOR' && user.role !== 'ADMIN')) {
+    const role =
+      typeof user?.role === 'string' ? user.role.toUpperCase() : 'USER';
+
+    if (!user || (role !== 'MODERATOR' && role !== 'ADMIN')) {
       return NextResponse.json(
         { success: false, error: 'Insufficient permissions' },
         { status: 403 }
@@ -41,12 +44,29 @@ export async function GET(
 
     const existingSubmission = await prisma.submission.findUnique({
       where: { id: submissionId },
-      select: { id: true },
+      select: {
+        id: true,
+        author: {
+          select: {
+            clerkId: true,
+          },
+        },
+      },
     });
     if (!existingSubmission) {
       return NextResponse.json(
         { success: false, error: 'Submission not found.' },
         { status: 404 }
+      );
+    }
+
+    if (role === 'MODERATOR' && existingSubmission.author?.clerkId === userId) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Moderators cannot review their own submissions.',
+        },
+        { status: 403 }
       );
     }
 

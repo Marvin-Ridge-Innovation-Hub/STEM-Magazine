@@ -22,7 +22,10 @@ export async function GET() {
       where: { clerkId: userId },
     });
 
-    if (!user || (user.role !== 'ADMIN' && user.role !== 'MODERATOR')) {
+    const role =
+      typeof user?.role === 'string' ? user.role.toUpperCase() : 'USER';
+
+    if (!user || (role !== 'ADMIN' && role !== 'MODERATOR')) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized - Admin access required' },
         { status: 403 }
@@ -85,7 +88,10 @@ export async function POST(request: NextRequest) {
       where: { clerkId: userId },
     });
 
-    if (!user || (user.role !== 'ADMIN' && user.role !== 'MODERATOR')) {
+    const role =
+      typeof user?.role === 'string' ? user.role.toUpperCase() : 'USER';
+
+    if (!user || (role !== 'ADMIN' && role !== 'MODERATOR')) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized - Admin access required' },
         { status: 403 }
@@ -184,7 +190,10 @@ export async function DELETE(request: NextRequest) {
       where: { clerkId: userId },
     });
 
-    if (!user || (user.role !== 'ADMIN' && user.role !== 'MODERATOR')) {
+    const role =
+      typeof user?.role === 'string' ? user.role.toUpperCase() : 'USER';
+
+    if (!user || (role !== 'ADMIN' && role !== 'MODERATOR')) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized - Admin access required' },
         { status: 403 }

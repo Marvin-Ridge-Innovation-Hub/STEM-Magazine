@@ -150,8 +150,28 @@ export async function approveSubmissionAction(submissionId: string) {
       user.imageUrl
     );
 
-    if (userProfile.role !== 'ADMIN' && userProfile.role !== 'MODERATOR') {
+    const reviewerRole =
+      typeof userProfile.role === 'string'
+        ? userProfile.role.toUpperCase()
+        : 'USER';
+
+    if (reviewerRole !== 'ADMIN' && reviewerRole !== 'MODERATOR') {
       return { success: false, error: 'Insufficient permissions' };
+    }
+
+    const submission = await getSubmissionById(submissionId);
+    if (!submission) {
+      return { success: false, error: 'Submission not found' };
+    }
+
+    if (
+      reviewerRole === 'MODERATOR' &&
+      submission.authorId === userProfile.id
+    ) {
+      return {
+        success: false,
+        error: 'Moderators cannot review their own submissions.',
+      };
     }
 
     // Approve submission
@@ -286,8 +306,28 @@ export async function rejectSubmissionAction(
       user.imageUrl
     );
 
-    if (userProfile.role !== 'ADMIN' && userProfile.role !== 'MODERATOR') {
+    const reviewerRole =
+      typeof userProfile.role === 'string'
+        ? userProfile.role.toUpperCase()
+        : 'USER';
+
+    if (reviewerRole !== 'ADMIN' && reviewerRole !== 'MODERATOR') {
       return { success: false, error: 'Insufficient permissions' };
+    }
+
+    const submission = await getSubmissionById(submissionId);
+    if (!submission) {
+      return { success: false, error: 'Submission not found' };
+    }
+
+    if (
+      reviewerRole === 'MODERATOR' &&
+      submission.authorId === userProfile.id
+    ) {
+      return {
+        success: false,
+        error: 'Moderators cannot review their own submissions.',
+      };
     }
 
     // Reject submission with canMoveToDraft flag
@@ -359,11 +399,16 @@ export async function deleteSubmissionAction(submissionId: string) {
       user.imageUrl
     );
 
+    const reviewerRole =
+      typeof userProfile.role === 'string'
+        ? userProfile.role.toUpperCase()
+        : 'USER';
+
     // Only allow author or admin to delete
     if (
       submission.authorId !== userProfile.id &&
-      userProfile.role !== 'ADMIN' &&
-      userProfile.role !== 'MODERATOR'
+      reviewerRole !== 'ADMIN' &&
+      reviewerRole !== 'MODERATOR'
     ) {
       return {
         success: false,

@@ -143,7 +143,12 @@ export async function GET() {
     // Step 4: Find admin user to set as author (or create system user)
     let adminUser = await prisma.user.findFirst({
       where: {
-        OR: [{ role: 'ADMIN' }, { role: 'MODERATOR' }],
+        OR: [
+          { role: 'ADMIN' },
+          { role: 'MODERATOR' },
+          { role: 'admin' },
+          { role: 'moderator' },
+        ],
       },
     });
 

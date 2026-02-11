@@ -19,10 +19,12 @@ export async function POST(request: Request) {
       where: { clerkId: adminId },
     });
 
-    if (
-      !adminProfile ||
-      (adminProfile.role !== 'ADMIN' && adminProfile.role !== 'MODERATOR')
-    ) {
+    const adminRole =
+      typeof adminProfile?.role === 'string'
+        ? adminProfile.role.toUpperCase()
+        : 'USER';
+
+    if (!adminProfile || (adminRole !== 'ADMIN' && adminRole !== 'MODERATOR')) {
       return NextResponse.json(
         { error: 'Insufficient permissions' },
         { status: 403 }

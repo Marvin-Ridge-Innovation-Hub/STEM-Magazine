@@ -28,6 +28,8 @@ type Submission = {
   tags: string[];
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
   canMoveToDraft: boolean;
+  canReview?: boolean;
+  reviewBlockedReason?: string | null;
   createdAt: string;
   author: { id: string; email: string; name?: string };
 };
@@ -228,8 +230,14 @@ export default function SubmissionsModerationPanel({
 
     setSelectedIssueCodes([]);
     setModeratorNotes('');
+    if (selected.canReview === false) {
+      setAssistantWarnings([]);
+      setAssistantError(null);
+      setAssistantLoading(false);
+      return;
+    }
     void runAssistantChecks(selected.id);
-  }, [selected?.id, runAssistantChecks]);
+  }, [selected?.id, selected?.canReview, runAssistantChecks]);
 
   const issueTemplateMap = useMemo(
     () =>
@@ -247,11 +255,16 @@ export default function SubmissionsModerationPanel({
   const hasSelectedIssues = selectedIssueCodes.length > 0;
   const actionInProgress = selected ? actionLoading === selected.id : false;
   const isPendingSubmission = selected?.status === 'PENDING';
+  const selectedCanReview = selected ? selected.canReview !== false : false;
 
   const canReject = Boolean(
-    isPendingSubmission && hasSelectedIssues && !actionInProgress
+    selectedCanReview &&
+    isPendingSubmission &&
+    hasSelectedIssues &&
+    !actionInProgress
   );
   const canApprove = Boolean(
+    selectedCanReview &&
     isPendingSubmission &&
     !hasSelectedIssues &&
     blockingWarnings.length === 0 &&
@@ -295,6 +308,8 @@ export default function SubmissionsModerationPanel({
   };
 
   const addIssuesFromWarning = (warning: AssistantWarning) => {
+    if (!selectedCanReview) return;
+
     const allowedCodes = new Set(applicableIssues.map((issue) => issue.code));
     const nextCodes = warning.suggestedIssueCodes.filter((code) =>
       allowedCodes.has(code)
@@ -308,21 +323,27 @@ export default function SubmissionsModerationPanel({
     });
   };
 
-  const approveHint = !isPendingSubmission
-    ? 'Only pending submissions can be approved.'
-    : hasSelectedIssues
-      ? 'Clear selected issues before approving.'
-      : blockingWarnings.length > 0
-        ? 'Resolve blocking assistant warnings before approving.'
-        : assistantLoading
-          ? 'Assistant checks are still running.'
-          : null;
+  const approveHint = !selectedCanReview
+    ? selected?.reviewBlockedReason ||
+      'You cannot review this submission with your current role.'
+    : !isPendingSubmission
+      ? 'Only pending submissions can be approved.'
+      : hasSelectedIssues
+        ? 'Clear selected issues before approving.'
+        : blockingWarnings.length > 0
+          ? 'Resolve blocking assistant warnings before approving.'
+          : assistantLoading
+            ? 'Assistant checks are still running.'
+            : null;
 
-  const rejectHint = !isPendingSubmission
-    ? 'Only pending submissions can be rejected.'
-    : hasSelectedIssues
-      ? null
-      : 'Select at least one issue to enable rejection.';
+  const rejectHint = !selectedCanReview
+    ? selected?.reviewBlockedReason ||
+      'You cannot review this submission with your current role.'
+    : !isPendingSubmission
+      ? 'Only pending submissions can be rejected.'
+      : hasSelectedIssues
+        ? null
+        : 'Select at least one issue to enable rejection.';
 
   return (
     <div className="space-y-6">
@@ -403,7 +424,7 @@ export default function SubmissionsModerationPanel({
             <div className="border-b border-(--border) px-3 py-2 text-sm font-semibold text-(--foreground)">
               Queue ({queue.length})
             </div>
-            <div className="max-h-[68vh] overflow-y-auto">
+            <div className="max-h-[40vh] overflow-y-auto sm:max-h-[68vh]">
               {submissionsLoading ? (
                 <div className="p-3 text-sm text-(--muted-foreground)">
                   Loading...
@@ -444,6 +465,11 @@ export default function SubmissionsModerationPanel({
                         <p className="text-[11px] text-(--muted-foreground)">
                           {formatDate(submission.createdAt)}
                         </p>
+                        {submission.canReview === false ? (
+                          <p className="mt-1 text-[11px] font-semibold text-amber-600 dark:text-amber-400">
+                            Locked: your submission
+                          </p>
+                        ) : null}
                       </div>
                     </div>
                   </button>
@@ -458,22 +484,36 @@ export default function SubmissionsModerationPanel({
             <div className="rounded-lg border border-(--border) bg-(--card) p-6 text-(--muted-foreground)">
               Select a submission to review.
             </div>
+          ) : selected.canReview === false ? (
+            <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-6">
+              <h2 className="text-xl font-bold text-(--foreground)">
+                {selected.title}
+              </h2>
+              <p className="mt-1 break-words text-sm text-(--muted-foreground)">
+                By {selected.author.name || selected.author.email} -{' '}
+                {formatDate(selected.createdAt)}
+              </p>
+              <p className="mt-4 text-sm font-medium text-amber-700 dark:text-amber-300">
+                {selected.reviewBlockedReason ||
+                  'Moderators cannot review their own submissions.'}
+              </p>
+            </div>
           ) : (
             <>
               <div className="space-y-3 rounded-lg border border-(--border) bg-(--card) p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="min-w-0">
                     <h2 className="text-xl font-bold text-(--foreground)">
                       {selected.title}
                     </h2>
-                    <p className="text-sm text-(--muted-foreground)">
+                    <p className="break-words text-sm text-(--muted-foreground)">
                       By {selected.author.name || selected.author.email} -{' '}
                       {formatDate(selected.createdAt)}
                     </p>
                   </div>
                   <button
                     onClick={() => onOpenFullContent(selected)}
-                    className="inline-flex items-center gap-1 text-xs font-semibold text-(--primary) hover:underline"
+                    className="inline-flex items-center gap-1 self-start text-xs font-semibold text-(--primary) hover:underline"
                   >
                     <BookOpen className="h-3 w-3" />
                     View full
@@ -648,14 +688,14 @@ export default function SubmissionsModerationPanel({
               </div>
 
               <div className="space-y-3 rounded-lg border border-(--border) bg-(--card) p-4">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <h3 className="font-bold text-(--foreground)">
                     Assistant warnings
                   </h3>
                   <button
                     onClick={() => void runAssistantChecks(selected.id)}
                     disabled={assistantLoading}
-                    className="inline-flex items-center gap-1 rounded border border-(--border) px-3 py-1 text-xs text-(--foreground) disabled:opacity-50"
+                    className="inline-flex items-center gap-1 self-start rounded border border-(--border) px-3 py-1 text-xs text-(--foreground) disabled:opacity-50"
                   >
                     <RefreshCw
                       className={`h-3 w-3 ${assistantLoading ? 'animate-spin' : ''}`}
@@ -685,7 +725,7 @@ export default function SubmissionsModerationPanel({
                           warning.severity
                         )}`}
                       >
-                        <div className="flex items-start justify-between gap-3">
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                           <div>
                             <p className="font-semibold">
                               <AlertTriangle className="mr-1 inline h-4 w-4" />
@@ -704,7 +744,7 @@ export default function SubmissionsModerationPanel({
                           <button
                             onClick={() => addIssuesFromWarning(warning)}
                             disabled={!warning.suggestedIssueCodes.length}
-                            className="rounded border border-current px-2 py-1 text-xs disabled:opacity-50"
+                            className="self-start rounded border border-current px-2 py-1 text-xs disabled:opacity-50"
                           >
                             Add as issue
                           </button>
@@ -786,18 +826,18 @@ export default function SubmissionsModerationPanel({
                   </p>
                 ) : null}
 
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                   <button
                     disabled={!canApprove}
                     onClick={() => void onApprove(selected.id)}
-                    className="rounded bg-green-500 px-4 py-2 font-semibold text-white disabled:opacity-50"
+                    className="w-full rounded bg-green-500 px-4 py-2 font-semibold text-white disabled:opacity-50 sm:w-auto"
                   >
                     {actionInProgress ? 'Processing...' : 'Approve'}
                   </button>
                   <button
                     disabled={!canReject}
                     onClick={() => void onReject(selected.id, rejectionText)}
-                    className="rounded bg-red-500 px-4 py-2 font-semibold text-white disabled:opacity-50"
+                    className="w-full rounded bg-red-500 px-4 py-2 font-semibold text-white disabled:opacity-50 sm:w-auto"
                   >
                     {actionInProgress
                       ? 'Processing...'

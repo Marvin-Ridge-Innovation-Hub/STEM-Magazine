@@ -6,8 +6,8 @@ import { deleteSubmission } from '@/services/submissionService';
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-// Check if user is a moderator
-async function checkModerator() {
+// Check if user can access admin moderation routes
+async function checkAdminAccess() {
   const { userId } = await auth();
   if (!userId) return false;
 
@@ -16,14 +16,16 @@ async function checkModerator() {
     select: { role: true },
   });
 
-  return user?.role === 'MODERATOR';
+  const normalizedRole =
+    typeof user?.role === 'string' ? user.role.toUpperCase() : 'USER';
+  return normalizedRole === 'MODERATOR' || normalizedRole === 'ADMIN';
 }
 
 // GET - Get all published posts (for admin view)
 export async function GET() {
   try {
-    const isModerator = await checkModerator();
-    if (!isModerator) {
+    const hasAdminAccess = await checkAdminAccess();
+    if (!hasAdminAccess) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
         { status: 403 }
@@ -93,8 +95,8 @@ export async function GET() {
 // DELETE - Delete a post (submission)
 export async function DELETE(request: NextRequest) {
   try {
-    const isModerator = await checkModerator();
-    if (!isModerator) {
+    const hasAdminAccess = await checkAdminAccess();
+    if (!hasAdminAccess) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized' },
         { status: 403 }

@@ -110,6 +110,8 @@ interface Submission {
   tags: string[];
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
   canMoveToDraft: boolean;
+  canReview?: boolean;
+  reviewBlockedReason?: string | null;
   createdAt: string;
   author: {
     id: string;

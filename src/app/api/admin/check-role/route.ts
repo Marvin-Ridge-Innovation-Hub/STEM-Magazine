@@ -29,7 +29,10 @@ export async function GET() {
     }
 
     // Check if user is MODERATOR or ADMIN
-    const role = (user as any).role || 'USER';
+    const role =
+      typeof (user as any).role === 'string'
+        ? (user as any).role.toUpperCase()
+        : 'USER';
     const authorized = role === 'MODERATOR' || role === 'ADMIN';
 
     const response = NextResponse.json({

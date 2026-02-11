@@ -101,7 +101,7 @@ After setting your role, you can access:
      where: { role: 'ADMIN' },
    });
 
-   if (adminCount > 0 && !isAdmin) {
+   if (adminCount > 0 && !callerHasAdminRole) {
      return NextResponse.json(
        { error: 'Setup already completed' },
        { status: 403 }

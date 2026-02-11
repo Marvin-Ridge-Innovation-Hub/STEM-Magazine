@@ -12,8 +12,9 @@ export async function POST(request: NextRequest) {
     }
 
     const { email, role } = await request.json();
+    const requestedRole = typeof role === 'string' ? role.toUpperCase() : '';
 
-    if (!email || !['MODERATOR', 'ADMIN', 'USER'].includes(role)) {
+    if (!email || !['MODERATOR', 'ADMIN', 'USER'].includes(requestedRole)) {
       return NextResponse.json(
         { error: 'Invalid email or role' },
         { status: 400 }
@@ -29,9 +30,11 @@ export async function POST(request: NextRequest) {
     // Allow if caller is admin, or if this is their first time setting their own role
     const isSettingOwnRole =
       clerkUser.emailAddresses[0]?.emailAddress === email;
-    const isAdmin = caller?.role === 'ADMIN';
+    const callerRole =
+      typeof caller?.role === 'string' ? caller.role.toUpperCase() : 'USER';
+    const callerHasAdminRole = callerRole === 'ADMIN';
 
-    if (!isAdmin && !isSettingOwnRole) {
+    if (!callerHasAdminRole && !isSettingOwnRole) {
       return NextResponse.json(
         {
           error: 'Only admins can set roles for other users',
@@ -43,18 +46,18 @@ export async function POST(request: NextRequest) {
     // Update or create user with role
     const user = await prisma.user.upsert({
       where: { email },
-      update: { role },
+      update: { role: requestedRole },
       create: {
         email,
         clerkId: userId,
         name: clerkUser.firstName || clerkUser.username || 'User',
-        role,
+        role: requestedRole,
       },
     });
 
     return NextResponse.json({
       success: true,
-      message: `${user.email} is now a ${role}`,
+      message: `${user.email} is now a ${requestedRole}`,
       shouldRefresh: isSettingOwnRole,
     });
   } catch (error) {

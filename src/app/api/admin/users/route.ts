@@ -22,10 +22,12 @@ export async function GET() {
       where: { clerkId: userId },
     });
 
-    if (
-      !userProfile ||
-      (userProfile.role !== 'ADMIN' && userProfile.role !== 'MODERATOR')
-    ) {
+    const role =
+      typeof userProfile?.role === 'string'
+        ? userProfile.role.toUpperCase()
+        : 'USER';
+
+    if (!userProfile || (role !== 'ADMIN' && role !== 'MODERATOR')) {
       return NextResponse.json(
         { error: 'Insufficient permissions' },
         { status: 403 }
@@ -45,7 +47,12 @@ export async function GET() {
       },
     });
 
-    const roleMap = new Map(dbUsers.map((u) => [u.clerkId, u.role]));
+    const roleMap = new Map(
+      dbUsers.map((u) => [
+        u.clerkId,
+        typeof u.role === 'string' ? u.role.toUpperCase() : 'USER',
+      ])
+    );
 
     // Combine Clerk and DB data
     const users = clerkUsers.data.map((user) => ({

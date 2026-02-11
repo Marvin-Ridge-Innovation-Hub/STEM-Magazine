@@ -3,13 +3,13 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 const isProtectedRoute = createRouteMatcher(['/dashboard(.*)']);
-const isAdminRoute = createRouteMatcher(['/admin(.*)']);
+const adminSectionRoute = createRouteMatcher(['/admin(.*)']);
 
 export default clerkMiddleware(async (auth, req: NextRequest) => {
   if (isProtectedRoute(req)) await auth.protect();
 
   // Check admin routes for moderator/admin access
-  if (isAdminRoute(req)) {
+  if (adminSectionRoute(req)) {
     const { userId } = await auth();
 
     if (!userId) {
