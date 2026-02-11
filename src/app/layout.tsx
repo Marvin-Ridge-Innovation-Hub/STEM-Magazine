@@ -70,10 +70,10 @@ export const metadata = {
     siteName: 'MRHS STEM Magazine',
     images: [
       {
-        url: '/images/og.png',
+        url: '/images/carouselimages/logo-padded.png',
         width: 1200,
         height: 630,
-        alt: 'MRHS STEM Magazine - Student Projects & Innovation',
+        alt: 'MRHS STEM Magazine Logo',
       },
     ],
   },
@@ -82,7 +82,7 @@ export const metadata = {
     title: 'MRHS STEM Magazine | Student STEM Projects & Podcasts',
     description:
       'MRHS STEM Magazine is a student-run STEM magazine featuring projects, articles, and podcasts from Marvin Ridge High School. Explore student innovation.',
-    images: ['/images/og.png'],
+    images: ['/images/carouselimages/logo-padded.png'],
   },
   robots: {
     index: true,
