@@ -3,6 +3,13 @@ import FAQSection from '@/components/home/FAQSection';
 import HeroSection from '@/components/home/HeroSection';
 import RecentPostsSection from '@/components/home/RecentPostsSection';
 import { heroImages } from '@/components/home/home-data';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  alternates: {
+    canonical: '/',
+  },
+};
 
 export default function Home() {
   return (

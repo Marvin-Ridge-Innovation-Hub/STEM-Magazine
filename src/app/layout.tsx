@@ -52,9 +52,6 @@ export const metadata = {
   authors: [{ name: 'MRHS STEM Magazine' }, { name: 'Arjun Cattamanchi' }],
   creator: 'Arjun Cattamanchi',
   metadataBase: new URL('https://mrhsstemmag.com'),
-  alternates: {
-    canonical: '/',
-  },
   icons: {
     icon: '/images/logo-normal.png',
     shortcut: '/images/logo-normal.png',

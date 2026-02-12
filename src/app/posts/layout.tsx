@@ -4,6 +4,9 @@ export const metadata: Metadata = {
   title: 'Explore STEM Projects & Articles',
   description:
     'Browse innovative STEM projects, insightful articles, and engaging podcasts created by students. Discover SM Expo projects, SM Now articles, and SM Pods episodes at MRHS STEM Magazine.',
+  alternates: {
+    canonical: '/posts',
+  },
   keywords: [
     'STEM projects',
     'student articles',
