@@ -119,6 +119,22 @@ function isLikelyCompleteAttribution(value: unknown): boolean {
   return typeof sourceUrl === 'string' && typeof authorName === 'string';
 }
 
+function mapGrammarIssueCodes(issueType: string): string[] {
+  const normalized = issueType.toLowerCase();
+  if (
+    normalized.includes('misspelling') ||
+    normalized.includes('typo') ||
+    normalized.includes('punctuation') ||
+    normalized.includes('grammar')
+  ) {
+    return ['SPELLING_AND_GRAMMAR'];
+  }
+  if (normalized.includes('style') || normalized.includes('redundancy')) {
+    return ['CLARITY_AND_STRUCTURE'];
+  }
+  return ['CLARITY_AND_STRUCTURE'];
+}
+
 function runLocalGrammarFallback(content: string): AssistantWarning[] {
   const warnings: AssistantWarning[] = [];
   const sentences = content
@@ -136,7 +152,7 @@ function runLocalGrammarFallback(content: string): AssistantWarning[] {
       severity: longSentences > 2 ? 'medium' : 'low',
       message: 'Some sentences are very long and may reduce readability.',
       evidence: `${longSentences} long sentence(s) detected.`,
-      suggestedIssueCodes: ['TITLE_ACCURACY'],
+      suggestedIssueCodes: ['CLARITY_AND_STRUCTURE'],
       blocking: false,
     });
   }
@@ -149,7 +165,7 @@ function runLocalGrammarFallback(content: string): AssistantWarning[] {
       severity: 'low',
       message: 'Repeated punctuation was detected.',
       evidence: `${punctuationClusters} repeated punctuation cluster(s).`,
-      suggestedIssueCodes: ['CONTENT_SAFETY'],
+      suggestedIssueCodes: ['SPELLING_AND_GRAMMAR'],
       blocking: false,
     });
   }
@@ -203,7 +219,7 @@ async function runGrammarChecks(content: string): Promise<AssistantWarning[]> {
         severity,
         message: match.message || 'Potential grammar issue detected.',
         evidence,
-        suggestedIssueCodes: ['TITLE_ACCURACY'],
+        suggestedIssueCodes: mapGrammarIssueCodes(issueType),
         blocking: false,
       } as AssistantWarning;
     });
@@ -299,7 +315,11 @@ async function runCopyrightChecks(
       evidence: `"${strongestTitleMatch.title}" (score ${strongestTitleMatch.score.toFixed(
         2
       )})`,
-      suggestedIssueCodes: ['TITLE_ACCURACY', 'ORIGINALITY_AND_RIGHTS'],
+      suggestedIssueCodes: [
+        'TITLE_ACCURACY',
+        'CONTENT_ACCURACY',
+        'ORIGINALITY_AND_RIGHTS',
+      ],
       blocking: false,
     });
   }
@@ -316,6 +336,8 @@ async function runCopyrightChecks(
       message: 'Multiple factual claim signals were detected without sources.',
       evidence: `${claimSignals} claim/quote indicator(s) with no sources.`,
       suggestedIssueCodes: [
+        'UNSUPPORTED_CLAIMS',
+        'CONTENT_ACCURACY',
         'CITATION_FOR_CLAIMS',
         'SOURCES_PRESENT_AND_FORMATTED',
       ],
@@ -329,6 +351,8 @@ async function runCopyrightChecks(
       message: 'Claims or quotes detected but sources are missing.',
       evidence: `${claimSignals} claim/quote indicator(s) with no sources.`,
       suggestedIssueCodes: [
+        'UNSUPPORTED_CLAIMS',
+        'CONTENT_ACCURACY',
         'CITATION_FOR_CLAIMS',
         'SOURCES_PRESENT_AND_FORMATTED',
       ],

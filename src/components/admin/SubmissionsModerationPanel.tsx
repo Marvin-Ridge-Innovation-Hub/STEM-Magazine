@@ -2,7 +2,15 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
-import { AlertTriangle, BookOpen, RefreshCw, Search } from 'lucide-react';
+import {
+  AlertTriangle,
+  BookOpen,
+  Check,
+  Copy,
+  RefreshCw,
+  Search,
+  X,
+} from 'lucide-react';
 import PostingRules from '@/components/PostingRules';
 import MarkdownContent from '@/components/MarkdownContent';
 import ImageAttributionDisplay from '@/components/ImageAttribution';
@@ -80,10 +88,43 @@ const ISSUE_DEFINITIONS: IssueDefinition[] = [
     template: 'The title is misleading or does not match the content.',
   },
   {
+    code: 'SPELLING_AND_GRAMMAR',
+    title: 'Spelling and grammar',
+    appliesTo: 'ALL',
+    template: 'The submission needs spelling, grammar, or punctuation fixes.',
+  },
+  {
+    code: 'CLARITY_AND_STRUCTURE',
+    title: 'Clarity and structure',
+    appliesTo: 'ALL',
+    template:
+      'The writing needs clearer organization, readability, or flow before publication.',
+  },
+  {
+    code: 'CONTENT_ACCURACY',
+    title: 'Content accuracy',
+    appliesTo: 'ALL',
+    template: 'Some statements need factual verification or correction.',
+  },
+  {
+    code: 'TONE_AND_PROFESSIONALISM',
+    title: 'Tone and professionalism',
+    appliesTo: 'ALL',
+    template:
+      'The tone or wording needs to be adjusted for a school publication audience.',
+  },
+  {
     code: 'CITATION_FOR_CLAIMS',
     title: 'Citations for claims',
     appliesTo: 'ALL',
     template: 'Claims, statistics, or quotations require clearer citations.',
+  },
+  {
+    code: 'UNSUPPORTED_CLAIMS',
+    title: 'Unsupported claims',
+    appliesTo: 'ALL',
+    template:
+      'Some claims are not adequately supported by evidence or sources.',
   },
   {
     code: 'IMAGE_ATTRIBUTION_COMPLETE',
@@ -110,6 +151,59 @@ const ISSUE_DEFINITIONS: IssueDefinition[] = [
     template: 'The sources section needs additional or clearer references.',
   },
 ];
+
+type IssueEvidenceEntry = {
+  warningId: string;
+  text: string;
+};
+
+type IssuePreset = {
+  id: string;
+  label: string;
+  codes: string[];
+};
+
+const ISSUE_PRESETS: IssuePreset[] = [
+  {
+    id: 'WRITING_QUALITY',
+    label: 'Writing quality',
+    codes: [
+      'SPELLING_AND_GRAMMAR',
+      'CLARITY_AND_STRUCTURE',
+      'TONE_AND_PROFESSIONALISM',
+    ],
+  },
+  {
+    id: 'EVIDENCE_AND_SOURCES',
+    label: 'Evidence and sources',
+    codes: [
+      'UNSUPPORTED_CLAIMS',
+      'CONTENT_ACCURACY',
+      'CITATION_FOR_CLAIMS',
+      'SOURCES_PRESENT_AND_FORMATTED',
+    ],
+  },
+  {
+    id: 'ORIGINALITY_AND_TITLE',
+    label: 'Originality and title',
+    codes: ['ORIGINALITY_AND_RIGHTS', 'TITLE_ACCURACY'],
+  },
+  {
+    id: 'MEDIA_ATTRIBUTION',
+    label: 'Media attribution',
+    codes: ['IMAGE_ATTRIBUTION_COMPLETE', 'THUMBNAIL_ATTRIBUTION_COMPLETE'],
+  },
+];
+
+const MAX_EVIDENCE_LINES_PER_ISSUE = 3;
+
+const formatEvidenceSnippet = (warning: AssistantWarning) => {
+  const raw = (warning.evidence || warning.message || '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!raw) return 'Warning added by moderator.';
+  return raw.length > 180 ? `${raw.slice(0, 177)}...` : raw;
+};
 
 const formatDate = (value: string) =>
   new Date(value).toLocaleDateString('en-US', {
@@ -145,6 +239,13 @@ export default function SubmissionsModerationPanel({
   const [search, setSearch] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedIssueCodes, setSelectedIssueCodes] = useState<string[]>([]);
+  const [selectedIssueEvidence, setSelectedIssueEvidence] = useState<
+    Record<string, IssueEvidenceEntry[]>
+  >({});
+  const [justAddedWarningIds, setJustAddedWarningIds] = useState<
+    Record<string, true>
+  >({});
+  const [copied, setCopied] = useState(false);
   const [moderatorNotes, setModeratorNotes] = useState('');
   const [assistantWarnings, setAssistantWarnings] = useState<
     AssistantWarning[]
@@ -221,6 +322,9 @@ export default function SubmissionsModerationPanel({
   useEffect(() => {
     if (!selected) {
       setSelectedIssueCodes([]);
+      setSelectedIssueEvidence({});
+      setJustAddedWarningIds({});
+      setCopied(false);
       setModeratorNotes('');
       setAssistantWarnings([]);
       setAssistantError(null);
@@ -229,6 +333,9 @@ export default function SubmissionsModerationPanel({
     }
 
     setSelectedIssueCodes([]);
+    setSelectedIssueEvidence({});
+    setJustAddedWarningIds({});
+    setCopied(false);
     setModeratorNotes('');
     if (selected.canReview === false) {
       setAssistantWarnings([]);
@@ -246,10 +353,21 @@ export default function SubmissionsModerationPanel({
       ) as Record<string, string>,
     []
   );
+  const issueTitleMap = useMemo(
+    () =>
+      Object.fromEntries(
+        ISSUE_DEFINITIONS.map((issue) => [issue.code, issue.title])
+      ) as Record<string, string>,
+    []
+  );
 
   const blockingWarnings = useMemo(
     () => assistantWarnings.filter((warning) => warning.blocking),
     [assistantWarnings]
+  );
+  const applicableIssueCodeSet = useMemo(
+    () => new Set(applicableIssues.map((issue) => issue.code)),
+    [applicableIssues]
   );
 
   const hasSelectedIssues = selectedIssueCodes.length > 0;
@@ -275,13 +393,22 @@ export default function SubmissionsModerationPanel({
   const rejectionText = useMemo(() => {
     if (!selected || !hasSelectedIssues) return '';
 
-    const reasons = selectedIssueCodes.map(
-      (code) => issueTemplateMap[code] || code
-    );
     const lines = [
       `Thanks for submitting "${selected.title}". We cannot publish it yet for the reasons below:`,
-      ...reasons.map((reason) => `- ${reason}`),
     ];
+
+    selectedIssueCodes.forEach((code) => {
+      lines.push(`- ${issueTemplateMap[code] || code}`);
+      const evidenceEntries = selectedIssueEvidence[code] || [];
+      if (evidenceEntries.length) {
+        lines.push('  Evidence:');
+        evidenceEntries
+          .slice(0, MAX_EVIDENCE_LINES_PER_ISSUE)
+          .forEach((entry) => {
+            lines.push(`  - ${entry.text}`);
+          });
+      }
+    });
 
     if (moderatorNotes.trim()) {
       lines.push('', 'Moderator notes:', moderatorNotes.trim());
@@ -294,6 +421,7 @@ export default function SubmissionsModerationPanel({
     hasSelectedIssues,
     selectedIssueCodes,
     issueTemplateMap,
+    selectedIssueEvidence,
     moderatorNotes,
   ]);
 
@@ -305,14 +433,33 @@ export default function SubmissionsModerationPanel({
       }
       return previous.filter((existing) => existing !== code);
     });
+    if (!checked) {
+      setSelectedIssueEvidence((previous) => {
+        if (!previous[code]) return previous;
+        const next = { ...previous };
+        delete next[code];
+        return next;
+      });
+    }
+  };
+
+  const markWarningAsAdded = (warningId: string) => {
+    setJustAddedWarningIds((previous) => ({ ...previous, [warningId]: true }));
+    setTimeout(() => {
+      setJustAddedWarningIds((previous) => {
+        if (!previous[warningId]) return previous;
+        const next = { ...previous };
+        delete next[warningId];
+        return next;
+      });
+    }, 1400);
   };
 
   const addIssuesFromWarning = (warning: AssistantWarning) => {
     if (!selectedCanReview) return;
 
-    const allowedCodes = new Set(applicableIssues.map((issue) => issue.code));
     const nextCodes = warning.suggestedIssueCodes.filter((code) =>
-      allowedCodes.has(code)
+      applicableIssueCodeSet.has(code)
     );
     if (!nextCodes.length) return;
 
@@ -321,6 +468,84 @@ export default function SubmissionsModerationPanel({
       nextCodes.forEach((code) => merged.add(code));
       return Array.from(merged);
     });
+
+    const evidenceText = formatEvidenceSnippet(warning);
+    setSelectedIssueEvidence((previous) => {
+      const next = { ...previous };
+      nextCodes.forEach((code) => {
+        const existing = next[code] || [];
+        if (existing.some((entry) => entry.warningId === warning.id)) return;
+        next[code] = [
+          ...existing,
+          {
+            warningId: warning.id,
+            text: evidenceText,
+          },
+        ];
+      });
+      return next;
+    });
+
+    markWarningAsAdded(warning.id);
+  };
+
+  const addBlockingIssues = () => {
+    if (!blockingWarnings.length) return;
+    blockingWarnings.forEach((warning) => addIssuesFromWarning(warning));
+  };
+
+  const applyIssuePreset = (preset: IssuePreset) => {
+    const validCodes = preset.codes.filter((code) =>
+      applicableIssueCodeSet.has(code)
+    );
+    if (!validCodes.length) return;
+    setSelectedIssueCodes((previous) =>
+      Array.from(new Set([...previous, ...validCodes]))
+    );
+  };
+
+  const hasLinkedEvidenceForWarning = (warning: AssistantWarning) =>
+    warning.suggestedIssueCodes.some((code) =>
+      (selectedIssueEvidence[code] || []).some(
+        (entry) => entry.warningId === warning.id
+      )
+    );
+
+  const selectedIssuesWithEvidence = useMemo(
+    () =>
+      selectedIssueCodes.map((code) => ({
+        code,
+        title: issueTitleMap[code] || code,
+        evidence: selectedIssueEvidence[code] || [],
+      })),
+    [selectedIssueCodes, selectedIssueEvidence, issueTitleMap]
+  );
+
+  const decisionReadiness = !selectedCanReview
+    ? selected?.reviewBlockedReason || 'Review disabled for this submission.'
+    : !isPendingSubmission
+      ? 'Read-only: this submission is not pending.'
+      : canApprove
+        ? 'Ready to approve.'
+        : canReject
+          ? 'Ready to reject with current issue selection.'
+          : hasSelectedIssues
+            ? 'Rejection is available; approval is blocked while issues are selected.'
+            : blockingWarnings.length > 0
+              ? 'Blocking warnings found. Add issues or resolve before approving.'
+              : assistantLoading
+                ? 'Waiting for assistant checks to finish.'
+                : 'Select issues to reject or keep clear to approve.';
+
+  const handleCopyRejection = async () => {
+    if (!rejectionText) return;
+    try {
+      await navigator.clipboard.writeText(rejectionText);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1400);
+    } catch {
+      setCopied(false);
+    }
   };
 
   const approveHint = !selectedCanReview
@@ -692,16 +917,28 @@ export default function SubmissionsModerationPanel({
                   <h3 className="font-bold text-(--foreground)">
                     Assistant warnings
                   </h3>
-                  <button
-                    onClick={() => void runAssistantChecks(selected.id)}
-                    disabled={assistantLoading}
-                    className="inline-flex items-center gap-1 self-start rounded border border-(--border) px-3 py-1 text-xs text-(--foreground) disabled:opacity-50"
-                  >
-                    <RefreshCw
-                      className={`h-3 w-3 ${assistantLoading ? 'animate-spin' : ''}`}
-                    />
-                    Re-run checks
-                  </button>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      onClick={addBlockingIssues}
+                      disabled={
+                        assistantLoading || blockingWarnings.length === 0
+                      }
+                      className="inline-flex items-center gap-1 self-start rounded border border-amber-500/50 bg-amber-500/10 px-3 py-1 text-xs text-amber-700 disabled:opacity-50 dark:text-amber-300"
+                    >
+                      <AlertTriangle className="h-3 w-3" />
+                      Add all blocking
+                    </button>
+                    <button
+                      onClick={() => void runAssistantChecks(selected.id)}
+                      disabled={assistantLoading}
+                      className="inline-flex items-center gap-1 self-start rounded border border-(--border) px-3 py-1 text-xs text-(--foreground) disabled:opacity-50"
+                    >
+                      <RefreshCw
+                        className={`h-3 w-3 ${assistantLoading ? 'animate-spin' : ''}`}
+                      />
+                      Re-run checks
+                    </button>
+                  </div>
                 </div>
 
                 {assistantLoading ? (
@@ -746,7 +983,15 @@ export default function SubmissionsModerationPanel({
                             disabled={!warning.suggestedIssueCodes.length}
                             className="self-start rounded border border-current px-2 py-1 text-xs disabled:opacity-50"
                           >
-                            Add as issue
+                            {justAddedWarningIds[warning.id] ||
+                            hasLinkedEvidenceForWarning(warning) ? (
+                              <span className="inline-flex items-center gap-1">
+                                <Check className="h-3 w-3" />
+                                Added
+                              </span>
+                            ) : (
+                              'Add as issue'
+                            )}
                           </button>
                         </div>
                       </div>
@@ -760,6 +1005,49 @@ export default function SubmissionsModerationPanel({
                 <p className="text-xs text-(--muted-foreground)">
                   Select issue categories for this decision.
                 </p>
+
+                <div className="rounded border border-(--border) bg-(--background) px-3 py-2 text-xs text-(--foreground)">
+                  {decisionReadiness}
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-(--muted-foreground)">
+                    Quick presets
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {ISSUE_PRESETS.map((preset) => (
+                      <button
+                        key={preset.id}
+                        type="button"
+                        onClick={() => applyIssuePreset(preset)}
+                        className="rounded-full border border-(--border) bg-(--background) px-3 py-1 text-xs text-(--foreground) hover:bg-(--muted)"
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {hasSelectedIssues ? (
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-(--muted-foreground)">
+                      Selected issues
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedIssueCodes.map((code) => (
+                        <button
+                          key={code}
+                          type="button"
+                          onClick={() => toggleIssue(code, false)}
+                          className="inline-flex items-center gap-1 rounded-full border border-(--border) bg-(--background) px-2 py-1 text-xs text-(--foreground)"
+                        >
+                          {issueTitleMap[code] || code}
+                          <X className="h-3 w-3" />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
 
                 <div className="grid gap-1 md:grid-cols-2">
                   {applicableIssues.map((issue) => (
@@ -779,6 +1067,39 @@ export default function SubmissionsModerationPanel({
                   ))}
                 </div>
 
+                {selectedIssuesWithEvidence.some(
+                  (issue) => issue.evidence.length > 0
+                ) ? (
+                  <div className="space-y-2 rounded border border-(--border) bg-(--background) p-3">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-(--muted-foreground)">
+                      Attached evidence preview
+                    </p>
+                    <div className="space-y-2">
+                      {selectedIssuesWithEvidence.map((issue) =>
+                        issue.evidence.length ? (
+                          <div key={issue.code} className="space-y-1">
+                            <p className="text-xs font-semibold text-(--foreground)">
+                              {issue.title}
+                            </p>
+                            <ul className="space-y-1">
+                              {issue.evidence
+                                .slice(0, MAX_EVIDENCE_LINES_PER_ISSUE)
+                                .map((entry) => (
+                                  <li
+                                    key={`${issue.code}-${entry.warningId}`}
+                                    className="text-xs text-(--muted-foreground)"
+                                  >
+                                    - {entry.text}
+                                  </li>
+                                ))}
+                            </ul>
+                          </div>
+                        ) : null
+                      )}
+                    </div>
+                  </div>
+                ) : null}
+
                 <textarea
                   value={moderatorNotes}
                   onChange={(event) => setModeratorNotes(event.target.value)}
@@ -791,6 +1112,25 @@ export default function SubmissionsModerationPanel({
                   }
                   className="w-full rounded border border-(--border) bg-(--background) px-3 py-2 text-sm text-(--foreground) disabled:opacity-60"
                 />
+
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs text-(--muted-foreground)">
+                    Generated rejection message
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => void handleCopyRejection()}
+                    disabled={!hasSelectedIssues || !rejectionText}
+                    className="inline-flex items-center gap-1 rounded border border-(--border) px-2 py-1 text-xs text-(--foreground) disabled:opacity-50"
+                  >
+                    {copied ? (
+                      <Check className="h-3 w-3" />
+                    ) : (
+                      <Copy className="h-3 w-3" />
+                    )}
+                    {copied ? 'Copied' : 'Copy'}
+                  </button>
+                </div>
 
                 <textarea
                   readOnly
