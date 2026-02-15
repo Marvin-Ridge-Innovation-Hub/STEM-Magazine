@@ -512,8 +512,18 @@ export default function CreatePostPage() {
             // Don't block submission success for draft deletion failure
           }
         }
-        // Redirect to success page
-        router.push(`/submission-success?submissionId=${result.submissionId}`);
+        // Redirect to success page (include optional warning for non-blocking email issues)
+        const params = new URLSearchParams();
+        if (result.submissionId) {
+          params.set('submissionId', result.submissionId);
+        }
+        if (result.warning) {
+          params.set('warning', result.warning);
+        }
+        const query = params.toString();
+        router.push(
+          query ? `/submission-success?${query}` : '/submission-success'
+        );
       } else {
         setMessage(result.error || 'Failed to submit post');
       }

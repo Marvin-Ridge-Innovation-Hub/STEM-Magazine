@@ -23,6 +23,7 @@
     "prisma:generate": "npx prisma generate",
     "prisma:push": "npx prisma db push",
     "seed": "node --loader ts-node/esm prisma/seed.ts",
+    "cleanup:duplicate-drafts": "node scripts/cleanup-duplicate-draft-submissions.mjs",
     "ngrok": "ngrok http 3000"
   },
   "lint-staged": {

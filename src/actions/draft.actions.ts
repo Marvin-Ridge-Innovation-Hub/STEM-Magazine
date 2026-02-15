@@ -16,6 +16,9 @@ import { getSubmissionById } from '@/services/submissionService';
 import type { CreateDraftInput, UpdateDraftInput } from '@/types';
 import { randomBytes } from 'crypto';
 
+const MODERATOR_NOTIFICATION_WARNING =
+  'Submission saved, but moderator notification email failed. Our team has been alerted.';
+
 /**
  * Save a new draft
  */
@@ -249,12 +252,27 @@ export async function submitDraftForReview(draftId: string) {
       throw new Error('Failed to retrieve submission after creation');
     }
 
-    // Send email notification to moderators
-    await sendSubmissionForReview(
-      submission,
-      userProfile.name,
-      userProfile.email
-    );
+    let warning: string | undefined;
+    try {
+      // Send email notification to moderators
+      await sendSubmissionForReview(
+        submission,
+        userProfile.name,
+        userProfile.email
+      );
+    } catch (notificationError) {
+      warning = MODERATOR_NOTIFICATION_WARNING;
+      console.error(
+        'Submission created from draft but failed to send moderator notification:',
+        {
+          submissionId: result.submissionId,
+          clerkUserId: userId,
+          authorId: userProfile.id,
+          draftId,
+          error: notificationError,
+        }
+      );
+    }
 
     revalidatePath('/dashboard');
     revalidatePath('/create');
@@ -263,6 +281,7 @@ export async function submitDraftForReview(draftId: string) {
       success: true,
       submissionId: result.submissionId,
       message: 'Draft submitted for review!',
+      warning,
     };
   } catch (error) {
     console.error('Error submitting draft:', error);

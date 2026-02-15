@@ -16,6 +16,7 @@ import {
   sendSubmissionForReview,
   sendApprovalNotification,
   sendRejectionNotification,
+  notifyModeratorsForSubmission,
 } from '@/services/emailService';
 import { notifySubscribers } from '@/services/newsletterService';
 import {
@@ -23,6 +24,9 @@ import {
   getUserById,
 } from '@/services/userProfileService';
 import type { CreateSubmissionInput, SubmissionStatus } from '@/types';
+
+const MODERATOR_NOTIFICATION_WARNING =
+  'Submission saved, but moderator notification email failed. Our team has been alerted.';
 
 /**
  * Submit a new post for review
@@ -47,12 +51,26 @@ export async function submitPost(data: CreateSubmissionInput) {
     // Create submission
     const submission = await createSubmission(userProfile.id, data);
 
-    // Send email notification to moderators
-    await sendSubmissionForReview(
-      submission,
-      userProfile.name,
-      userProfile.email
-    );
+    let warning: string | undefined;
+    try {
+      // Send email notification to moderators
+      await sendSubmissionForReview(
+        submission,
+        userProfile.name,
+        userProfile.email
+      );
+    } catch (notificationError) {
+      warning = MODERATOR_NOTIFICATION_WARNING;
+      console.error(
+        'Submission created but failed to send moderator notification:',
+        {
+          submissionId: submission.id,
+          clerkUserId: userId,
+          authorId: userProfile.id,
+          error: notificationError,
+        }
+      );
+    }
 
     revalidatePath('/dashboard');
     revalidatePath('/create');
@@ -61,12 +79,70 @@ export async function submitPost(data: CreateSubmissionInput) {
       success: true,
       submissionId: submission.id,
       message: 'Your post has been submitted for review!',
+      warning,
     };
   } catch (error) {
     console.error('Error submitting post:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to submit post',
+    };
+  }
+}
+
+/**
+ * Retry moderator notification email for an existing submission (admin/mod only)
+ */
+export async function retrySubmissionModeratorNotificationAction(
+  submissionId: string
+) {
+  try {
+    const { userId } = await auth();
+    const user = await currentUser();
+
+    if (!userId || !user) {
+      return { success: false, error: 'Unauthorized' };
+    }
+
+    const userProfile = await getOrCreateUserProfile(
+      userId,
+      user.emailAddresses[0]?.emailAddress || '',
+      user.fullName || user.username || 'Unknown User',
+      user.imageUrl
+    );
+
+    const reviewerRole =
+      typeof userProfile.role === 'string'
+        ? userProfile.role.toUpperCase()
+        : 'USER';
+
+    if (reviewerRole !== 'ADMIN' && reviewerRole !== 'MODERATOR') {
+      return { success: false, error: 'Insufficient permissions' };
+    }
+
+    const submission = await getSubmissionById(submissionId);
+    if (!submission) {
+      return { success: false, error: 'Submission not found' };
+    }
+
+    await notifyModeratorsForSubmission(submissionId);
+
+    return {
+      success: true,
+      message: `Moderator notification retried for "${submission.title}".`,
+    };
+  } catch (error) {
+    console.error(
+      'Error retrying moderator notification for submission:',
+      submissionId,
+      error
+    );
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : 'Failed to retry moderator notification',
     };
   }
 }

@@ -138,6 +138,37 @@ export async function sendSubmissionForReview(
 }
 
 /**
+ * Retry moderator notification for an existing submission.
+ * Useful for operational/manual replays after transient SMTP failures.
+ */
+export async function notifyModeratorsForSubmission(
+  submissionId: string
+): Promise<void> {
+  const submission = await prisma.submission.findUnique({
+    where: { id: submissionId },
+  });
+
+  if (!submission) {
+    throw new Error('Submission not found');
+  }
+
+  const author = await prisma.user.findUnique({
+    where: { id: submission.authorId },
+    select: { name: true, email: true },
+  });
+
+  if (!author?.email) {
+    throw new Error('Submission author not found');
+  }
+
+  await sendSubmissionForReview(
+    submission as unknown as Submission,
+    author.name || 'Unknown User',
+    author.email
+  );
+}
+
+/**
  * Check if user has email notifications enabled
  * Returns preference object with emailEnabled, emailOnApproval, emailOnRejection
  */
