@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   approveSubmissionAction,
   rejectSubmissionAction,
+  moveApprovedSubmissionToReviewAction,
 } from '@/actions/submission.actions';
 import SubmissionsModerationPanel from '@/components/admin/SubmissionsModerationPanel';
 import MarkdownContent from '@/components/MarkdownContent';
@@ -315,6 +316,34 @@ export default function AdminDashboard() {
           text: result.error || 'Failed to reject submission',
         });
         toast.error(result.error || 'Failed to reject');
+      }
+    } catch (error) {
+      setMessage({ type: 'error', text: 'An unexpected error occurred.' });
+      toast.error('An error occurred');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleMoveBackToReview = async (submissionId: string) => {
+    setActionLoading(submissionId);
+    setMessage(null);
+
+    try {
+      const result = await moveApprovedSubmissionToReviewAction(submissionId);
+      if (result.success) {
+        setMessage({
+          type: 'success',
+          text: result.message || 'Submission moved back to review',
+        });
+        toast.success(result.message || 'Moved back to review');
+        await loadSubmissions();
+      } else {
+        setMessage({
+          type: 'error',
+          text: result.error || 'Failed to move submission back to review',
+        });
+        toast.error(result.error || 'Failed to move back to review');
       }
     } catch (error) {
       setMessage({ type: 'error', text: 'An unexpected error occurred.' });
@@ -716,6 +745,7 @@ export default function AdminDashboard() {
               onAllowMoveToDraftChange={setAllowMoveToDraft}
               onApprove={handleApprove}
               onReject={handleReject}
+              onMoveBackToReview={handleMoveBackToReview}
               onOpenFullContent={(submission) =>
                 setExpandedSubmission(submission)
               }

@@ -56,6 +56,7 @@ type Props = {
   onAllowMoveToDraftChange: (value: boolean) => void;
   onApprove: (submissionId: string) => Promise<void>;
   onReject: (submissionId: string, rejectionReason: string) => Promise<void>;
+  onMoveBackToReview: (submissionId: string) => Promise<void>;
   onOpenFullContent: (submission: Submission) => void;
 };
 
@@ -234,6 +235,7 @@ export default function SubmissionsModerationPanel({
   onAllowMoveToDraftChange,
   onApprove,
   onReject,
+  onMoveBackToReview,
   onOpenFullContent,
 }: Props) {
   const [search, setSearch] = useState('');
@@ -373,6 +375,7 @@ export default function SubmissionsModerationPanel({
   const hasSelectedIssues = selectedIssueCodes.length > 0;
   const actionInProgress = selected ? actionLoading === selected.id : false;
   const isPendingSubmission = selected?.status === 'PENDING';
+  const isApprovedSubmission = selected?.status === 'APPROVED';
   const selectedCanReview = selected ? selected.canReview !== false : false;
 
   const canReject = Boolean(
@@ -388,6 +391,9 @@ export default function SubmissionsModerationPanel({
     blockingWarnings.length === 0 &&
     !assistantLoading &&
     !actionInProgress
+  );
+  const canMoveBackToReview = Boolean(
+    selectedCanReview && isApprovedSubmission && !actionInProgress
   );
 
   const rejectionText = useMemo(() => {
@@ -523,19 +529,23 @@ export default function SubmissionsModerationPanel({
 
   const decisionReadiness = !selectedCanReview
     ? selected?.reviewBlockedReason || 'Review disabled for this submission.'
-    : !isPendingSubmission
-      ? 'Read-only: this submission is not pending.'
-      : canApprove
-        ? 'Ready to approve.'
-        : canReject
-          ? 'Ready to reject with current issue selection.'
-          : hasSelectedIssues
-            ? 'Rejection is available; approval is blocked while issues are selected.'
-            : blockingWarnings.length > 0
-              ? 'Blocking warnings found. Add issues or resolve before approving.'
-              : assistantLoading
-                ? 'Waiting for assistant checks to finish.'
-                : 'Select issues to reject or keep clear to approve.';
+    : isApprovedSubmission
+      ? canMoveBackToReview
+        ? 'Ready to move this approved submission back to review.'
+        : 'This approved submission cannot be moved right now.'
+      : !isPendingSubmission
+        ? 'Read-only: this submission is not pending.'
+        : canApprove
+          ? 'Ready to approve.'
+          : canReject
+            ? 'Ready to reject with current issue selection.'
+            : hasSelectedIssues
+              ? 'Rejection is available; approval is blocked while issues are selected.'
+              : blockingWarnings.length > 0
+                ? 'Blocking warnings found. Add issues or resolve before approving.'
+                : assistantLoading
+                  ? 'Waiting for assistant checks to finish.'
+                  : 'Select issues to reject or keep clear to approve.';
 
   const handleCopyRejection = async () => {
     if (!rejectionText) return;
@@ -569,6 +579,13 @@ export default function SubmissionsModerationPanel({
       : hasSelectedIssues
         ? null
         : 'Select at least one issue to enable rejection.';
+
+  const moveBackHint = isApprovedSubmission
+    ? !selectedCanReview
+      ? selected?.reviewBlockedReason ||
+        'You cannot review this submission with your current role.'
+      : null
+    : null;
 
   return (
     <div className="max-w-full space-y-6 overflow-x-hidden">
@@ -1165,8 +1182,24 @@ export default function SubmissionsModerationPanel({
                     {rejectHint}
                   </p>
                 ) : null}
+                {moveBackHint ? (
+                  <p className="text-xs text-(--muted-foreground)">
+                    {moveBackHint}
+                  </p>
+                ) : null}
 
                 <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                  {isApprovedSubmission ? (
+                    <button
+                      disabled={!canMoveBackToReview}
+                      onClick={() => void onMoveBackToReview(selected.id)}
+                      className="w-full rounded bg-amber-500 px-4 py-2 font-semibold text-white disabled:opacity-50 sm:w-auto"
+                    >
+                      {actionInProgress
+                        ? 'Processing...'
+                        : 'Move Back to Review'}
+                    </button>
+                  ) : null}
                   <button
                     disabled={!canApprove}
                     onClick={() => void onApprove(selected.id)}

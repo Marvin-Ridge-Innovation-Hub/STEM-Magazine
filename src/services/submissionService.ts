@@ -69,6 +69,50 @@ function mapSubmission(record: any): Submission {
   };
 }
 
+type SubmissionPostLookup = {
+  authorId: string;
+  title: string;
+  publishedAt: Date | null;
+};
+
+async function findAssociatedPostForSubmission(
+  db: Prisma.TransactionClient | typeof prisma,
+  submission: SubmissionPostLookup
+) {
+  const baseSlug = toBaseSlug(submission.title);
+
+  let post = submission.publishedAt
+    ? await db.post.findFirst({
+        where: {
+          authorId: submission.authorId,
+          title: submission.title,
+          publishedAt: submission.publishedAt,
+        },
+      })
+    : null;
+
+  if (!post) {
+    const slugOrTitleFilters: Prisma.PostWhereInput[] = [
+      { title: submission.title },
+    ];
+
+    if (baseSlug) {
+      slugOrTitleFilters.push({ slug: baseSlug });
+      slugOrTitleFilters.push({ slug: { startsWith: `${baseSlug}-` } });
+    }
+
+    post = await db.post.findFirst({
+      where: {
+        authorId: submission.authorId,
+        OR: slugOrTitleFilters,
+      },
+      orderBy: [{ publishedAt: 'desc' }, { createdAt: 'desc' }],
+    });
+  }
+
+  return post;
+}
+
 /**
  * Create a new submission
  */
@@ -339,6 +383,80 @@ export async function rejectSubmission(
 }
 
 /**
+ * Move an approved submission back into the pending review queue.
+ * Removes the derived public Post record while preserving submission media/content.
+ */
+export async function moveApprovedSubmissionToReview(
+  submissionId: string
+): Promise<Submission> {
+  const submission = await prisma.submission.findUnique({
+    where: { id: submissionId },
+  });
+
+  if (!submission) {
+    throw new Error('Submission not found');
+  }
+
+  if (submission.status !== 'APPROVED') {
+    throw new Error('Only approved submissions can be moved back to review');
+  }
+
+  const updatedSubmission = await prisma.$transaction(async (tx) => {
+    const post = await findAssociatedPostForSubmission(tx, {
+      authorId: submission.authorId,
+      title: submission.title,
+      publishedAt: submission.publishedAt,
+    });
+
+    if (post) {
+      await tx.comment.deleteMany({
+        where: { postId: post.id },
+      });
+
+      await tx.post.delete({
+        where: { id: post.id },
+      });
+    }
+
+    const user = await tx.user.findUnique({
+      where: { id: submission.authorId },
+      select: { postIds: true, pendingPostIds: true },
+    });
+
+    const nextPostIds = post
+      ? (user?.postIds || []).filter((id) => id !== post.id)
+      : user?.postIds || [];
+    const nextPendingPostIds = (user?.pendingPostIds || []).includes(
+      submission.id
+    )
+      ? user?.pendingPostIds || []
+      : [...(user?.pendingPostIds || []), submission.id];
+
+    await tx.user.update({
+      where: { id: submission.authorId },
+      data: {
+        postIds: { set: nextPostIds },
+        pendingPostIds: { set: nextPendingPostIds },
+      },
+    });
+
+    return await tx.submission.update({
+      where: { id: submission.id },
+      data: {
+        status: 'PENDING',
+        reviewedBy: null,
+        reviewedAt: null,
+        publishedAt: null,
+        rejectionReason: null,
+        canMoveToDraft: true,
+      },
+    });
+  });
+
+  return mapSubmission(updatedSubmission);
+}
+
+/**
  * Delete a submission
  * If approved, also deletes the associated post
  */
@@ -355,36 +473,11 @@ export async function deleteSubmission(submissionId: string): Promise<void> {
 
   // If submission was approved, we need to delete the associated post
   if (submission.status === 'APPROVED') {
-    const baseSlug = toBaseSlug(submission.title);
-
-    let post = submission.publishedAt
-      ? await prisma.post.findFirst({
-          where: {
-            authorId: submission.authorId,
-            title: submission.title,
-            publishedAt: submission.publishedAt,
-          },
-        })
-      : null;
-
-    if (!post) {
-      const slugOrTitleFilters: Prisma.PostWhereInput[] = [
-        { title: submission.title },
-      ];
-
-      if (baseSlug) {
-        slugOrTitleFilters.push({ slug: baseSlug });
-        slugOrTitleFilters.push({ slug: { startsWith: `${baseSlug}-` } });
-      }
-
-      post = await prisma.post.findFirst({
-        where: {
-          authorId: submission.authorId,
-          OR: slugOrTitleFilters,
-        },
-        orderBy: [{ publishedAt: 'desc' }, { createdAt: 'desc' }],
-      });
-    }
+    const post = await findAssociatedPostForSubmission(prisma, {
+      authorId: submission.authorId,
+      title: submission.title,
+      publishedAt: submission.publishedAt,
+    });
 
     if (post) {
       // Delete all comments on the post first

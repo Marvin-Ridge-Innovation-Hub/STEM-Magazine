@@ -9,6 +9,7 @@ import {
   getUserSubmissions,
   approveSubmission,
   rejectSubmission,
+  moveApprovedSubmissionToReview,
   deleteSubmission,
   moveToDraft,
 } from '@/services/submissionService';
@@ -446,6 +447,83 @@ export async function rejectSubmissionAction(
       success: false,
       error:
         error instanceof Error ? error.message : 'Failed to reject submission',
+    };
+  }
+}
+
+/**
+ * Move an approved submission back to pending review (moderator only)
+ */
+export async function moveApprovedSubmissionToReviewAction(
+  submissionId: string
+) {
+  try {
+    const { userId } = await auth();
+    const user = await currentUser();
+
+    if (!userId || !user) {
+      return { success: false, error: 'Unauthorized' };
+    }
+
+    // Check if user is admin/moderator
+    const userProfile = await getOrCreateUserProfile(
+      userId,
+      user.emailAddresses[0]?.emailAddress || '',
+      user.fullName || user.username || 'Unknown User',
+      user.imageUrl
+    );
+
+    const reviewerRole =
+      typeof userProfile.role === 'string'
+        ? userProfile.role.toUpperCase()
+        : 'USER';
+
+    if (reviewerRole !== 'ADMIN' && reviewerRole !== 'MODERATOR') {
+      return { success: false, error: 'Insufficient permissions' };
+    }
+
+    const submission = await getSubmissionById(submissionId);
+    if (!submission) {
+      return { success: false, error: 'Submission not found' };
+    }
+
+    if (
+      reviewerRole === 'MODERATOR' &&
+      submission.authorId === userProfile.id
+    ) {
+      return {
+        success: false,
+        error: 'Moderators cannot review their own submissions.',
+      };
+    }
+
+    if (submission.status !== 'APPROVED') {
+      return {
+        success: false,
+        error: 'Only approved submissions can be moved back to review.',
+      };
+    }
+
+    await moveApprovedSubmissionToReview(submissionId);
+
+    revalidatePath('/dashboard');
+    revalidatePath('/admin');
+    revalidatePath('/admin/submissions');
+    revalidatePath('/posts');
+    revalidatePath(`/posts/${submissionId}`);
+
+    return {
+      success: true,
+      message: 'Submission moved back to pending review.',
+    };
+  } catch (error) {
+    console.error('Error moving approved submission back to review:', error);
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : 'Failed to move submission back to review',
     };
   }
 }
