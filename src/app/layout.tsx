@@ -7,6 +7,7 @@ import MainFooter from '@/components/Footer';
 import MainNavbar from '@/components/Navbar';
 import { QueryProvider } from '@/providers/query';
 import { ThemeProvider } from '@/providers/theme';
+import 'katex/dist/katex.min.css';
 import '@/styles/globals.css';
 import type { ChildrenProps } from '@/types';
 

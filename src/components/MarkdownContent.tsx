@@ -1,5 +1,7 @@
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
 import rehypeSanitize from 'rehype-sanitize';
 
 type MarkdownContentProps = {
@@ -18,8 +20,11 @@ export default function MarkdownContent({
   return (
     <div className={combinedClassName}>
       <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
-        rehypePlugins={[rehypeSanitize]}
+        remarkPlugins={[remarkGfm, remarkMath]}
+        rehypePlugins={[
+          rehypeSanitize,
+          [rehypeKatex, { throwOnError: false, strict: 'ignore' }],
+        ]}
         components={{
           a: ({ children, ...props }) => {
             const href = typeof props.href === 'string' ? props.href : '';

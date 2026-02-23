@@ -862,6 +862,15 @@
     height: auto;
     border-radius: 0.75rem;
   }
+  .markdown-content .katex-display {
+    margin: 1rem 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 0.25rem;
+  }
+  .markdown-content .katex-display > .katex {
+    white-space: nowrap;
+  }
 
   .input-field {
     @apply w-full px-4 py-3 rounded-lg border focus:outline-none focus:ring-2;
