@@ -26,6 +26,7 @@ import OnboardingTooltip from '@/components/OnboardingTooltip';
 import PostingRules from '@/components/PostingRules';
 import ImageCitationHelp from '@/components/ImageCitationHelp';
 import MarkdownContent from '@/components/MarkdownContent';
+import FormattingTipsheet from '@/components/FormattingTipsheet';
 import ImageAttributionDisplay from '@/components/ImageAttribution';
 import type { ImageAttribution } from '@/types';
 
@@ -1575,6 +1576,7 @@ export default function CreatePostPage() {
                   </button>
                 </div>
               </div>
+              <FormattingTipsheet />
               {showContentPreview ? (
                 <div className="rounded border border-(--border) bg-(--background) p-4">
                   {content.trim().length === 0 ? (
@@ -1592,13 +1594,18 @@ export default function CreatePostPage() {
                 <textarea
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
-                  placeholder="Write your post content here. Markdown is supported."
+                  placeholder="Write your post content here. Markdown is supported. For equations, use fenced ```math``` blocks."
                   className="w-full border border-(--border) rounded px-3 py-2 min-h-50 resize-vertical bg-(--background) text-(--foreground) placeholder:text-(--muted-foreground) focus:outline-none focus:ring-2 focus:ring-(--primary)"
                 />
               )}
               <div className="text-xs text-(--muted-foreground)">
                 Provide helpful context: what, why, how, and any notes readers
-                should know. Cite claims, statistics, quotes, and external
+                should know. Use fenced
+                <code className="mx-1 rounded bg-(--muted) px-1.5 py-0.5 text-xs">
+                  math
+                </code>
+                blocks for equations. Dollar signs stay plain text, so prices
+                like $25 are safe. Cite claims, statistics, quotes, and external
                 research in Sources. Keep content respectful and appropriate for
                 a school audience per{' '}
                 <Link

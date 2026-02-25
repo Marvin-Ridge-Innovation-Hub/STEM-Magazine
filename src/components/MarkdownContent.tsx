@@ -1,7 +1,7 @@
+import { isValidElement, type ReactNode } from 'react';
+import katex from 'katex';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import remarkMath from 'remark-math';
-import rehypeKatex from 'rehype-katex';
 import rehypeSanitize from 'rehype-sanitize';
 
 type MarkdownContentProps = {
@@ -17,14 +17,28 @@ export default function MarkdownContent({
     .filter(Boolean)
     .join(' ');
 
+  const renderMathBlock = (source: string) =>
+    katex.renderToString(source, {
+      displayMode: true,
+      throwOnError: false,
+      strict: 'ignore',
+    });
+
+  const getCodeElement = (children: ReactNode) => {
+    const child = Array.isArray(children) ? children[0] : children;
+    return isValidElement(child) ? child : null;
+  };
+
+  const getLanguage = (classNameValue?: string) => {
+    const match = classNameValue?.match(/language-([\w-]+)/);
+    return match?.[1]?.toLowerCase();
+  };
+
   return (
     <div className={combinedClassName}>
       <ReactMarkdown
-        remarkPlugins={[remarkGfm, remarkMath]}
-        rehypePlugins={[
-          rehypeSanitize,
-          [rehypeKatex, { throwOnError: false, strict: 'ignore' }],
-        ]}
+        remarkPlugins={[remarkGfm]}
+        rehypePlugins={[rehypeSanitize]}
         components={{
           a: ({ children, ...props }) => {
             const href = typeof props.href === 'string' ? props.href : '';
@@ -41,16 +55,55 @@ export default function MarkdownContent({
               </a>
             );
           },
-          code: ({ children, className, ...props }) => {
-            const isBlock = Boolean(
-              className && className.includes('language-')
+          pre: ({ children, ...props }) => {
+            const codeElement = getCodeElement(children);
+            if (codeElement) {
+              const codeProps = codeElement.props as {
+                className?: string;
+                children?: ReactNode;
+              };
+              const language = getLanguage(codeProps.className);
+              if (language === 'math') {
+                const source = String(codeProps.children ?? '').replace(
+                  /\n$/,
+                  ''
+                );
+                return (
+                  <div
+                    className="my-4 overflow-x-auto"
+                    dangerouslySetInnerHTML={{
+                      __html: renderMathBlock(source),
+                    }}
+                  />
+                );
+              }
+            }
+
+            return (
+              <pre
+                {...props}
+                className="overflow-x-auto rounded bg-(--muted) p-3 text-sm"
+              >
+                {children}
+              </pre>
             );
+          },
+          code: ({ children, className, ...props }) => {
+            const language = getLanguage(className);
+            if (language) {
+              return (
+                <code {...props} className={className || ''}>
+                  {children}
+                </code>
+              );
+            }
+
             return (
               <code
                 {...props}
                 className={`rounded bg-(--muted) px-1.5 py-0.5 text-sm ${
-                  isBlock ? 'block p-3 overflow-x-auto' : ''
-                } ${className || ''}`}
+                  className || ''
+                }`}
               >
                 {children}
               </code>
