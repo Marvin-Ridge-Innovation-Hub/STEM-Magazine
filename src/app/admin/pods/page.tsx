@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Youtube,
@@ -14,6 +13,7 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import SafeImage from '@/components/SafeImage';
 
 interface Pod {
   id: string;
@@ -567,7 +567,7 @@ export default function SMPodsManagement() {
                 {/* Thumbnail / Video Preview */}
                 <div className="relative aspect-video">
                   {pod.thumbnailUrl ? (
-                    <Image
+                    <SafeImage
                       src={pod.thumbnailUrl}
                       alt={pod.title}
                       fill

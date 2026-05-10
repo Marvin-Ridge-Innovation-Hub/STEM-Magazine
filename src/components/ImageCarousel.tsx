@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useState, useCallback } from 'react';
-import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { ImageAttribution as ImageAttributionType } from '@/types';
 import ImageAttributionDisplay from '@/components/ImageAttribution';
+import SafeImage from '@/components/SafeImage';
 
 interface ImageCarouselProps {
   images: string[];
@@ -85,7 +85,7 @@ export default function ImageCarousel({
                 : ''
           }`}
         >
-          <Image
+          <SafeImage
             src={images[0]}
             alt={alt}
             fill
@@ -148,7 +148,7 @@ export default function ImageCarousel({
             }}
             className="absolute inset-0"
           >
-            <Image
+            <SafeImage
               src={images[currentIndex]}
               alt={`${alt} ${currentIndex + 1}`}
               fill
@@ -218,7 +218,7 @@ export default function ImageCarousel({
               }`}
               aria-label={`View image ${index + 1}`}
             >
-              <Image
+              <SafeImage
                 src={image}
                 alt={`Thumbnail ${index + 1}`}
                 fill

@@ -29,9 +29,9 @@ import {
 } from 'lucide-react';
 import OnboardingTooltip from '@/components/OnboardingTooltip';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
+import SafeImage from '@/components/SafeImage';
 import { getMyDrafts, deleteDraftAction } from '@/actions/draft.actions';
 import {
   getMySubmissions,
@@ -412,7 +412,7 @@ const SubmissionReviewModal = ({
 
           {submission.thumbnailUrl && (
             <div className="relative w-full h-56 sm:h-72 rounded-xl overflow-hidden border border-(--border)">
-              <Image
+              <SafeImage
                 src={submission.thumbnailUrl}
                 alt={submission.title}
                 fill
@@ -1572,7 +1572,7 @@ export default function DashboardPage() {
                             <div className="p-4 sm:p-5 flex flex-col sm:flex-row gap-4">
                               {submission.thumbnailUrl && (
                                 <div className="relative w-full sm:w-28 h-36 sm:h-20 rounded-lg overflow-hidden shrink-0">
-                                  <Image
+                                  <SafeImage
                                     src={submission.thumbnailUrl}
                                     alt={submission.title}
                                     fill

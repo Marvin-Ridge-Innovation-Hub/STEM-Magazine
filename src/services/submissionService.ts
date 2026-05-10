@@ -48,6 +48,43 @@ function validateSubmissionAttributions(data: CreateSubmissionInput) {
   }
 }
 
+function isValidStoredImageUrl(value?: string | null) {
+  if (!value?.trim()) return false;
+
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === 'https:' || parsed.protocol === 'http:';
+  } catch {
+    return false;
+  }
+}
+
+function validatePublishedMedia(submission: {
+  postType: string;
+  thumbnailUrl: string | null;
+  images: string[];
+}) {
+  if (submission.postType === 'SM_EXPO') {
+    if (!submission.images.length) {
+      throw new Error('SM Expo submissions require at least one image.');
+    }
+
+    const invalidIndex = submission.images.findIndex(
+      (image) => !isValidStoredImageUrl(image)
+    );
+    if (invalidIndex >= 0) {
+      throw new Error(`Image ${invalidIndex + 1} is missing a valid URL.`);
+    }
+  }
+
+  if (
+    submission.postType === 'SM_NOW' &&
+    !isValidStoredImageUrl(submission.thumbnailUrl)
+  ) {
+    throw new Error('SM Now submissions require a valid thumbnail URL.');
+  }
+}
+
 const toJsonValue = (value: unknown) =>
   value as unknown as Prisma.InputJsonValue;
 
@@ -235,6 +272,12 @@ export async function approveSubmission(
     throw new Error('Submission is not pending');
   }
 
+  validatePublishedMedia({
+    postType: submission.postType,
+    thumbnailUrl: submission.thumbnailUrl,
+    images: submission.images || [],
+  });
+
   const user = await prisma.user.findUnique({
     where: { id: submission.authorId },
     select: { pendingPostIds: true },
@@ -263,7 +306,9 @@ export async function approveSubmission(
             published: true,
             authorId: submission.authorId,
             coverImage:
-              submission.thumbnailUrl || 'https://via.placeholder.com/800x400',
+              submission.thumbnailUrl ||
+              submission.images[0] ||
+              '/images/logo-normal.png',
             slug: nextSlug,
             postType: submission.postType,
             projectLinks: submission.projectLinks || [],

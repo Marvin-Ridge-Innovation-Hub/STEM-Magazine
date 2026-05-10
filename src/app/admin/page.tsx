@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -11,6 +10,7 @@ import {
 } from '@/actions/submission.actions';
 import SubmissionsModerationPanel from '@/components/admin/SubmissionsModerationPanel';
 import MarkdownContent from '@/components/MarkdownContent';
+import SafeImage from '@/components/SafeImage';
 import type { ImageAttribution } from '@/types';
 import {
   Target,
@@ -934,7 +934,7 @@ export default function AdminDashboard() {
                   >
                     <div className="relative aspect-video">
                       {pod.thumbnailUrl ? (
-                        <Image
+                        <SafeImage
                           src={pod.thumbnailUrl}
                           alt={pod.title}
                           fill
@@ -1082,7 +1082,7 @@ export default function AdminDashboard() {
                     {/* Thumbnail */}
                     <div className="relative w-20 h-14 rounded-lg overflow-hidden shrink-0 bg-(--muted)">
                       {post.thumbnailUrl || post.coverImage ? (
-                        <Image
+                        <SafeImage
                           src={post.thumbnailUrl || post.coverImage || ''}
                           alt={post.title}
                           fill
@@ -1200,7 +1200,7 @@ export default function AdminDashboard() {
                   >
                     {/* User Avatar */}
                     {user.imageUrl ? (
-                      <Image
+                      <SafeImage
                         src={user.imageUrl}
                         alt={user.name || 'User'}
                         width={48}

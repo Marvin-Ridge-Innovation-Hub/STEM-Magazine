@@ -31,7 +31,11 @@ export async function GET(
             status: 'APPROVED',
             publishedAt: { not: null },
           },
-          orderBy: { publishedAt: 'desc' },
+          orderBy: [
+            { publishedAt: 'desc' },
+            { createdAt: 'desc' },
+            { id: 'desc' },
+          ],
           select: {
             id: true,
             title: true,

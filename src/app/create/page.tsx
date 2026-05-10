@@ -312,11 +312,15 @@ export default function CreatePostPage() {
   };
 
   // Upload image to Cloudinary via API
-  const uploadToCloudinary = async (file: File): Promise<string | null> => {
+  const uploadToCloudinary = async (
+    file: File,
+    mode: 'thumbnail' | 'gallery' = 'thumbnail'
+  ): Promise<string | null> => {
     setIsUploading(true);
     try {
       const formData = new FormData();
       formData.append('file', file);
+      formData.append('mode', mode);
 
       const response = await fetch('/api/upload', {
         method: 'POST',
@@ -456,7 +460,7 @@ export default function CreatePostPage() {
             continue;
           }
 
-          const uploadedUrl = await uploadToCloudinary(file);
+          const uploadedUrl = await uploadToCloudinary(file, 'gallery');
           if (!uploadedUrl) {
             setIsSubmitting(false);
             return; // Error message already set by uploadToCloudinary
@@ -470,7 +474,10 @@ export default function CreatePostPage() {
         // SM Now: single thumbnail
         if (thumbnailFile) {
           // Upload new file
-          const uploadedUrl = await uploadToCloudinary(thumbnailFile);
+          const uploadedUrl = await uploadToCloudinary(
+            thumbnailFile,
+            'thumbnail'
+          );
           if (!uploadedUrl) {
             setIsSubmitting(false);
             return;
@@ -507,7 +514,7 @@ export default function CreatePostPage() {
         // Delete the draft if we were editing one
         if (currentDraftId) {
           try {
-            await deleteDraftAction(currentDraftId);
+            await deleteDraftAction(currentDraftId, { preserveImages: true });
           } catch (err) {
             console.error('Failed to delete draft after submission:', err);
             // Don't block submission success for draft deletion failure
@@ -606,6 +613,7 @@ export default function CreatePostPage() {
 
     try {
       let uploadedImages: string[] = [];
+      let failedUploads = 0;
       let thumbnailFileInfo: string | undefined = thumbnailPreview || undefined;
 
       if (postType === 'SM Expo') {
@@ -620,19 +628,33 @@ export default function CreatePostPage() {
             continue;
           }
 
-          const uploadedUrl = await uploadToCloudinary(file);
+          const uploadedUrl = await uploadToCloudinary(file, 'gallery');
           if (uploadedUrl) {
             uploadedImages.push(uploadedUrl);
+          } else {
+            failedUploads += 1;
           }
-          // Don't fail draft save if upload fails
+        }
+
+        if (failedUploads > 0) {
+          setMessage(
+            `${failedUploads} image upload${failedUploads === 1 ? '' : 's'} failed. Draft was not saved so images are not lost.`
+          );
+          return;
         }
 
         thumbnailFileInfo = uploadedImages[0];
       } else if (thumbnailFile) {
         // SM Now: single thumbnail
-        const uploadedUrl = await uploadToCloudinary(thumbnailFile);
+        const uploadedUrl = await uploadToCloudinary(
+          thumbnailFile,
+          'thumbnail'
+        );
         if (uploadedUrl) {
           thumbnailFileInfo = uploadedUrl;
+        } else {
+          setMessage('Thumbnail upload failed. Draft was not saved.');
+          return;
         }
       }
 

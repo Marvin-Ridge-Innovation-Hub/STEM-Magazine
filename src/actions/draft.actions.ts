@@ -165,7 +165,10 @@ export async function getMyDrafts() {
 /**
  * Delete a draft
  */
-export async function deleteDraftAction(draftId: string) {
+export async function deleteDraftAction(
+  draftId: string,
+  options: { preserveImages?: boolean } = {}
+) {
   try {
     const { userId } = await auth();
     const user = await currentUser();
@@ -190,7 +193,9 @@ export async function deleteDraftAction(draftId: string) {
       return { success: false, error: 'Unauthorized to delete this draft' };
     }
 
-    await deleteDraft(draftId, userProfile.id);
+    await deleteDraft(draftId, userProfile.id, {
+      deleteImages: !options.preserveImages,
+    });
 
     revalidatePath('/dashboard');
 

@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import Image from 'next/image';
 import {
   AlertTriangle,
   BookOpen,
@@ -14,6 +13,7 @@ import {
 import PostingRules from '@/components/PostingRules';
 import MarkdownContent from '@/components/MarkdownContent';
 import ImageAttributionDisplay from '@/components/ImageAttribution';
+import SafeImage from '@/components/SafeImage';
 import type { ImageAttribution } from '@/types';
 import type {
   AssistantWarning,
@@ -689,7 +689,7 @@ export default function SubmissionsModerationPanel({
                     <div className="flex gap-2">
                       <div className="relative h-12 w-12 overflow-hidden rounded bg-(--muted)">
                         {submission.thumbnailUrl ? (
-                          <Image
+                          <SafeImage
                             src={submission.thumbnailUrl}
                             alt={submission.title}
                             fill
@@ -795,7 +795,7 @@ export default function SubmissionsModerationPanel({
                                   rel="noopener noreferrer"
                                   className="relative block aspect-video overflow-hidden rounded border border-(--border)"
                                 >
-                                  <Image
+                                  <SafeImage
                                     src={imageUrl}
                                     alt={`Submission image ${index + 1}`}
                                     fill
@@ -832,7 +832,7 @@ export default function SubmissionsModerationPanel({
                           rel="noopener noreferrer"
                           className="relative block aspect-video overflow-hidden rounded border border-(--border)"
                         >
-                          <Image
+                          <SafeImage
                             src={selected.thumbnailUrl}
                             alt={`${selected.title} thumbnail`}
                             fill

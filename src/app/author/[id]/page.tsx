@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft,
@@ -23,6 +22,7 @@ import {
   Heart,
   MessageSquare,
 } from 'lucide-react';
+import SafeImage from '@/components/SafeImage';
 
 // Helper for consistent iconography
 const PostTypeIcon = ({
@@ -265,7 +265,7 @@ export default function AuthorProfilePage() {
             {/* Avatar */}
             <div className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-full overflow-hidden bg-(--muted) ring-4 ring-(--border) shrink-0">
               {profile.image ? (
-                <Image
+                <SafeImage
                   src={profile.image}
                   alt={profile.name || 'Author'}
                   fill
@@ -361,7 +361,7 @@ export default function AuthorProfilePage() {
                     {/* Cover Image */}
                     <div className="relative h-40 overflow-hidden">
                       {post.coverImage ? (
-                        <Image
+                        <SafeImage
                           src={post.coverImage}
                           alt={post.title}
                           fill

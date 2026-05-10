@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft,
@@ -19,6 +18,7 @@ import LikeButton from '@/components/LikeButton';
 import ImageCarousel from '@/components/ImageCarousel';
 import MarkdownContent from '@/components/MarkdownContent';
 import ImageAttribution from '@/components/ImageAttribution';
+import SafeImage from '@/components/SafeImage';
 import type { ImageAttribution as ImageAttributionType } from '@/types';
 
 const PostTypeIcon = ({
@@ -65,6 +65,44 @@ const getPostTypeChipClass = (type: string) => {
       return 'bg-[var(--muted)] text-[var(--foreground)]';
   }
 };
+
+const URL_PATTERN = /(https?:\/\/[^\s<>"']+)/g;
+
+function SourcesList({ sources }: { sources: string }) {
+  const lines = sources
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  const renderLinkedText = (text: string) =>
+    text.split(URL_PATTERN).map((part, index) => {
+      if (!part.match(URL_PATTERN)) {
+        return <span key={`${part}-${index}`}>{part}</span>;
+      }
+
+      return (
+        <a
+          key={`${part}-${index}`}
+          href={part}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="break-all text-[var(--primary)] underline decoration-transparent hover:decoration-inherit transition-colors"
+        >
+          {part}
+        </a>
+      );
+    });
+
+  return (
+    <div className="space-y-3 text-[var(--muted-foreground)] leading-relaxed [overflow-wrap:anywhere]">
+      {(lines.length > 0 ? lines : [sources]).map((line, index) => (
+        <p key={`${line}-${index}`} className="min-w-0 break-words">
+          {renderLinkedText(line)}
+        </p>
+      ))}
+    </div>
+  );
+}
 
 export interface PostContentProps {
   post: {
@@ -209,7 +247,7 @@ export default function PostContent({ post, relatedPosts }: PostContentProps) {
               >
                 <div className="relative h-9 w-9 rounded-full overflow-hidden bg-[var(--muted)] border border-[color:var(--border)]">
                   {post.author.imageUrl ? (
-                    <Image
+                    <SafeImage
                       src={post.author.imageUrl}
                       alt={post.author.name || 'Author'}
                       fill
@@ -281,7 +319,7 @@ export default function PostContent({ post, relatedPosts }: PostContentProps) {
               post.coverImage && (
                 <div className="mb-10 space-y-2">
                   <div className="relative w-full h-64 md:h-96 rounded-2xl overflow-hidden border border-[color:var(--border)]">
-                    <Image
+                    <SafeImage
                       src={post.coverImage}
                       alt={post.title}
                       fill
@@ -337,9 +375,7 @@ export default function PostContent({ post, relatedPosts }: PostContentProps) {
                   <ExternalLink className="h-5 w-5 text-[var(--program-now)]" />
                   Sources
                 </h2>
-                <div className="text-[var(--muted-foreground)] whitespace-pre-wrap leading-relaxed">
-                  {post.sources}
-                </div>
+                <SourcesList sources={post.sources} />
               </div>
             )}
 
@@ -381,7 +417,7 @@ export default function PostContent({ post, relatedPosts }: PostContentProps) {
                     >
                       <div className="relative h-24 w-32 sm:h-28 sm:w-40 shrink-0 overflow-hidden rounded-xl bg-[var(--muted)]">
                         {relatedPost.thumbnailUrl ? (
-                          <Image
+                          <SafeImage
                             src={relatedPost.thumbnailUrl}
                             alt={relatedPost.title}
                             fill

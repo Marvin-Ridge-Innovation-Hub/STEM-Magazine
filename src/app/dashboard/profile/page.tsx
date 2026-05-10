@@ -16,9 +16,9 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import SafeImage from '@/components/SafeImage';
 
 interface ProfileData {
   bio: string;
@@ -189,7 +189,7 @@ export default function ProfilePage() {
           <div className="flex items-center gap-4 mb-8">
             <div className="relative w-16 h-16 rounded-full overflow-hidden bg-(--muted)">
               {user?.imageUrl ? (
-                <Image
+                <SafeImage
                   src={user.imageUrl}
                   alt={user.fullName || 'Profile'}
                   fill

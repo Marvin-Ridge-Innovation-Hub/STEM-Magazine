@@ -97,6 +97,8 @@
 @layer base {
   :root {
     color-scheme: light;
+    --font-inter: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    --font-poppins: 'Poppins', ui-sans-serif, system-ui, sans-serif;
     --brand-blue: oklch(34% 0.078 250);
     --brand-orange: oklch(70% 0.148 58);
     --navy-ink: oklch(19% 0.03 252);
@@ -765,6 +767,15 @@
     background-color: var(--program-pods);
     color: var(--primary-foreground);
   }
+  .explore-title-clamp {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    max-height: 2.5em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    overflow-wrap: anywhere;
+  }
   .status-chip-pending {
     background-color: color-mix(
       in oklch,
@@ -835,6 +846,11 @@
   }
   .markdown-content p {
     margin: 0;
+    overflow-wrap: anywhere;
+  }
+  .markdown-content a {
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
   .markdown-content p + p {
     margin-top: 1rem;
@@ -856,6 +872,17 @@
   .markdown-content hr {
     border: 0;
     border-top: 1px solid var(--border);
+  }
+  .markdown-content table {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+    border-collapse: collapse;
+  }
+  .markdown-content th,
+  .markdown-content td {
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
   .markdown-content img {
     max-width: 100%;

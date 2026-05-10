@@ -161,9 +161,7 @@ async function getRelatedPosts(
         },
       },
     },
-    orderBy: {
-      publishedAt: 'desc',
-    },
+    orderBy: [{ publishedAt: 'desc' }, { createdAt: 'desc' }, { id: 'desc' }],
     take: 6,
   });
 
@@ -220,9 +218,7 @@ async function getRelatedPosts(
           },
         },
       },
-      orderBy: {
-        publishedAt: 'desc',
-      },
+      orderBy: [{ publishedAt: 'desc' }, { createdAt: 'desc' }, { id: 'desc' }],
       take: 3 - rankedPrimary.length,
     });
 

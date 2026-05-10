@@ -166,14 +166,16 @@ export async function getUserDrafts(authorId: string): Promise<Draft[]> {
  */
 export async function deleteDraft(
   draftId: string,
-  authorId: string
+  authorId: string,
+  options: { deleteImages?: boolean } = {}
 ): Promise<void> {
+  const shouldDeleteImages = options.deleteImages ?? true;
   // First, get the draft to access its images
   const draft = await prisma.draft.findUnique({
     where: { id: draftId },
   });
 
-  if (draft) {
+  if (draft && shouldDeleteImages) {
     // Delete images from Cloudinary
     await deletePostImages(draft.thumbnailFile, draft.images);
   }

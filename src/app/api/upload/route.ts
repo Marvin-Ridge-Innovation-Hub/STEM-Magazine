@@ -22,6 +22,7 @@ export async function POST(request: NextRequest) {
 
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
+    const mode = formData.get('mode') === 'gallery' ? 'gallery' : 'thumbnail';
 
     if (!file) {
       return NextResponse.json(
@@ -58,11 +59,27 @@ export async function POST(request: NextRequest) {
           {
             folder: 'stem-magazine',
             resource_type: 'image',
-            transformation: [
-              { width: 1200, height: 630, crop: 'fill', gravity: 'auto' },
-              { quality: 'auto:good' },
-              { fetch_format: 'auto' },
-            ],
+            transformation:
+              mode === 'gallery'
+                ? [
+                    {
+                      width: 1600,
+                      height: 1600,
+                      crop: 'limit',
+                    },
+                    { quality: 'auto:good' },
+                    { fetch_format: 'auto' },
+                  ]
+                : [
+                    {
+                      width: 1200,
+                      height: 630,
+                      crop: 'fill',
+                      gravity: 'auto',
+                    },
+                    { quality: 'auto:good' },
+                    { fetch_format: 'auto' },
+                  ],
           },
           (error, result) => {
             if (error) reject(error);

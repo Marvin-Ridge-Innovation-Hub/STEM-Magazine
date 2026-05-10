@@ -1,11 +1,16 @@
 export const postService = {
-  getPosts: async (query: string = '', category?: string, sortBy: string = 'newest') => {
+  getPosts: async (
+    search: string = '',
+    type?: string,
+    _sortBy: string = 'newest'
+  ) => {
     const params = new URLSearchParams();
-    if (query) params.append('query', query);
-    if (category) params.append('category', category);
-    if (sortBy) params.append('sortBy', sortBy);
+    if (search) params.append('search', search);
+    if (type && type !== 'ALL') params.append('type', type);
 
-    const url = params.toString() ? `/api/posts?${params.toString()}` : '/api/posts';
+    const url = params.toString()
+      ? `/api/posts?${params.toString()}`
+      : '/api/posts';
     const response = await fetch(url, {
       method: 'GET',
       headers: {

@@ -2,8 +2,8 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { motion } from 'framer-motion';
 import { CalendarIcon, Eye, MessageSquare } from 'lucide-react';
-import Image from 'next/image';
 import Link from 'next/link';
+import SafeImage from '@/components/SafeImage';
 
 const Avatar = ({ src, alt, fallback, className = '' }: any) => {
   return (
@@ -11,7 +11,7 @@ const Avatar = ({ src, alt, fallback, className = '' }: any) => {
       className={`relative flex h-6 w-6 shrink-0 overflow-hidden rounded-full ${className}`}
     >
       {src ? (
-        <Image
+        <SafeImage
           src={src}
           alt={alt || 'Avatar'}
           fill
@@ -68,7 +68,7 @@ export default function PostCard({
       <Link href={`/posts/${id}`} className="block">
         <div className="relative h-48 overflow-hidden">
           {coverImage ? (
-            <Image
+            <SafeImage
               src={coverImage}
               alt={title}
               fill

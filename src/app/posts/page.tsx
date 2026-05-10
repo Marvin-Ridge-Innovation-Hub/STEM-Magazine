@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
@@ -16,6 +15,7 @@ import {
   LayoutGrid,
   SlidersHorizontal,
 } from 'lucide-react';
+import SafeImage from '@/components/SafeImage';
 
 // Icon mapping for consistent iconography
 const PostTypeIcon = ({
@@ -117,7 +117,7 @@ const PostCard = ({
       <div className="relative h-full rounded-2xl overflow-hidden bg-[var(--card)] border border-[color:var(--border)] flex flex-col shadow-sm transition-transform duration-300 group-hover:-translate-y-1 group-hover:shadow-md">
         <div className="relative w-full aspect-[16/9] overflow-hidden">
           {post.coverImage ? (
-            <Image
+            <SafeImage
               src={post.coverImage}
               alt={post.title}
               fill
@@ -148,7 +148,7 @@ const PostCard = ({
                 {getTimeAgo(post.publishedAt || post.createdAt)}
               </span>
             </div>
-            <h3 className="font-display text-lg sm:text-xl text-[var(--foreground)] group-hover:text-[var(--primary)] transition-colors leading-tight line-clamp-2 min-h-[3.5rem]">
+            <h3 className="explore-title-clamp font-display text-lg sm:text-xl text-[var(--foreground)] group-hover:text-[var(--primary)] transition-colors leading-tight min-h-[3.5rem]">
               {post.title}
             </h3>
             <p className="text-sm leading-5 text-[var(--muted-foreground)] line-clamp-2 min-h-10 mt-2">
@@ -160,7 +160,7 @@ const PostCard = ({
             <div className="flex items-center gap-2">
               {post.author?.imageUrl ? (
                 <div className="relative w-5 h-5 rounded-full overflow-hidden">
-                  <Image
+                  <SafeImage
                     src={post.author.imageUrl}
                     alt={post.author.name || 'Author'}
                     fill
@@ -209,7 +209,7 @@ const FeaturedCard = ({
       <div className="relative rounded-3xl overflow-hidden bg-[var(--card)] border border-[color:var(--border)] shadow-xl transition-transform duration-300 group-hover:-translate-y-1 group-hover:shadow-2xl">
         <div className="relative w-full aspect-[16/9] overflow-hidden">
           {post.coverImage ? (
-            <Image
+            <SafeImage
               src={post.coverImage}
               alt={post.title}
               fill
@@ -240,7 +240,7 @@ const FeaturedCard = ({
               {getTimeAgo(post.publishedAt || post.createdAt)}
             </span>
           </div>
-          <h2 className="font-display text-2xl lg:text-3xl text-[var(--foreground)] leading-tight line-clamp-2">
+          <h2 className="explore-title-clamp font-display text-2xl lg:text-3xl text-[var(--foreground)] leading-tight">
             {post.title}
           </h2>
           <p className="text-sm lg:text-base text-[var(--muted-foreground)] line-clamp-1">
@@ -249,7 +249,7 @@ const FeaturedCard = ({
           <div className="flex items-center gap-3 pt-2 border-t border-[color:var(--border)]">
             {post.author?.imageUrl ? (
               <div className="relative w-8 h-8 rounded-full overflow-hidden border-2 border-[color:var(--border)]">
-                <Image
+                <SafeImage
                   src={post.author.imageUrl}
                   alt={post.author.name || 'Author'}
                   fill
@@ -296,7 +296,7 @@ const PostListRow = ({
       <div className="flex flex-col sm:flex-row gap-4 rounded-2xl border border-[color:var(--border)] bg-[var(--card)] p-4 sm:p-5 shadow-sm transition-all duration-300 group-hover:-translate-y-0.5 group-hover:shadow-md">
         <div className="relative w-full sm:w-44 md:w-52 aspect-[16/10] sm:aspect-[4/3] rounded-xl overflow-hidden bg-[var(--muted)]">
           {post.coverImage ? (
-            <Image
+            <SafeImage
               src={post.coverImage}
               alt={post.title}
               fill
@@ -325,7 +325,7 @@ const PostListRow = ({
               {getTimeAgo(post.publishedAt || post.createdAt)}
             </span>
           </div>
-          <h3 className="font-display text-lg sm:text-xl text-[var(--foreground)] leading-tight group-hover:text-[var(--primary)] transition-colors line-clamp-2">
+          <h3 className="explore-title-clamp font-display text-lg sm:text-xl text-[var(--foreground)] leading-tight group-hover:text-[var(--primary)] transition-colors">
             {post.title}
           </h3>
           <p className="text-sm text-[var(--muted-foreground)] line-clamp-2">
@@ -335,7 +335,7 @@ const PostListRow = ({
             <div className="flex items-center gap-2">
               {post.author?.imageUrl ? (
                 <div className="relative w-7 h-7 rounded-full overflow-hidden border border-[color:var(--border)]">
-                  <Image
+                  <SafeImage
                     src={post.author.imageUrl}
                     alt={post.author.name || 'Author'}
                     fill
@@ -371,18 +371,16 @@ export default function PostsPage() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [totalCount, setTotalCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState<string>('ALL');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const filterPanelRef = useRef<HTMLDivElement | null>(null);
 
-  const INITIAL_LOAD = 10;
+  const INITIAL_LOAD = 8;
   const LOAD_MORE_COUNT = 4;
-
-  useEffect(() => {
-    loadPosts(true);
-  }, []);
 
   useEffect(() => {
     const params = new URLSearchParams(searchParamsKey);
@@ -401,6 +399,10 @@ export default function PostsPage() {
     setSelectedType(isValidPostType(typeFromParams) ? typeFromParams : 'ALL');
     setSelectedTags(tagsFromParams);
   }, [searchParamsKey]);
+
+  useEffect(() => {
+    loadPosts(true);
+  }, [searchQuery, selectedType, selectedTags]);
 
   useEffect(() => {
     if (!isFilterOpen) return;
@@ -434,23 +436,48 @@ export default function PostsPage() {
       if (initial) {
         setLoading(true);
         setPosts([]);
+        setNextCursor(null);
       } else {
+        if (!nextCursor) return;
         setLoadingMore(true);
       }
 
-      const skip = initial ? 0 : posts.length;
-      const take = initial ? INITIAL_LOAD : LOAD_MORE_COUNT;
+      const params = new URLSearchParams();
+      params.set('limit', String(initial ? INITIAL_LOAD : LOAD_MORE_COUNT));
 
-      const response = await fetch(`/api/posts?skip=${skip}&take=${take}`);
-      const data = await response.json();
-
-      if (initial) {
-        setPosts(data.posts || []);
-      } else {
-        setPosts((prev) => [...prev, ...(data.posts || [])]);
+      if (!initial && nextCursor) {
+        params.set('cursor', nextCursor);
       }
 
+      if (searchQuery.trim()) {
+        params.set('search', searchQuery.trim());
+      }
+
+      if (selectedType !== 'ALL') {
+        params.set('type', selectedType);
+      }
+
+      selectedTags.forEach((tag) => params.append('tag', tag));
+
+      const response = await fetch(`/api/posts?${params.toString()}`);
+      const data = await response.json();
+      const receivedPosts = data.posts || [];
+
+      if (initial) {
+        setPosts(receivedPosts);
+      } else {
+        setPosts((prev) => {
+          const existingIds = new Set(prev.map((post) => post.id));
+          return [
+            ...prev,
+            ...receivedPosts.filter((post: any) => !existingIds.has(post.id)),
+          ];
+        });
+      }
+
+      setNextCursor(data.pagination?.nextCursor || null);
       setHasMore(data.pagination?.hasMore || false);
+      setTotalCount(data.pagination?.total || 0);
     } catch (error) {
       console.error('Failed to load posts:', error);
       if (initial) setPosts([]);
@@ -462,31 +489,8 @@ export default function PostsPage() {
 
   // Filter posts based on search, type, and tags
   const filteredPosts = useMemo(() => {
-    const filtered = posts.filter((post) => {
-      // Search filter
-      const matchesSearch =
-        searchQuery === '' ||
-        post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        post.content?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        post.author?.name?.toLowerCase().includes(searchQuery.toLowerCase());
-
-      // Type filter
-      const matchesType =
-        selectedType === 'ALL' || post.postType === selectedType;
-
-      // Tags filter
-      const postTags = Array.isArray(post.tags)
-        ? post.tags.map(normalizeTag)
-        : [];
-      const matchesTags =
-        selectedTags.length === 0 ||
-        selectedTags.some((tag) => postTags.includes(tag));
-
-      return matchesSearch && matchesType && matchesTags;
-    });
-
-    return filtered;
-  }, [posts, searchQuery, selectedType, selectedTags]);
+    return posts;
+  }, [posts]);
 
   const toggleTag = (tag: string) => {
     setSelectedTags((prev) =>
@@ -518,11 +522,9 @@ export default function PostsPage() {
       return currentLikes > mostLikedLikes ? post : mostLiked;
     }, first10[0]);
 
-    const remaining = filteredPosts.filter((post) => post.id !== featured.id);
-
     return {
       featuredPost: featured,
-      latestPosts: remaining.slice(0, 8),
+      latestPosts: filteredPosts,
     };
   }, [filteredPosts, hasActiveFilters]);
 
@@ -712,7 +714,7 @@ export default function PostsPage() {
                 <p className="text-sm text-[var(--muted-foreground)]">
                   Found{' '}
                   <span className="font-semibold text-[var(--foreground)]">
-                    {filteredPosts.length}
+                    {totalCount}
                   </span>{' '}
                   articles
                 </p>
@@ -796,7 +798,7 @@ export default function PostsPage() {
                 <p className="text-sm text-[var(--muted-foreground)]">
                   Showing{' '}
                   <span className="font-semibold text-[var(--foreground)]">
-                    {filteredPosts.length}
+                    {totalCount || filteredPosts.length}
                   </span>{' '}
                   {filteredPosts.length === 1 ? 'result' : 'results'}
                 </p>

@@ -1,11 +1,11 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight, Clock, Headphones, Newspaper, Target } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import HomeSection from '@/components/HomeSection';
+import SafeImage from '@/components/SafeImage';
 
 const fadeIn = {
   initial: { opacity: 0, y: 20 },
@@ -161,7 +161,7 @@ export default function RecentPostsSection() {
                           <div className="relative aspect-[16/9] overflow-hidden">
                             {featuredPost.coverImage ||
                             featuredPost.thumbnailUrl ? (
-                              <Image
+                              <SafeImage
                                 src={
                                   featuredPost.coverImage ||
                                   featuredPost.thumbnailUrl
@@ -230,7 +230,7 @@ export default function RecentPostsSection() {
                           <div className="flex flex-col overflow-hidden rounded-2xl border border-[color:var(--border)] bg-[var(--card)] shadow-sm transition-all duration-300 group-hover:-translate-y-1 group-hover:shadow-md">
                             <div className="relative aspect-[16/9] overflow-hidden">
                               {post.coverImage || post.thumbnailUrl ? (
-                                <Image
+                                <SafeImage
                                   src={post.coverImage || post.thumbnailUrl}
                                   alt={post.title}
                                   fill

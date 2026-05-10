@@ -53,9 +53,7 @@ export async function GET() {
           },
         },
       },
-      orderBy: {
-        publishedAt: 'desc',
-      },
+      orderBy: [{ publishedAt: 'desc' }, { createdAt: 'desc' }, { id: 'desc' }],
     });
 
     const response = NextResponse.json({

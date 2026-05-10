@@ -1,6 +1,5 @@
 // app/layout.tsx
 import { ClerkProvider } from '@clerk/nextjs';
-import { Inter, Poppins } from 'next/font/google';
 import { Toaster } from 'react-hot-toast';
 
 import MainFooter from '@/components/Footer';
@@ -10,20 +9,6 @@ import { ThemeProvider } from '@/providers/theme';
 import 'katex/dist/katex.min.css';
 import '@/styles/globals.css';
 import type { ChildrenProps } from '@/types';
-
-const inter = Inter({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-inter',
-  adjustFontFallback: false,
-});
-
-const poppins = Poppins({
-  weight: ['400', '500', '600', '700'],
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-poppins',
-});
 
 export const metadata = {
   title: {
@@ -125,7 +110,7 @@ export default function RootLayout({ children }: ChildrenProps) {
       <html lang="en" suppressHydrationWarning className="overflow-x-hidden">
         <body
           suppressHydrationWarning
-          className={`${inter.variable} ${poppins.variable} font-sans antialiased overflow-x-hidden`}
+          className="font-sans antialiased overflow-x-hidden"
         >
           <RootLayoutContent>{children}</RootLayoutContent>
         </body>

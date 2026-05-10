@@ -49,7 +49,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       updatedAt: true,
       publishedAt: true,
     },
-    orderBy: { publishedAt: 'desc' },
+    orderBy: [{ publishedAt: 'desc' }, { createdAt: 'desc' }, { id: 'desc' }],
   });
 
   const postRoutes: MetadataRoute.Sitemap = posts.map((post) => ({
